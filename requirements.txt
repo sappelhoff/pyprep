@@ -2,9 +2,10 @@ numpy
 scipy
 matplotlib
 scikit-learn
-mayavi
 jupyter
 spyder
+vtk
+mayavi
 PySurfer
 mne
 

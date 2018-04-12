@@ -399,6 +399,10 @@ def find_noisy_channels(raw_mne):
     # Reject the stim channel
     raw.pick_types(eeg=True, stim=False)
 
+    # We work on 1Hz highpass filtered data ...
+    # in original PREP, also line noise is removed
+    raw.filter(l_freq=1., h_freq=None, fir_design='firwin')
+
     # Assuming the mne object to be measured in VOLTS
     # ... we need to convert to microvolts
     X = raw.get_data() * 10e6
@@ -406,9 +410,10 @@ def find_noisy_channels(raw_mne):
     srate = raw.info['sfreq']
 
     # We also need a bandpass filtered version of the data:
-    # Remove signal content above 50Hz and below 1Hz
+    # Remove signal content above 50Hz
+    # Below 1Hz was removed beforehand (see above)
     raw_bp = raw.copy()
-    raw_bp.filter(l_freq=1, h_freq=50, fir_design='firwin')
+    raw_bp.filter(l_freq=None, h_freq=50., fir_design='firwin')
     X_bp = raw_bp.get_data()
 
     # Find all bad channels emplying several methods
