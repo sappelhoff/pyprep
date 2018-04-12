@@ -1,5 +1,11 @@
 numpy
 scipy
+matplotlib
+scikit-learn
+mayavi
+jupyter
+spyder
+PySurfer
 mne
 
 
