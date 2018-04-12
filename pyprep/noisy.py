@@ -360,7 +360,31 @@ def find_bad_by_ransac(raw, exclude_bads=[],
 
 
 def find_noisy_channels(raw_mne):
-    """Find noisy channels emplying several methods."""
+    """Find noisy channels emplying several methods.
+
+    This function tries to implement the findNoisyChannels function of the
+    PREP as described in [1]. Currently, only default parameters are
+    supported.
+
+    Note: This function might need a minute to run.
+
+    Parameters
+    ----------
+    raw : mne python raw object
+
+    Returns
+    -------
+    bads : list
+        List of bad channel names.
+
+    References
+    ----------
+    .. [1] Bigdely-Shamlo, N., Mullen, T., Kothe, C., Su, K.-M.,
+       & Robbins, K. A. (2015). The PREP pipeline: standardized preprocessing
+       for large-scale EEG analysis. Frontiers in Neuroinformatics, 9, 16.
+       https://doi.org/10.3389/fninf.2015.00016
+
+    """
     raw = raw_mne.copy()
 
     # Add a montage
@@ -383,10 +407,9 @@ def find_noisy_channels(raw_mne):
 
     # We also need a bandpass filtered version of the data:
     # Remove signal content above 50Hz and below 1Hz
-    X_copy = raw.copy()
-    X_copy.filter(l_freq=1, h_freq=50, fir_design='firwin')
-    X_bp = X_copy.get_data()
-    X_copy = None
+    raw_bp = raw.copy()
+    raw_bp.filter(l_freq=1, h_freq=50, fir_design='firwin')
+    X_bp = raw_bp.get_data()
 
     # Find all bad channels emplying several methods
     all_bads = []
@@ -408,7 +431,7 @@ def find_noisy_channels(raw_mne):
 
     # Find bad by ransac by removing all bad channels found previously
     all_bads = list(set(all_bads))
-    bads = find_bad_by_ransac(raw, exclude_bads=all_bads)
+    bads = find_bad_by_ransac(raw_bp, exclude_bads=all_bads)
     all_bads += bads
 
     return all_bads
