@@ -1,10 +1,15 @@
 """Contains functions to implement a find_noisy_channels function."""
 
+from multiprocessing import cpu_count
+
 import numpy as np
 import mne
 
 # https://github.com/sappelhoff/remedian
 from remedian.remedian import Remedian
+
+
+n_workers = cpu_count()
 
 
 def mad(X, axis):
@@ -219,8 +224,7 @@ def find_bad_by_correlation(X, X_bp, ch_names, srate,
     """
     # Based on the data, determine how many windows we need
     # and how large they should be
-    signal_size = X.shape[1]
-    n_chans = len(ch_names)
+    n_chans, signal_size = X.shape
     correlation_frames = correlation_window_seconds * srate
     correlation_window = np.arange(0, correlation_frames)
     n = correlation_window.shape[0]
@@ -230,15 +234,15 @@ def find_bad_by_correlation(X, X_bp, ch_names, srate,
 
     # preallocate
     channel_correlations = np.ones((w_correlation, n_chans))
-    noise_levels = np.zeros((w_correlation, n_chans))
-    chn_devis = np.zeros((w_correlation, n_chans))
+    # noise_levels = np.zeros((w_correlation, n_chans))
+    # chn_devis = np.zeros((w_correlation, n_chans))
 
     # Cut the data indo windows
     X_bp_window = X_bp[:n_chans, :n*w_correlation]
     X_bp_window = X_bp_window.reshape(n_chans, n, w_correlation)
 
-    X_window = X[:n_chans, :n*w_correlation]
-    X_window = X_window.reshape(n_chans, n, w_correlation)
+    # X_window = X[:n_chans, :n*w_correlation]
+    # X_window = X_window.reshape(n_chans, n, w_correlation)
 
     # Perform Pearson correlations across channels per window
     # For each channel, take the absolute of the 98th percentile of
@@ -246,14 +250,17 @@ def find_bad_by_correlation(X, X_bp, ch_names, srate,
     # correlated that channel is with the others.
     for k in range(w_correlation):
         eeg_portion = X_bp_window[:, :, k]
-        data_portion = X_window[:, :, k]
+        # data_portion = X_window[:, :, k]
         window_correlation = np.corrcoef(eeg_portion)
         abs_corr = np.abs((window_correlation -
                            np.diag(np.diag(window_correlation))))
         channel_correlations[k, :] = np.percentile(abs_corr, 98, axis=0)
+
+        """ # Not needed for now ...
         noise_levels[k, :] = (mad((data_portion - eeg_portion), axis=1) -
                               mad(eeg_portion, axis=1))
         chn_devis[k, :] = 0.7413 * iqr(data_portion, axis=1)
+        """
 
     # Perform thresholding to see which channels correlate badly with the
     # other channels in a certain fraction of windows (bad_time_threshold)
@@ -371,7 +378,7 @@ def find_noisy_channels(raw_mne):
 
     Parameters
     ----------
-    raw : mne python raw object
+    raw_mne : mne python raw object
 
     Returns
     -------
@@ -401,7 +408,10 @@ def find_noisy_channels(raw_mne):
 
     # We work on 1Hz highpass filtered data ...
     # in original PREP, also line noise is removed
-    raw.filter(l_freq=1., h_freq=None, fir_design='firwin')
+    raw.filter(l_freq=1.,
+               h_freq=None,
+               fir_design='firwin',
+               n_jobs=n_workers)
 
     # Assuming the mne object to be measured in VOLTS
     # ... we need to convert to microvolts
@@ -409,11 +419,15 @@ def find_noisy_channels(raw_mne):
     ch_names = raw.ch_names
     srate = raw.info['sfreq']
 
-    # We also need a bandpass filtered version of the data:
+    # We also needraw a bandpass filtered version of the data:
     # Remove signal content above 50Hz
     # Below 1Hz was removed beforehand (see above)
     raw_bp = raw.copy()
-    raw_bp.filter(l_freq=None, h_freq=50., fir_design='firwin')
+    raw = None
+    raw_bp.filter(l_freq=None,
+                  h_freq=50.,
+                  fir_design='firwin',
+                  n_jobs=n_workers)
     X_bp = raw_bp.get_data()
 
     # Find all bad channels emplying several methods
