@@ -349,6 +349,7 @@ def find_bad_by_ransac(raw, exclude_bads=[],
         median_eeg.add_obs(raw_tmp.get_data())
 
     # Now check the predictability
+    raw_tmp = None
     x1 = raw_copy.get_data()
     x2 = median_eeg.remedian
     bads = find_bad_by_correlation(x1, x2, ch_names, srate,
@@ -392,8 +393,7 @@ def find_noisy_channels(raw_mne):
                                         ch_names=raw.ch_names)
     raw.set_montage(montage)
 
-    # Set reference ...
-    # If [], we use the original site: FCz
+    # Explicitly DO NOT set a new reference ...
     mne.set_eeg_reference(raw, ref_channels=[], verbose=False)
 
     # Reject the stim channel
