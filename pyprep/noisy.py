@@ -1,6 +1,7 @@
 """Contains functions to implement a find_noisy_channels function."""
 
 from multiprocessing import cpu_count
+from functools import partial
 
 import numpy as np
 import mne
@@ -10,6 +11,17 @@ from remedian.remedian import Remedian
 
 
 n_workers = cpu_count()
+
+
+def help_fun(__, gen):
+    """Exchange raw data with that yielded by a generator `gen`."""
+    return next(gen)
+
+
+def help_gen(data_mat):
+    """Create a generator that yields rows of `data_mat`."""
+    for i in range(data_mat.shape[0]):
+        yield data_mat[i, :].squeeze()
 
 
 def mad(X, axis):
@@ -277,7 +289,7 @@ def find_bad_by_correlation(X, X_bp, ch_names, srate,
     return bads
 
 
-def find_bad_by_ransac(raw, exclude_bads=[],
+def find_bad_by_ransac(raw_mne, exclude_bads=[],
                        ransac_channel_fraction=0.25,
                        ransac_sample_size=50,
                        ransac_corr_thresh=0.75,
@@ -287,7 +299,7 @@ def find_bad_by_ransac(raw, exclude_bads=[],
 
     Parameters
     ----------
-    raw : mne raw object
+    raw_mne : mne raw object
         2D input data X, band-pass filtered between 1Hz and 50Hz. Noisy
         channels already removed.
 
@@ -322,13 +334,18 @@ def find_bad_by_ransac(raw, exclude_bads=[],
 
     """
     # Exclude previously identified bad channels
-    raw_copy = raw.copy()
-    raw_copy.drop_channels(exclude_bads)
+    raw = raw_mne.copy()
+    raw.drop_channels(exclude_bads)
+
+    # Save the true data ... later, we will interpolate and
+    # then always come back to the true data
+    raw.pick_types(eeg=True, stim=False)
+    raw_true_data = raw.get_data()
 
     # Get some information
-    ch_names = raw_copy.ch_names
-    n_chans, signal_size = raw_copy.get_data().shape
-    srate = raw_copy.info['sfreq']
+    ch_names = raw.ch_names
+    n_chans, signal_size = raw.get_data().shape
+    srate = raw.info['sfreq']
     ransac_subset = int(np.ceil(ransac_channel_fraction * n_chans))
 
     if (n_chans < ransac_subset+1) or (n_chans < 3) or (ransac_subset < 2):
@@ -337,7 +354,7 @@ def find_bad_by_ransac(raw, exclude_bads=[],
 
     # Initialize a remedian class: memory efficient approximation of the median
     # https://github.com/sappelhoff/remedian
-    median_eeg = Remedian(raw_copy.get_data().shape, 5, ransac_sample_size)
+    median_eeg = Remedian(raw.get_data().shape, 5, ransac_sample_size)
 
     # Perform Ransac
     for sample in range(ransac_sample_size):
@@ -345,21 +362,28 @@ def find_bad_by_ransac(raw, exclude_bads=[],
         # to be interpolated.
         bad_subset = np.random.choice(ch_names, (n_chans - ransac_subset),
                                       replace=False)
-        raw_tmp = raw_copy.copy()
-        raw_tmp.info['bads'] += list(bad_subset)
 
-        # Interpolate the "bad" channels
-        raw_tmp.interpolate_bads()
+        raw.info['bads'] += list(bad_subset)
+
+        # Interpolate the "bad" channels, thereby resetting their
+        # status to "good"
+        raw.interpolate_bads(reset_bads=True)
 
         # Form the median of the interpolated data across all iterations
         # of ransac_sample_size using a Remedian approach
-        median_eeg.add_obs(raw_tmp.get_data())
+        median_eeg.add_obs(raw.get_data())
+
+        # Before starting with next iteration, reset the interpolated
+        # data to the true data
+        mygen = help_gen(raw_true_data)
+        myfun = partial(help_fun, gen=mygen)
+        raw.apply_function(myfun)
 
     # Now check the predictability
-    raw_tmp = None
-    x1 = raw_copy.get_data()
-    x2 = median_eeg.remedian
-    bads = find_bad_by_correlation(x1, x2, ch_names, srate,
+    bads = find_bad_by_correlation(raw_true_data,
+                                   median_eeg.remedian,
+                                   ch_names=ch_names,
+                                   srate=srate,
                                    correlation_threshold=ransac_corr_thresh,
                                    bad_time_threshold=ransac_bad_time_thresh,
                                    correlation_window_seconds=ransac_window_s)
@@ -422,13 +446,13 @@ def find_noisy_channels(raw_mne):
     # We also needraw a bandpass filtered version of the data:
     # Remove signal content above 50Hz
     # Below 1Hz was removed beforehand (see above)
-    raw_bp = raw.copy()
-    raw = None
-    raw_bp.filter(l_freq=None,
-                  h_freq=50.,
-                  fir_design='firwin',
-                  n_jobs=n_workers)
-    X_bp = raw_bp.get_data()
+    raw.filter(l_freq=None,
+               h_freq=50.,
+               fir_design='firwin',
+               n_jobs=n_workers)
+
+    # Again, convert to microvolts
+    X_bp = raw.get_data() * 10e6
 
     # Find all bad channels emplying several methods
     all_bads = []
@@ -450,7 +474,7 @@ def find_noisy_channels(raw_mne):
 
     # Find bad by ransac by removing all bad channels found previously
     all_bads = list(set(all_bads))
-    bads = find_bad_by_ransac(raw_bp, exclude_bads=all_bads)
+    bads = find_bad_by_ransac(raw, exclude_bads=all_bads)
     all_bads += bads
 
     return all_bads
