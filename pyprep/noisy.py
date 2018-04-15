@@ -357,7 +357,7 @@ def find_bad_by_ransac(raw_mne, exclude_bads=[],
     # else ... Initialize a remedian class: memory efficient approximation
     # of the median, see: https://github.com/sappelhoff/remedian
     available_mb = psutil.virtual_memory().available * 1e-6
-    raw_size_mb = raw.get_data().nbytes() * 1e-6
+    raw_size_mb = raw.get_data().nbytes * 1e-6
     required_mb = raw_size_mb * ransac_sample_size
     if available_mb > required_mb:
         use_remedian = False
