@@ -2,6 +2,7 @@
 
 from multiprocessing import cpu_count
 from functools import partial
+import psutil
 
 import numpy as np
 import mne
@@ -352,9 +353,20 @@ def find_bad_by_ransac(raw_mne, exclude_bads=[],
         raise IOError('Too many channels have'
                       ' failed quality tests to perform ransac.')
 
-    # Initialize a remedian class: memory efficient approximation of the median
-    # https://github.com/sappelhoff/remedian
-    median_eeg = Remedian(raw.get_data().shape, 5, ransac_sample_size)
+    # Check memory: Can load all data into memory --> MEDIAN
+    # else ... Initialize a remedian class: memory efficient approximation
+    # of the median, see: https://github.com/sappelhoff/remedian
+    available_mb = psutil.virtual_memory().available * 1e-6
+    raw_size_mb = raw.get_data().nbytes() * 1e-6
+    required_mb = raw_size_mb * ransac_sample_size
+    if available_mb > required_mb:
+        use_remedian = False
+        median_eeg = np.zeros((n_chans, signal_size, ransac_sample_size))
+    else:
+        use_remedian = True
+        n_obs = int(np.floor(available_mb / raw_size_mb))
+        median_eeg = Remedian((n_chans, signal_size), n_obs,
+                              ransac_sample_size)
 
     # Perform Ransac
     for sample in range(ransac_sample_size):
@@ -370,8 +382,12 @@ def find_bad_by_ransac(raw_mne, exclude_bads=[],
         raw.interpolate_bads(reset_bads=True)
 
         # Form the median of the interpolated data across all iterations
-        # of ransac_sample_size using a Remedian approach
-        median_eeg.add_obs(raw.get_data())
+        # Either true median or remedian approach depending on available
+        # memory
+        if not use_remedian:
+            median_eeg[:, :, sample] = raw.get_data()
+        else:  # use_remedian
+            median_eeg.add_obs(raw.get_data())
 
         # Before starting with next iteration, reset the interpolated
         # data to the true data
@@ -379,9 +395,15 @@ def find_bad_by_ransac(raw_mne, exclude_bads=[],
         myfun = partial(help_fun, gen=mygen)
         raw.apply_function(myfun)
 
+    # Get the median based on the collected data
+    if not use_remedian:
+        median_data = np.median(median_eeg, axis=-1, overwrite_input=True)
+    else:
+        median_data = median_eeg.remedian
+
     # Now check the predictability
     bads = find_bad_by_correlation(raw_true_data,
-                                   median_eeg.remedian,
+                                   median_data,
                                    ch_names=ch_names,
                                    srate=srate,
                                    correlation_threshold=ransac_corr_thresh,
