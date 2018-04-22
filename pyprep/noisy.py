@@ -418,7 +418,7 @@ def find_noisy_channels(raw_mne):
 
     This function tries to implement the findNoisyChannels function of the
     PREP as described in [1]. Currently, only default parameters are
-    supported.
+    supported. The function only works on EEG data channels.
 
     Note: This function might need a minute to run.
 
