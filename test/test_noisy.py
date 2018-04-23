@@ -53,6 +53,25 @@ def test_find_by_nan(raw=raw):
     assert nd.bad_by_nan == [rand_chn_lab]
 
 
+def test_find_by_flat(raw=raw):
+    """Test find_by_flat."""
+    raw_tmp = raw.copy()
+    m, n = raw_tmp._data.shape
+
+    # Scale data so high that it would not be flat
+    raw_tmp._data *= 1e100
+
+    # Now insert one random flat channel
+    rand_chn_idx = int(np.random.randint(0, m, 1))
+    rand_chn_lab = raw_tmp.ch_names[rand_chn_idx]
+    raw_tmp._data[rand_chn_idx, :] = np.ones_like(raw_tmp._data[1, :])
+
+    # Now find it and assert it's the correct one.
+    nd = Noisydata(raw_tmp)
+    nd.find_bad_by_flat()
+    assert nd.bad_by_flat == [rand_chn_lab]
+
+
 def test_ransac_too_few_preds(raw=raw):
     """Test that ransac throws an arror for few predictors."""
     chns = np.random.choice(raw.ch_names, size=3, replace=False)
@@ -69,6 +88,6 @@ def test_ransac_too_little_ram(raw=raw):
     good_chn_labs = raw.ch_names
     n_pred_chns = 4
     data = raw._data
-    n_samples = 99e99
+    n_samples = 1e100
     assert_raises(MemoryError, nd._run_ransac, chn_pos, chn_pos_good,
                   good_chn_labs, n_pred_chns, data, n_samples)
