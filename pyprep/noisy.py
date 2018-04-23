@@ -83,6 +83,7 @@ class Noisydata():
         self.n_chans = len(self.ch_names)
         self.signal_len = len(self.raw_copy.times)
         self.sfreq = self.raw_copy.info['sfreq']
+        self.chn_pos = self.raw_copy._get_channel_positions()
 
         # The identified bad channels
         self.bad_by_flat = []
@@ -389,20 +390,19 @@ class Noisydata():
         good_idx = mne.pick_channels(self.ch_names, include=[], exclude=bads)
         good_chn_labs = self.ch_names[good_idx]
         n_chans_good = good_idx.shape[0]
-        chn_pos = self.raw_copy._get_channel_positions()
-        chn_pos_good = chn_pos[good_idx, :]
+        chn_pos_good = self.chn_pos[good_idx, :]
 
         # Check if we have enough remaning channels
         # after exclusion of bad channels
         n_pred_chns = int(np.ceil(fraction_good * n_chans_good))
 
-        if n_pred_chns < 2:
+        if n_pred_chns <= 3:
             raise IOError('Too many channels have failed quality tests to'
                           ' perform ransac. You could call `.find_all_bads`'
                           ' with the ransac=False option')
 
         # Make the ransac predictions
-        ransac_eeg = self._run_ransac(chn_pos=chn_pos,
+        ransac_eeg = self._run_ransac(chn_pos=self.chn_pos,
                                       chn_pos_good=chn_pos_good,
                                       good_chn_labs=good_chn_labs,
                                       n_pred_chns=n_pred_chns,
