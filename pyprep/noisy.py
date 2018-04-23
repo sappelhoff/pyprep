@@ -151,8 +151,8 @@ class Noisydata():
 
     def find_bad_by_nan(self):
         """Detect channels containing n/a data."""
-        bad_idxs = np.argwhere(np.sum(np.isnan(self.x), axis=0))
-        bads = np.asarray(self.ch_names)[bad_idxs.astype(int)]
+        bad_idxs = np.argwhere(np.sum(np.isnan(self.x), axis=-1) > 0)
+        bads = self.ch_names[bad_idxs.astype(int)]
         bads = [i[0] for i in bads]
         bads.sort()
         self.bad_by_nan = bads

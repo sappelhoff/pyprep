@@ -37,6 +37,22 @@ def test_init(raw=raw):
     assert nd
 
 
+def test_find_by_nan(raw=raw):
+    """Test find_by_nan."""
+    raw_tmp = raw.copy()
+    m, n = raw_tmp._data.shape
+
+    # Insert a nan value for a random channel
+    rand_chn_idx = int(np.random.randint(0, 5, 1))
+    rand_chn_lab = raw_tmp.ch_names[rand_chn_idx]
+    raw_tmp._data[rand_chn_idx, n-1] = np.nan
+
+    # Now find it and assert it's the correct one.
+    nd = Noisydata(raw_tmp)
+    nd.find_bad_by_nan()
+    assert nd.bad_by_nan == [rand_chn_lab]
+
+
 def test_ransac_too_few_preds(raw=raw):
     """Test that ransac throws an arror for few predictors."""
     chns = np.random.choice(raw.ch_names, size=3, replace=False)
