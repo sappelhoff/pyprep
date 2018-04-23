@@ -1,502 +1,561 @@
-"""Contains functions to implement a find_noisy_channels function."""
+"""Module contains class for bad channel detection."""
 
-from multiprocessing import cpu_count
-from functools import partial
-import psutil
+from psutil import virtual_memory
 
-import numpy as np
 import mne
-
-# https://github.com/sappelhoff/remedian
-from remedian.remedian import Remedian
-
-
-n_workers = cpu_count()
+from mne.channels.interpolation import _make_interpolation_matrix
+import numpy as np
+from scipy.stats import iqr
+from statsmodels.robust.scale import mad
 
 
-def help_fun(__, gen):
-    """Exchange raw data with that yielded by a generator `gen`."""
-    return next(gen)
-
-
-def help_gen(data_mat):
-    """Create a generator that yields rows of `data_mat`."""
-    for i in range(data_mat.shape[0]):
-        yield data_mat[i, :].squeeze()
-
-
-def mad(X, axis):
-    """Calculate the median absolute deviation (MAD) of an array.
+class Noisydata():
+    """For a given raw data object, detect bad EEG channels.
 
     Parameters
     ----------
-    X : ndarray, shape(n, t)
-        Input data.
+    instance : raw mne object
 
-    Returns
-    -------
-    mad : ndarray, shape(n,)
-        The median absolute deviation of the input data.
+    montage_kind : str
+        Which kind of montage should be used to infer the electrode
+        positions? E.g., 'standard_1020'
 
-    """
-    mad = np.median(np.abs(X - np.median(X, axis=axis, keepdims=True)),
-                    axis=axis)
-    return mad
+    low_cut : float
+        Frequency low cutoff value for the highpass filter
 
+    high_cut : float
+        Frequency high cutoff value for the lowpass filter
 
-def iqr(X, axis):
-    """Calculate the interquartile range along an axis.
-
-    Parameters
+    Attributes
     ----------
-    X : ndarray
-        Input data.
+    _channel_correlations : ndarray
 
-    Returns
-    -------
-    iqr : ndarray or int
-        The interquartile range.
+    _ransac_channel_correlations : ndarray
 
-    """
-    iqr = np.subtract(*np.percentile(X, [75, 25], axis=axis))
-    return iqr
+    _channel_deviations : ndarray
 
-
-def find_bad_by_nan(X, ch_names):
-    """Detect channels containing NaN data.
-
-    NOTE: Assumes EEG data to be measured in microvolts.
-
-    Parameters
-    ----------
-    X : ndarray, shape(n, t)
-        2D input data. NaN values will be searched for
-        along the column axis.
-
-    ch_names : list, len n
-        List of channel names corresponding to rows in input data.
-
-    Returns
-    -------
-    bads : list
-        List of bad channel names.
+    _channel_hf_noise : ndarray
 
     """
-    assert X.ndim == 2
-    bad_idxs = np.argwhere(np.sum(np.isnan(X), axis=0))
-    bads = np.asarray(ch_names)[bad_idxs.astype(int)]
-    bads = [i[0] for i in bads]
-    return bads
 
+    def __init__(self, instance,
+                 montage_kind='standard_1020',
+                 low_cut=0.01, high_cut=50.):
+        """Initialize the class."""
+        # Make sure that we got an MNE object
+        assert isinstance(instance, mne.io.BaseRaw)
 
-def find_bad_by_flat(X, ch_names):
-    """Detect channels containing constant or very small values.
+        # The data that we are targeting
+        # and a modifiable copy
+        self.raw_mne = instance
+        self.raw_copy = self.raw_mne.copy()
 
-    NOTE: Assumes EEG data to be measured in microvolts.
+        # Set montage, pick data type, get data and transform to uVolts
+        # We also filter all data at `low_cut` Hz highpass and obtain some data
+        # bandpassed between `low_cut` and `high_cut` Hz.
+        montage = mne.channels.read_montage(kind=montage_kind,
+                                            ch_names=self.raw_copy.ch_names)
+        self.raw_copy.set_montage(montage)
+        self.raw_copy.pick_types(eeg=True, stim=False)
+        self.raw_copy.filter(l_freq=low_cut, h_freq=None,
+                             method='fir', fir_design='firwin')
+        self.x = self.raw_copy.get_data() * 1e6
+        self.raw_copy.filter(l_freq=None, h_freq=high_cut,
+                             method='fir', fir_design='firwin')
+        self.x_bp = self.raw_copy.get_data() * 1e6
+        self.ch_names = np.asarray(self.raw_copy.ch_names)
+        self.n_chans = len(self.ch_names)
+        self.signal_len = len(self.raw_copy.times)
+        self.sfreq = self.raw_copy.info['sfreq']
 
-    Parameters
-    ----------
-    X : ndarray, shape(n, t)
-        2D input data.
+        # The identified bad channels
+        self.bad_by_flat = []
+        self.bad_by_nan = []
+        self.bad_by_deviation = []
+        self.bad_by_hf_noise = []
+        self.bad_by_correlation = []
+        self.bad_by_ransac = []
 
-    ch_names : list, len n
-        List of channel names corresponding to rows in input data.
+        return None
 
-    Returns
-    -------
-    bads : list
-        List of bad channel names.
+    def find_all_bads(self, ransac=True):
+        """Call all functions that detect bad channels.
 
-    """
-    assert X.ndim == 2
-    bad_by_mad = mad(X, axis=1) < 10e-10
-    bad_by_std = np.std(X, axis=1) < 10e-10
-    bad_idxs = np.argwhere(np.logical_or(bad_by_mad, bad_by_std))
-    bads = np.asarray(ch_names)[bad_idxs.astype(int)]
+        Note that this will be using the functions default thresholds
+        and settings.
 
-    bads = [i[0] for i in bads]
-    return bads
+        Parameters
+        ----------
+        ransac: boolean
+            Whether or not to also fetch the bad_by_ransac channels.
 
-
-def find_bad_by_deviation(X, ch_names, robust_deviation_threshold=5.):
-    """Detect channels that contain extreme amplitudes.
-
-    NOTE: Assumes EEG data to be measured in microvolts.
-
-    Parameters
-    ----------
-    X : ndarray, shape(n, t)
-        2D input data.
-
-    ch_names : list, len n
-        List of channel names corresponding to rows in input data.
-
-    robust_deviation_threshold : float
-        The threshold for z-scores, when exceeded: classify as bad.
-
-    Returns
-    -------
-    bads : list
-        List of bad channel names.
-
-    """
-    assert X.ndim == 2
-    # Calculate robust z-score of robust standard deviation for each channel
-    chn_devi = 0.7413 * iqr(X, axis=1)
-    chn_devi_sd = 0.7413 * iqr(chn_devi, axis=0)
-    chn_devi_median = np.median(chn_devi)
-    robust_chn_devi = (chn_devi - chn_devi_median) / chn_devi_sd
-
-    # z-scores exceeding our theshold are classified as bad
-    bad_idxs_bool = (np.abs(robust_chn_devi) >
-                     robust_deviation_threshold)
-    bad_idxs = np.argwhere(bad_idxs_bool)
-    bads = np.asarray(ch_names)[bad_idxs.astype(int)]
-
-    bads = [i[0] for i in bads]
-    return bads
-
-
-def find_bad_by_hf_noise(X, X_bp, ch_names, high_frequency_noise_threshold=5.):
-    """Detect channels that contain high frequency (hf) noise.
-
-    Parameters
-    ----------
-    X : ndarray, shape(n, t)
-        2D input data.
-
-    X_bp : ndarray, shape(n, t)
-        2D input data X but band-pass filtered between 1Hz and 50Hz.
-
-    ch_names : list, len n
-        List of channel names corresponding to rows in input data.
-
-    high_frequency_noise_threshold : float
-        The threshold for z-scores, when exceeded: classify as bad.
-
-    Returns
-    -------
-    bads : list
-        List of bad channel names.
-
-    """
-    assert X.ndim == 2
-    assert X_bp.ndim == 2
-    # Determine z-scored level of estimated signal-to-noise
-    # ratio for each channel
-    noisiness = (mad(X - X_bp, axis=1) /
-                 mad(X_bp, axis=1))
-    noisiness_median = np.median(noisiness)
-    noisiness_sd = mad(noisiness, axis=0) * 1.4826
-    zscore_hf_noise_temp = (noisiness - noisiness_median) / noisiness_sd
-    bad_idxs_bool = zscore_hf_noise_temp > high_frequency_noise_threshold
-    bad_idxs = np.argwhere(bad_idxs_bool)
-    bads = np.asarray(ch_names)[bad_idxs.astype(int)]
-
-    bads = [i[0] for i in bads]
-    return bads
-
-
-def find_bad_by_correlation(X, X_bp, ch_names, srate,
-                            correlation_threshold=0.4,
-                            bad_time_threshold=0.1,
-                            correlation_window_seconds=1.):
-    """Detect channels that do not correlate well with the other channels.
-
-    Parameters
-    ----------
-    X : ndarray, shape(n, t)
-        2D input data.
-
-    X_bp : ndarray, shape(n, t)
-        2D input data X but band-pass filtered between 1Hz and 50Hz.
-
-    ch_names : list, len n
-        List of channel names corresponding to rows in input data.
-
-    srate : float or int
-        Sampling rate of X.
-
-    correlation_threshold : float
-        The minimum correlation threshold that should be attained within a
-        data window.
-
-    bad_time_threshold : float
-        If this percentage of all data windows in which the correlation
-        threshold was not surpassed is exceeded, classify a channel as bad.
-
-    correlation_window_seconds : float or int
-        Size of the correlation window in seconds.
-
-
-    Returns
-    -------
-    bads : list
-        List of bad channel names.
-
-    """
-    # Based on the data, determine how many windows we need
-    # and how large they should be
-    n_chans, signal_size = X.shape
-    correlation_frames = correlation_window_seconds * srate
-    correlation_window = np.arange(0, correlation_frames)
-    n = correlation_window.shape[0]
-    correlation_offsets = np.arange(0, (signal_size - correlation_frames),
-                                    correlation_frames)
-    w_correlation = correlation_offsets.shape[0]
-
-    # preallocate
-    channel_correlations = np.ones((w_correlation, n_chans))
-    # noise_levels = np.zeros((w_correlation, n_chans))
-    # chn_devis = np.zeros((w_correlation, n_chans))
-
-    # Cut the data indo windows
-    X_bp_window = X_bp[:n_chans, :n*w_correlation]
-    X_bp_window = X_bp_window.reshape(n_chans, n, w_correlation)
-
-    # X_window = X[:n_chans, :n*w_correlation]
-    # X_window = X_window.reshape(n_chans, n, w_correlation)
-
-    # Perform Pearson correlations across channels per window
-    # For each channel, take the absolute of the 98th percentile of
-    # correlations with the other channels as a measure of how well
-    # correlated that channel is with the others.
-    for k in range(w_correlation):
-        eeg_portion = X_bp_window[:, :, k]
-        # data_portion = X_window[:, :, k]
-        window_correlation = np.corrcoef(eeg_portion)
-        abs_corr = np.abs((window_correlation -
-                           np.diag(np.diag(window_correlation))))
-        channel_correlations[k, :] = np.percentile(abs_corr, 98, axis=0)
-
-        """ # Not needed for now ...
-        noise_levels[k, :] = (mad((data_portion - eeg_portion), axis=1) -
-                              mad(eeg_portion, axis=1))
-        chn_devis[k, :] = 0.7413 * iqr(data_portion, axis=1)
         """
+        self.find_bad_by_nan()
+        self.find_bad_by_flat()
+        self.find_bad_by_deviation()
+        self.find_bad_by_hf_noise()
+        self.find_bad_by_correlation()
+        if ransac:
+            self.find_bad_by_ransac()
+        return None
 
-    # Perform thresholding to see which channels correlate badly with the
-    # other channels in a certain fraction of windows (bad_time_threshold)
-    thresholded_correlations = channel_correlations < correlation_threshold
-    fraction_bad_correlation_windows = np.mean(thresholded_correlations,
-                                               axis=0)
+    def get_bads(self, verbose=False):
+        """Get a list of all bad channels.
 
-    # find the corresponding channel names and return
-    bad_idxs_bool = fraction_bad_correlation_windows > bad_time_threshold
-    bad_idxs = np.argwhere(bad_idxs_bool)
-    bads = np.asarray(ch_names)[bad_idxs.astype(int)]
+        Parameters
+        ----------
+        verbose : boolean
+            If verbose, print a summary of bad channels.
 
-    bads = [i[0] for i in bads]
-    return bads
+        """
+        bads = (self.bad_by_flat + self.bad_by_nan + self.bad_by_deviation +
+                self.bad_by_hf_noise + self.bad_by_correlation +
+                self.bad_by_ransac)
+        bads = list(set(bads))
 
+        if verbose:
+            print('Found {} uniquely bad channels.'.format(len(bads)))
+            print('\n{} by n/a: {}'.format(len(self.bad_by_nan),
+                                           self.bad_by_nan))
+            print('\n{} by flat: {}'.format(len(self.bad_by_flat),
+                                            self.bad_by_flat))
+            print('\n{} by deviation: {}'.format(len(self.bad_by_deviation),
+                                                 self.bad_by_deviation))
+            print('\n{} by hf noise: {}'.format(len(self.bad_by_hf_noise),
+                                                self.bad_by_hf_noise))
+            print('\n{} by correl: {}'.format(len(self.bad_by_correlation),
+                                              self.bad_by_correlation))
+            print('\n{} by ransac: {}'.format(len(self.bad_by_ransac),
+                                              self.bad_by_ransac))
 
-def find_bad_by_ransac(raw_mne, exclude_bads=[],
-                       ransac_channel_fraction=0.25,
-                       ransac_sample_size=50,
-                       ransac_corr_thresh=0.75,
-                       ransac_bad_time_thresh=0.4,
-                       ransac_window_s=5.):
-    """Detect channels that are not predicted well by the other channels.
+        return bads
 
-    Parameters
-    ----------
-    raw_mne : mne raw object
-        2D input data X, band-pass filtered between 1Hz and 50Hz. Noisy
-        channels already removed.
+    def find_bad_by_nan(self):
+        """Detect channels containing n/a data."""
+        bad_idxs = np.argwhere(np.sum(np.isnan(self.x), axis=0))
+        bads = np.asarray(self.ch_names)[bad_idxs.astype(int)]
+        bads = [i[0] for i in bads]
+        bads.sort()
+        self.bad_by_nan = bads
+        return None
 
-    exclude_bads : list
-        Channels previously identified to be bad. Should be excluded from
-        ransac.
+    def find_bad_by_flat(self, flat_thresh=1, std_thresh=1):
+        """Detect channels containing constant or very small values.
 
-    ransac_channel_fraction : 0.1<=float<=0.9
-        Fraction of channels used for robust reconstruction of the signal.
-        Defaults to 0.25
+        Use the median absolute deviation and the standard deviation
+        to find channels that have consistently low values.
 
-    ransac_sample_size : int
-        Number of samples used for computation of ransac. Defaults to 50.
+        Parameters
+        ----------
+        flat_thresh : float
+            Channels with a median absolute deviation below `flat_thresh`
+            will be considered bac_by_flat.
 
-    ransac_corr_thresh : float
-        The minimum correlation threshold that should be attained within a
-        data window. Defaults to 0.75
+        std_thresh : float
+            Channels with a standard deviation below `std_thresh`
+            will be considered bad_by_flat.
 
-    ransac_bad_time_thresh : float
-        If this percentage of all data windows in which the correlation
-        threshold was not surpassed is exceeded, classify a channel as bad.
-        Defaults to 0.4
+        """
+        bad_by_mad = mad(self.x, c=1, axis=1) < flat_thresh
+        bad_by_std = np.std(self.x, axis=1) < std_thresh
+        bad_idxs = np.argwhere(np.logical_or(bad_by_mad, bad_by_std))
+        bads = self.ch_names[bad_idxs.astype(int)]
+        bads = [i[0] for i in bads]
+        bads.sort()
+        self.bad_by_flat = bads
+        return None
 
-    ransac_window_s : float or int
-        Size of the correlation window in seconds. Defaults to 5.
+    def find_bad_by_deviation(self, deviation_thresh=3.29053):
+        """Detect channels that contain extreme amplitudes.
 
+        This function is working on robust z-scores. You might want to
+        select the thresholds according to how much of the data is expected
+        to fall within the absolute bounds:
 
-    Returns
-    -------
-    bads : list
-        List of bad channel names.
+        95.0% --> 1.95996
+        97.0% --> 2.17009
+        99.0% --> 2.57583
+        99.9% --> 3.29053
 
-    """
-    # Exclude previously identified bad channels
-    raw = raw_mne.copy()
-    raw.drop_channels(exclude_bads)
+        Parameters
+        ----------
+        deviation_thresh : float
+            Channels with a higher amplitude z-score than `deviation_thresh`
+            will be considered bad_by_deviation.
 
-    # Save the true data ... later, we will interpolate and
-    # then always come back to the true data
-    raw.pick_types(eeg=True, stim=False)
-    raw_true_data = raw.get_data()
+        """
+        # Calculate robust z-score of robust standard deviation for each chan
+        chn_devi = 0.7413 * iqr(self.x, axis=1)
+        chn_devi_sd = 0.7413 * iqr(chn_devi, axis=0)
+        chn_devi_median = np.median(chn_devi)
+        robust_chn_devi = (chn_devi - chn_devi_median) / chn_devi_sd
 
-    # Get some information
-    ch_names = raw.ch_names
-    n_chans, signal_size = raw.get_data().shape
-    srate = raw.info['sfreq']
-    ransac_subset = int(np.ceil(ransac_channel_fraction * n_chans))
+        # z-scores exceeding our theshold are classified as bad
+        bad_idxs_bool = np.abs(robust_chn_devi) > deviation_thresh
+        bad_idxs = np.argwhere(bad_idxs_bool)
+        bads = self.ch_names[bad_idxs.astype(int)]
+        bads = [i[0] for i in bads]
+        bads.sort()
+        self.bad_by_deviation = bads
+        self._channel_deviations = robust_chn_devi
+        return None
 
-    if (n_chans < ransac_subset+1) or (n_chans < 3) or (ransac_subset < 2):
-        raise IOError('Too many channels have'
-                      ' failed quality tests to perform ransac.')
+    def find_bad_by_hf_noise(self, hf_noise_thresh=3.29053):
+        """Detect channels that contain high frequency (hf) noise.
 
-    # Check memory: Can load all data into memory --> MEDIAN
-    # else ... Initialize a remedian class: memory efficient approximation
-    # of the median, see: https://github.com/sappelhoff/remedian
-    available_mb = psutil.virtual_memory().available * 1e-6
-    raw_size_mb = raw.get_data().nbytes * 1e-6
-    required_mb = raw_size_mb * ransac_sample_size
-    if available_mb > required_mb:
-        use_remedian = False
-        median_eeg = np.zeros((n_chans, signal_size, ransac_sample_size))
-    else:
-        use_remedian = True
-        n_obs = int(np.floor(available_mb / raw_size_mb))
-        median_eeg = Remedian((n_chans, signal_size), n_obs,
-                              ransac_sample_size)
+        Use a robust estimate of the power of the high frequency components
+        to the power of the low frequency components. This function depends
+        on the `low_cut` and `high_cut` parameters given at initialization,
+        as they determine the bandpass.
 
-    # Perform Ransac
-    for sample in range(ransac_sample_size):
-        # Assign a subset of all channels "bad" label
-        # to be interpolated.
-        bad_subset = np.random.choice(ch_names, (n_chans - ransac_subset),
-                                      replace=False)
+        This function is working on robust z-scores. You might want to
+        select the thresholds according to how much of the data is expected
+        to fall within the absolute bounds:
 
-        raw.info['bads'] += list(bad_subset)
+        95.0% --> 1.95996
+        97.0% --> 2.17009
+        99.0% --> 2.57583
+        99.9% --> 3.29053
 
-        # Interpolate the "bad" channels, thereby resetting their
-        # status to "good"
-        raw.interpolate_bads(reset_bads=True)
+        Parameters
+        ----------
+        hf_noise_thresh : float
+            The threshold for z-scores, when exceeded: classify as bad.
 
-        # Form the median of the interpolated data across all iterations
-        # Either true median or remedian approach depending on available
-        # memory
-        if not use_remedian:
-            median_eeg[:, :, sample] = raw.get_data()
-        else:  # use_remedian
-            median_eeg.add_obs(raw.get_data())
+        """
+        # Determine z-scored level of estimated signal-to-noise
+        # ratio for each channel
+        noisiness = (mad(self.x - self.x_bp, c=1, axis=1) /
+                     mad(self.x_bp, c=1, axis=1))
+        noisiness_median = np.median(noisiness)
+        # robust estimate of STD
+        noisiness_sd = mad(noisiness, c=1, axis=0) * 1.4826
+        hf_noise_z = (noisiness - noisiness_median) / noisiness_sd
+        bad_idxs_bool = hf_noise_z > hf_noise_thresh
+        bad_idxs = np.argwhere(bad_idxs_bool)
+        bads = self.ch_names[bad_idxs.astype(int)]
+        bads = [i[0] for i in bads]
+        bads.sort()
+        self.bad_by_hf_noise = bads
+        self._channel_hf_noise = hf_noise_z
+        return None
 
-        # Before starting with next iteration, reset the interpolated
-        # data to the true data
-        mygen = help_gen(raw_true_data)
-        myfun = partial(help_fun, gen=mygen)
-        raw.apply_function(myfun)
+    def find_bad_by_correlation(self, corr_thresh=0.4, fraction_bad=0.1,
+                                corr_window_secs=1.):
+        """Detect channels that do not correlate well with the other channels.
 
-    # Get the median based on the collected data
-    if not use_remedian:
-        median_data = np.median(median_eeg, axis=-1, overwrite_input=True)
-    else:
-        median_data = median_eeg.remedian
+        Divide the whole signal into windows and compute window wise
+        correlations. If a channel has more than `fraction_bad` windows that
+        have correlate less than `corr_thresh` with the other channels, that
+        channel is considered `bad_by_correlation`. The measure of correlation
+        with other channels is defined as the 98th percentile of the absolute
+        values of the correlations with the other channels in each window.
 
-    # Now check the predictability
-    bads = find_bad_by_correlation(raw_true_data,
-                                   median_data,
-                                   ch_names=ch_names,
-                                   srate=srate,
-                                   correlation_threshold=ransac_corr_thresh,
-                                   bad_time_threshold=ransac_bad_time_thresh,
-                                   correlation_window_seconds=ransac_window_s)
+        Parameters
+        ----------
+        corr_thresh : float
+            The minimum correlation threshold that should be attained within a
+            data window.
 
-    return bads
+        fraction_bad : float
+            If this percentage of all data windows in which the correlation
+            threshold was not surpassed is exceeded, classify a
+            channel as `bad_by_correlation`.
 
+        corr_window_secs : float
+            Width of the correlation window in seconds.
 
-def find_noisy_channels(raw_mne):
-    """Find noisy channels emplying several methods.
+        """
+        # Based on the data, determine how many windows we need
+        # and how large they should be
+        correlation_frames = corr_window_secs * self.sfreq
+        correlation_window = np.arange(0, correlation_frames)
+        n = correlation_window.shape[0]
+        correlation_offsets = np.arange(0, (self.signal_len -
+                                            correlation_frames),
+                                        correlation_frames)
+        w_correlation = correlation_offsets.shape[0]
 
-    This function tries to implement the findNoisyChannels function of the
-    PREP as described in [1]. Currently, only default parameters are
-    supported. The function only works on EEG data channels.
+        # preallocate
+        channel_correlations = np.ones((w_correlation, self.n_chans))
 
-    Note: This function might need a minute to run.
+        # Cut the data indo windows
+        x_bp_window = self.x_bp[:self.n_chans, :n*w_correlation]
+        x_bp_window = x_bp_window.reshape(self.n_chans, n, w_correlation)
 
-    Parameters
-    ----------
-    raw_mne : mne python raw object
+        # Perform Pearson correlations across channels per window
+        # For each channel, take the absolute of the 98th percentile of
+        # correlations with the other channels as a measure of how well
+        # correlated that channel is with the others.
+        for k in range(w_correlation):
+            eeg_portion = x_bp_window[:, :, k]
+            window_correlation = np.corrcoef(eeg_portion)
+            abs_corr = np.abs((window_correlation -
+                               np.diag(np.diag(window_correlation))))
+            channel_correlations[k, :] = np.percentile(abs_corr, 98, axis=0)
 
-    Returns
-    -------
-    bads : list
-        List of bad channel names.
+        # Perform thresholding to see which channels correlate badly with the
+        # other channels in a certain fraction of windows (bad_time_threshold)
+        thresholded_correlations = channel_correlations < corr_thresh
+        frac_bad_corr_windows = np.mean(thresholded_correlations, axis=0)
 
-    References
-    ----------
-    .. [1] Bigdely-Shamlo, N., Mullen, T., Kothe, C., Su, K.-M.,
-       & Robbins, K. A. (2015). The PREP pipeline: standardized preprocessing
-       for large-scale EEG analysis. Frontiers in Neuroinformatics, 9, 16.
-       https://doi.org/10.3389/fninf.2015.00016
+        # find the corresponding channel names and return
+        bad_idxs_bool = frac_bad_corr_windows > fraction_bad
+        bad_idxs = np.argwhere(bad_idxs_bool)
+        bads = self.ch_names[bad_idxs.astype(int)]
+        bads = [i[0] for i in bads]
+        bads.sort()
+        self.bad_by_correlation = bads
+        self._channel_correlations = channel_correlations
+        return None
 
-    """
-    raw = raw_mne.copy()
+    def find_bad_by_ransac(self, n_samples=50, fraction_good=0.25,
+                           corr_thresh=0.75, fraction_bad=0.4,
+                           corr_window_secs=4.):
+        u"""Detect channels that are not predicted well by other channels.
 
-    # Add a montage
-    montage = mne.channels.read_montage(kind='standard_1020',
-                                        ch_names=raw.ch_names)
-    raw.set_montage(montage)
+        Here, a ransac approach (see [1], and a short discussion in [2]) is
+        adopted to predict a "clean EEG" dataset. After identifying clean EEG
+        channels through the other methods, the clean EEG dataset is
+        constructed by repeatedly sampling a small subset of clean EEG channels
+        and interpolation the complete data. The median of all those
+        repetitions forms the clean EEG dataset. In a second step, the original
+        and the ransac predicted data are correlated and channels, which do not
+        correlate well with themselves across the two datasets are considered
+        `bad_by_ransac`.
 
-    # Explicitly DO NOT set a new reference ...
-    mne.set_eeg_reference(raw, ref_channels=[], verbose=False)
+        Parameters
+        ----------
+        n_samples : int
+            Number of samples used for computation of ransac.
 
-    # Reject the stim channel
-    raw.pick_types(eeg=True, stim=False)
+        fraction_good : float
+            Fraction of channels used for robust reconstruction of the signal.
+            This needs to be in the range [0, 1], where obviously neither 0
+            nor 1 would make sense.
 
-    # We work on 1Hz highpass filtered data ...
-    # in original PREP, also line noise is removed
-    raw.filter(l_freq=1.,
-               h_freq=None,
-               fir_design='firwin',
-               n_jobs=n_workers)
+        corr_thresh : float
+            The minimum correlation threshold that should be attained within a
+            data window.
 
-    # Assuming the mne object to be measured in VOLTS
-    # ... we need to convert to microvolts
-    X = raw.get_data() * 10e6
-    ch_names = raw.ch_names
-    srate = raw.info['sfreq']
+        fraction_bad : float
+            If this percentage of all data windows in which the correlation
+            threshold was not surpassed is exceeded, classify a
+            channel as `bad_by_ransac`.
 
-    # We also needraw a bandpass filtered version of the data:
-    # Remove signal content above 50Hz
-    # Below 1Hz was removed beforehand (see above)
-    raw.filter(l_freq=None,
-               h_freq=50.,
-               fir_design='firwin',
-               n_jobs=n_workers)
+        corr_window_secs : float
+            Size of the correlation window in seconds.
 
-    # Again, convert to microvolts
-    X_bp = raw.get_data() * 10e6
+        References
+        ----------
+        .. [1] M. A. Fischler, R. C. Bolles, 1981. Random sample consensus: A
+           Paradigm for Model Fitting with Applications to Image Analysis and
+           Automated Cartography,  Communications of the ACM 24, p. 381–395.
 
-    # Find all bad channels emplying several methods
-    all_bads = []
+        .. [2] Mainak Jas, Denis A. Engemann, Yousra Bekhti, Federico Raimondo,
+           Alexandre Gramfort, 2017. Autoreject: Automated Artifact Rejection
+           for MEG and EEG Data. NeuroImage, 159, p. 417-429
 
-    bads = find_bad_by_nan(X, ch_names)
-    all_bads += bads
+        """
+        # First, identify all bad channels by other means:
+        self.find_all_bads(ransac=False)
+        bads = self.get_bads()
 
-    bads = find_bad_by_flat(X, ch_names)
-    all_bads += bads
+        # Get all channel positions and the position subset of "clean channels"
+        good_idx = mne.pick_channels(self.ch_names, include=[], exclude=bads)
+        good_chn_labs = self.ch_names[good_idx]
+        n_chans_good = good_idx.shape[0]
+        chn_pos = self.raw_copy._get_channel_positions()
+        chn_pos_good = chn_pos[good_idx, :]
 
-    bads = find_bad_by_deviation(X, ch_names)
-    all_bads += bads
+        # Check if we have enough remaning channels
+        # after exclusion of bad channels
+        n_pred_chns = int(np.ceil(fraction_good * n_chans_good))
 
-    bads = find_bad_by_hf_noise(X, X_bp, ch_names)
-    all_bads += bads
+        if n_pred_chns < 2:
+            raise IOError('Too many channels have failed quality tests to'
+                          ' perform ransac. You could call `.find_all_bads`'
+                          ' with the ransac=False option')
 
-    bads = find_bad_by_correlation(X, X_bp, ch_names, srate)
-    all_bads += bads
+        # Make the ransac predictions
+        ransac_eeg = self._run_ransac(chn_pos=chn_pos,
+                                      chn_pos_good=chn_pos_good,
+                                      good_chn_labs=good_chn_labs,
+                                      n_pred_chns=n_pred_chns,
+                                      data=self.raw_copy._data,
+                                      n_samples=n_samples)
 
-    # Find bad by ransac by removing all bad channels found previously
-    all_bads = list(set(all_bads))
-    bads = find_bad_by_ransac(raw, exclude_bads=all_bads)
-    all_bads += bads
+        # Correlate ransac prediction and eeg data
+        correlation_frames = corr_window_secs * self.sfreq
+        correlation_window = np.arange(correlation_frames)
+        n = correlation_window.shape[0]
+        correlation_offsets = np.arange(0, (self.signal_len -
+                                            correlation_frames),
+                                        correlation_frames)
+        w_correlation = correlation_offsets.shape[0]
 
-    return all_bads
+        # For the actual data
+        data_window = self.raw_copy._data[:self.n_chans, :n*w_correlation]
+        data_window = data_window.reshape(self.n_chans, n, w_correlation)
+
+        # For the ransac predicted eeg
+        pred_window = ransac_eeg[:self.n_chans, :n*w_correlation]
+        pred_window = pred_window.reshape(self.n_chans, n, w_correlation)
+
+        # Preallocate
+        channel_correlations = np.ones((w_correlation, self.n_chans))
+
+        # Perform correlations
+        for k in range(w_correlation):
+            data_portion = data_window[:, :, k]
+            pred_portion = pred_window[:, :, k]
+
+            R = np.corrcoef(data_portion, pred_portion)
+
+            # Take only correlations of data with pred
+            # and use diag to exctract correlation of
+            # data_i with pred_i
+            R = np.diag(R[0:self.n_chans, self.n_chans:])
+            channel_correlations[k, :] = R
+
+        # Thresholding
+        thresholded_correlations = channel_correlations < corr_thresh
+        frac_bad_corr_windows = np.mean(thresholded_correlations, axis=0)
+
+        # find the corresponding channel names and return
+        bad_idxs_bool = frac_bad_corr_windows > fraction_bad
+        bad_idxs = np.argwhere(bad_idxs_bool)
+        bads = self.ch_names[bad_idxs.astype(int)]
+        bads = [i[0] for i in bads]
+        bads.sort()
+        self.bad_by_ransac = bads
+        self._ransac_channel_correlations = channel_correlations
+        return None
+
+    def _run_ransac(self, chn_pos, chn_pos_good, good_chn_labs,
+                    n_pred_chns, data, n_samples):
+        """Predict the EEG timecourse of a channel using a ransac approach.
+
+        Given the EEG data and electrode positions, form `sample_size`
+        reconstructions of one channel based on spherical spline interpolation
+        specified in [1]. The median of these reconstructions is used as a
+        "clean prediction" of the channel.
+
+        Parameters
+        ----------
+        chn_pos : ndarray, shape(n_chns, 3)
+            3D coordinates of the electrodes used to collect
+            the EEG data.
+
+        chn_pos_good : ndarray, shape(n_good_chns, 3)
+            3D coordinates of only the "clean" electrodes used to collect
+            the EEG data.
+
+        good_chn_labs : array_like, shape(n_good_chns,)
+            The channel labels of the channels in `chn_good_pos`.
+
+        n_pred_chns : int
+            Number of channels used for each interpolation during
+            ransac.
+
+        data : ndarray, shape(n_chns, n_timepoints)
+            The EEG data.
+
+        n_samples : int
+            Number of interpolations(reconstructions), from which
+            a median will be formed to provide the final prediction.
+
+        Returns
+        -------
+        ransac_eeg : ndarray of shape(n_chns, n_timepts)
+            The EEG data as predicted by ransac.
+
+        References
+        ----------
+        .. [1] Perrin, F., Pernier, J., Bertrand, O. and Echallier, JF. (1989).
+           Spherical splines for scalp potential and current density mapping.
+           Electroencephalography Clinical Neurophysiology, Feb; 72(2):184-7.
+
+        """
+        # Before running, make sure we have enough memory
+        try:
+            available_gb = virtual_memory().available * 1e-9
+            needed_gb = (data.nbytes * 1e-9) * n_samples
+            assert available_gb > needed_gb
+        except AssertionError:
+            raise MemoryError('For given data of shape {} and the requested'
+                              ' number of {} samples, {} GB or memory would be'
+                              ' needed but only {} GB are available. You'
+                              ' could downsample the data or reduce the number'
+                              ' of requested samples.'
+                              ''.format(data.shape, n_samples, needed_gb,
+                                        available_gb))
+
+        # Memory seems to be fine ...
+        # Make the predictions
+        n_chns, n_timepts = data.shape
+        eeg_predictions = np.zeros((n_chns, n_timepts, n_samples))
+        for sample in range(n_samples):
+            eeg_predictions[..., sample] = self._get_ransac_pred(chn_pos,
+                                                                 chn_pos_good,
+                                                                 good_chn_labs,
+                                                                 n_pred_chns,
+                                                                 data)
+
+        # Form median from all predictions
+        ransac_eeg = np.median(eeg_predictions, axis=-1, overwrite_input=True)
+        return ransac_eeg
+
+    def _get_ransac_pred(self, chn_pos, chn_pos_good,
+                         good_chn_labs, n_pred_chns, data):
+        """Make a single ransac prediction.
+
+        Parameters
+        ----------
+        chn_pos : ndarray, shape(n_chns, 3)
+            3D coordinates of the electrodes used to collect
+            the EEG data.
+
+        chn_pos_good : ndarray, shape(n_good_chns, 3)
+            3D coordinates of only the "clean" electrodes used to collect
+            the EEG data.
+
+        good_chn_labs : array_like, shape(n_good_chns,)
+            The channel labels of the channels in `chn_good_pos`.
+
+        n_pred_chns : int
+            Number of channels used for each interpolation during
+            ransac.
+
+        data : ndarray, shape(n_chns, n_timepoints)
+            The EEG data.
+
+        Returns
+        -------
+        ransac_pred : ndarray of shape(n_chns, n_timepts)
+            A single prediction based on ransac. Several of these
+            should be averaged (e.g., median) to get `ransac_eeg`
+
+        See Also
+        --------
+        _run_ransac, find_bad_by_ransac
+
+        """
+        # Pick a subset of clean channels for reconstruction
+        reconstr_idx = np.random.choice(np.arange(chn_pos_good.shape[0]),
+                                        size=n_pred_chns,
+                                        replace=False)
+
+        # Get positions and according labels
+        reconstr_labels = good_chn_labs[reconstr_idx]
+        reconstr_pos = chn_pos_good[reconstr_idx, :]
+
+        # Map the labels to their indices within the complete data
+        # Do not use mne.pick_channels, because it will return a sorted list.
+        reconstr_picks = [list(self.ch_names).index(chn_lab) for chn_lab
+                          in reconstr_labels]
+
+        # Interpolate
+        interpol_mat = _make_interpolation_matrix(reconstr_pos, chn_pos)
+        ransac_pred = np.matmul(interpol_mat, data[reconstr_picks, :])
+        return ransac_pred
