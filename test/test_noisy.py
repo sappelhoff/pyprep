@@ -37,8 +37,8 @@ def test_init(raw=raw):
     assert nd
 
 
-def test_find_by_nan(raw=raw):
-    """Test find_by_nan."""
+def test_find_bad_by_nan(raw=raw):
+    """Test find_bad_by_nan."""
     raw_tmp = raw.copy()
     m, n = raw_tmp._data.shape
 
@@ -53,8 +53,8 @@ def test_find_by_nan(raw=raw):
     assert nd.bad_by_nan == [rand_chn_lab]
 
 
-def test_find_by_flat(raw=raw):
-    """Test find_by_flat."""
+def test_find_bad_by_flat(raw=raw):
+    """Test find_bad_by_flat."""
     raw_tmp = raw.copy()
     m, n = raw_tmp._data.shape
 
@@ -70,6 +70,30 @@ def test_find_by_flat(raw=raw):
     nd = Noisydata(raw_tmp)
     nd.find_bad_by_flat()
     assert nd.bad_by_flat == [rand_chn_lab]
+
+
+def test_find_bad_by_correlation(raw=raw):
+    """Test find_bad_by_flat."""
+    raw_tmp = raw.copy()
+    m, n = raw_tmp._data.shape
+
+    # The test data is correlated well
+    # We insert a badly correlated channel and see if it is detected.
+    rand_chn_idx = int(np.random.randint(0, m, 1))
+    rand_chn_lab = raw_tmp.ch_names[rand_chn_idx]
+
+    # Use cosine instead of sine to create a signal
+    signal = np.zeros((1, n))
+    for freq_i in range(10):
+        freq = np.random.randint(0, 100, n)
+        signal[0, :] += np.cos(2*np.pi*t*freq)
+
+    raw_tmp._data[rand_chn_idx, :] = signal * 1e-6
+
+    # Now find it and assert it's the correct one.
+    nd = Noisydata(raw_tmp)
+    nd.find_bad_by_correlation()
+    assert nd.bad_by_correlation == [rand_chn_lab]
 
 
 def test_ransac_too_few_preds(raw=raw):
