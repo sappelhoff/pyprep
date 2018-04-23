@@ -1,10 +1,8 @@
-numpy
-scipy
-matplotlib
-scikit-learn
-jupyter
-spyder
+numpy>=1.14.1
+scipy>=1.0.0
+scikit-learn>=0.19.1
+matplotlib>=1.5.1
+statsmodels>=0.8.0
 vtk
-mayavi
-PySurfer
-mne
+
+-r requirements2.txt

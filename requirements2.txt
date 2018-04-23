@@ -1,0 +1,3 @@
+mayavi
+PySurfer
+mne>=0.15.0

@@ -398,7 +398,7 @@ class Noisydata():
                                       chn_pos_good=chn_pos_good,
                                       good_chn_labs=good_chn_labs,
                                       n_pred_chns=n_pred_chns,
-                                      data=self.raw_copy._data,
+                                      data=self.x_bp,
                                       n_samples=n_samples)
 
         # Correlate ransac prediction and eeg data
@@ -411,7 +411,7 @@ class Noisydata():
         w_correlation = correlation_offsets.shape[0]
 
         # For the actual data
-        data_window = self.raw_copy._data[:self.n_chans, :n*w_correlation]
+        data_window = self.x_bp[:self.n_chans, :n*w_correlation]
         data_window = data_window.reshape(self.n_chans, n, w_correlation)
 
         # For the ransac predicted eeg
