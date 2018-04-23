@@ -43,7 +43,7 @@ def test_find_by_nan(raw=raw):
     m, n = raw_tmp._data.shape
 
     # Insert a nan value for a random channel
-    rand_chn_idx = int(np.random.randint(0, 5, 1))
+    rand_chn_idx = int(np.random.randint(0, m, 1))
     rand_chn_lab = raw_tmp.ch_names[rand_chn_idx]
     raw_tmp._data[rand_chn_idx, n-1] = np.nan
 
