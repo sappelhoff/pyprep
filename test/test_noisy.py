@@ -11,10 +11,11 @@ def test_init():
     # Make a random raw mne object
     sfreq = 1000.
     t = np.arange(0, 10, 1./sfreq)
-    n_chns = 3
+    n_chans = 3
     ch_names = ['Cz', 'Pz', 'Oz']
-    X = np.random.random((n_chns, t.shape[0]))
-    info = mne.create_info(ch_names=ch_names, sfreq=sfreq)
+    X = np.random.random((n_chans, t.shape[0]))
+    info = mne.create_info(ch_names=ch_names, sfreq=sfreq,
+                           ch_types=['eeg']*n_chans)
     raw = mne.io.RawArray(X, info)
     nd = Noisydata(raw)
     assert nd

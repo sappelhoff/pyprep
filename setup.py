@@ -6,7 +6,7 @@ import io
 here = path.abspath(path.dirname(__file__))
 
 # Get long description from README file
-with io.open(path.join(here, 'README.rst'), encoding='utf-8') as f:
+with io.open(path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(name='pyprep',
@@ -14,6 +14,7 @@ setup(name='pyprep',
       description=('A Python implementation of the preprocessing pipeline'
                    ' (PREP) for EEG data.'),
       long_description=long_description,
+      long_description_content_type='text/markdown',
       url='http://github.com/sappelhoff/pyprep',
       author='Stefan Appelhoff',
       author_email='stefan.appelhoff@mailbox.org',
