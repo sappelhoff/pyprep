@@ -31,19 +31,19 @@ class Noisydata():
 
     Attributes
     ----------
-    _channel_correlations : ndarray, shape(k_windows, n_chans)
+    _channel_correlations : ndarray, shape (k_windows, n_chans)
         For each k_window the correlation measure for each channel, where
         the correlation measure is an index of how well a channel correlates
         with all other channels.
 
-    _ransac_channel_correlations : ndarray, shape(k_windows, n_chans)
+    _ransac_channel_correlations : ndarray, shape (k_windows, n_chans)
         For each k_window the correlation for each channel with itself across
         the original data versus the ransac predicted data.
 
-    _channel_deviations : ndarray, shape(n_chans,)
+    _channel_deviations : ndarray, shape (n_chans,)
         The robust z-score deviation aggregates per channel.
 
-    _channel_hf_noise : ndarray, shape(n_chans,)
+    _channel_hf_noise : ndarray, shape (n_chans,)
         The robust z-score estimates of high frequency noise per channel.
 
     References
@@ -97,8 +97,10 @@ class Noisydata():
     def find_all_bads(self, ransac=True):
         """Call all functions that detect bad channels.
 
-        Note that this will be using the functions default thresholds
-        and settings.
+        Notes
+        -----
+            This will be using the functions default thresholds
+            and settings.
 
         Parameters
         ----------
@@ -189,8 +191,11 @@ class Noisydata():
         to fall within the absolute bounds:
 
         95.0% --> 1.95996
+
         97.0% --> 2.17009
+
         99.0% --> 2.57583
+
         99.9% --> 3.29053
 
         Parameters
@@ -229,8 +234,11 @@ class Noisydata():
         to fall within the absolute bounds:
 
         95.0% --> 1.95996
+
         97.0% --> 2.17009
+
         99.0% --> 2.57583
+        
         99.9% --> 3.29053
 
         Parameters

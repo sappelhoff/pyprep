@@ -10,6 +10,7 @@ Welcome to pyprep's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   examples
 
 
 Indices and tables
