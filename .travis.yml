@@ -15,4 +15,4 @@ script:
   - pytest test/ -v --cov=./
 
 after_success:
-- codecov --token=cc44d176-bd24-4e2a-9458-cce54bcd777e
+- codecov

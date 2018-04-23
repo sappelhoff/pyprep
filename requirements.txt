@@ -5,5 +5,3 @@ scikit-learn>=0.19.1
 matplotlib>=1.5.1
 statsmodels>=0.8.0
 mne>=0.15.0
-
-#-r requirements2.txt
