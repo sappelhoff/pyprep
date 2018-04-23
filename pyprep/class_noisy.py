@@ -64,12 +64,56 @@ class Noisydata():
 
         return None
 
-    def get_bads(self):
-        """Get a list of all bad channels."""
+    def find_all_bads(self, ransac=True):
+        """Call all functions that detect bad channels.
+
+        Note that this will be using the functions default thresholds
+        and settings.
+
+        Parameters
+        ----------
+        ransac: boolean
+            Whether or not to also fetch the bad_by_ransac channels.
+
+        """
+        self.find_bad_by_nan()
+        self.find_bad_by_flat()
+        self.find_bad_by_deviation()
+        self.find_bad_by_hf_noise()
+        self.find_bad_by_correlation()
+        if ransac:
+            self.find_bad_by_ransac()
+        return None
+
+    def get_bads(self, verbose=False):
+        """Get a list of all bad channels.
+
+        Parameters
+        ----------
+        verbose : boolean
+            If verbose, print a summary of bad channels.
+
+        """
         bads = (self.bad_by_flat + self.bad_by_nan + self.bad_by_deviation +
                 self.bad_by_hf_noise + self.bad_by_correlation +
                 self.bad_by_ransac)
         bads = list(set(bads))
+
+        if verbose:
+            print('Found {} uniquely bad channels.'.format(len(bads)))
+            print('\n{} by n/a: {}'.format(len(self.bad_by_nan),
+                                           self.bad_by_nan))
+            print('\n{} by flat: {}'.format(len(self.bad_by_flat),
+                                            self.bad_by_flat))
+            print('\n{} by deviation: {}'.format(len(self.bad_by_deviation),
+                                                 self.bad_by_deviation))
+            print('\n{} by hf noise: {}'.format(len(self.bad_by_hf_noise),
+                                                self.bad_by_hf_noise))
+            print('\n{} by correl: {}'.format(len(self.bad_by_correlation),
+                                              self.bad_by_correlation))
+            print('\n{} by ransac: {}'.format(len(self.bad_by_ransac),
+                                              self.bad_by_ransac))
+
         return bads
 
     def find_bad_by_nan(self):
@@ -77,6 +121,7 @@ class Noisydata():
         bad_idxs = np.argwhere(np.sum(np.isnan(self.x), axis=0))
         bads = np.asarray(self.ch_names)[bad_idxs.astype(int)]
         bads = [i[0] for i in bads]
+        bads.sort()
         self.bad_by_nan = bads
         return None
 
@@ -102,6 +147,7 @@ class Noisydata():
         bad_idxs = np.argwhere(np.logical_or(bad_by_mad, bad_by_std))
         bads = self.ch_names[bad_idxs.astype(int)]
         bads = [i[0] for i in bads]
+        bads.sort()
         self.bad_by_flat = bads
         return None
 
@@ -135,6 +181,7 @@ class Noisydata():
         bad_idxs = np.argwhere(bad_idxs_bool)
         bads = self.ch_names[bad_idxs.astype(int)]
         bads = [i[0] for i in bads]
+        bads.sort()
         self.bad_by_deviation = bads
         self._channel_deviations = robust_chn_devi
         return None
@@ -174,6 +221,7 @@ class Noisydata():
         bad_idxs = np.argwhere(bad_idxs_bool)
         bads = self.ch_names[bad_idxs.astype(int)]
         bads = [i[0] for i in bads]
+        bads.sort()
         self.bad_by_hf_noise = bads
         self._channel_hf_noise = hf_noise_z
         return None
@@ -242,7 +290,7 @@ class Noisydata():
         bad_idxs = np.argwhere(bad_idxs_bool)
         bads = self.ch_names[bad_idxs.astype(int)]
         bads = [i[0] for i in bads]
-
+        bads.sort()
         self.bad_by_correlation = bads
         self._channel_correlations = channel_correlations
         return None
@@ -299,49 +347,49 @@ class Noisydata():
         self.find_all_bads(ransac=False)
         bads = self.get_bads()
 
-        # We will work on a copy of the bandpassed data
-        raw_tmp = self.raw_copy.copy()
-
-        # Exclude previously identified bad channels
-        raw_tmp.drop_channels(bads)
-
-        # Need to update info about dimensions
-        n_chns, n_timepts = raw_tmp._data.shape
+        # Get all channel positions and the position subset of "clean channels"
+        good_idx = mne.pick_channels(self.ch_names, include=[], exclude=bads)
+        good_chn_labs = self.ch_names[good_idx]
+        n_chans_good = good_idx.shape[0]
+        chn_pos = self.raw_copy._get_channel_positions()
+        chn_pos_good = chn_pos[good_idx, :]
 
         # Check if we have enough remaning channels
         # after exclusion of bad channels
-        n_pred_chns = int(np.ceil(fraction_good * len(raw_tmp.ch_names)))
+        n_pred_chns = int(np.ceil(fraction_good * n_chans_good))
 
-        if (n_chns < n_pred_chns+1) or (n_chns < 3) or (n_pred_chns < 2):
+        if n_pred_chns < 2:
             raise IOError('Too many channels have failed quality tests to'
-                          ' perform ransac. You could call .find_all_bads'
+                          ' perform ransac. You could call `.find_all_bads`'
                           ' with the ransac=False option')
 
-        # Make a ransac prediction
-        ransac_eeg = self._run_ransac(chn_pos=raw_tmp._get_channel_positions(),
-                                      data=raw_tmp._data,
+        # Make the ransac predictions
+        ransac_eeg = self._run_ransac(chn_pos=chn_pos,
+                                      chn_pos_good=chn_pos_good,
+                                      good_chn_labs=good_chn_labs,
                                       n_pred_chns=n_pred_chns,
+                                      data=self.raw_copy._data,
                                       n_samples=n_samples)
 
         # Correlate ransac prediction and eeg data
         correlation_frames = corr_window_secs * self.sfreq
         correlation_window = np.arange(correlation_frames)
         n = correlation_window.shape[0]
-        correlation_offsets = np.arange(0, (n_timepts -
+        correlation_offsets = np.arange(0, (self.signal_len -
                                             correlation_frames),
                                         correlation_frames)
         w_correlation = correlation_offsets.shape[0]
 
         # For the actual data
-        data_window = raw_tmp._data[:n_chns, :n*w_correlation]
-        data_window = data_window.reshape(n_chns, n, w_correlation)
+        data_window = self.raw_copy._data[:self.n_chans, :n*w_correlation]
+        data_window = data_window.reshape(self.n_chans, n, w_correlation)
 
         # For the ransac predicted eeg
-        pred_window = ransac_eeg[:n_chns, :n*w_correlation]
-        pred_window = pred_window.reshape(n_chns, n, w_correlation)
+        pred_window = ransac_eeg[:self.n_chans, :n*w_correlation]
+        pred_window = pred_window.reshape(self.n_chans, n, w_correlation)
 
         # Preallocate
-        channel_correlations = np.ones((w_correlation, n_chns))
+        channel_correlations = np.ones((w_correlation, self.n_chans))
 
         # Perform correlations
         for k in range(w_correlation):
@@ -353,7 +401,7 @@ class Noisydata():
             # Take only correlations of data with pred
             # and use diag to exctract correlation of
             # data_i with pred_i
-            R = np.diag(R[0:n_chns, n_chns:])
+            R = np.diag(R[0:self.n_chans, self.n_chans:])
             channel_correlations[k, :] = R
 
         # Thresholding
@@ -363,71 +411,15 @@ class Noisydata():
         # find the corresponding channel names and return
         bad_idxs_bool = frac_bad_corr_windows > fraction_bad
         bad_idxs = np.argwhere(bad_idxs_bool)
-        bads = np.asarray(raw_tmp.ch_names)[bad_idxs.astype(int)]
+        bads = self.ch_names[bad_idxs.astype(int)]
         bads = [i[0] for i in bads]
-
+        bads.sort()
         self.bad_by_ransac = bads
         self._ransac_channel_correlations = channel_correlations
         return None
 
-    def find_all_bads(self, ransac=True):
-        """Call all functions that detect bad channels.
-
-        Note that this will be using the functions default thresholds
-        and settings.
-
-        Parameters
-        ----------
-        ransac: boolean
-            Whether or not to also fetch the bad_by_ransac channels.
-
-        """
-        self.find_bad_by_nan()
-        self.find_bad_by_flat()
-        self.find_bad_by_deviation()
-        self.find_bad_by_hf_noise()
-        self.find_bad_by_correlation()
-        if ransac:
-            self.find_bad_by_ransac()
-        return None
-
-    def _get_ransac_pred(self, chn_pos, n_pred_chns, data):
-        """Make a single ransac prediction.
-
-        Parameters
-        ----------
-        chn_pos : ndarray, shape(n_chns, 3)
-        3D coordinates of the electrodes used to collect
-        the EEG data.
-
-        data : ndarray, shape(n_chns, n_timepoints)
-            The EEG data.
-
-        n_pred_chns : int
-            Number of channels used for each interpolation during
-            ransac.
-
-        Returns
-        -------
-        ransac_pred : ndarray of shape(n_chns, n_timepts)
-            A single prediction based on ransac. Several of these
-            should be averaged (e.g., median) to get `ransac_eeg`
-
-        See Also
-        --------
-        _run_ransac, find_bad_by_ransac
-
-        """
-        n_chns, n_timepts = data.shape
-        reconstr_idx = np.random.choice(np.arange(n_chns),
-                                        size=n_pred_chns,
-                                        replace=False)
-        reconstr_pos = chn_pos[reconstr_idx]
-        interpol_mat = _make_interpolation_matrix(reconstr_pos, chn_pos)
-        ransac_pred = np.matmul(interpol_mat, data[reconstr_idx, :])
-        return ransac_pred
-
-    def _run_ransac(self, chn_pos, data, n_pred_chns, n_samples):
+    def _run_ransac(self, chn_pos, chn_pos_good, good_chn_labs,
+                    n_pred_chns, data, n_samples):
         """Predict the EEG timecourse of a channel using a ransac approach.
 
         Given the EEG data and electrode positions, form `sample_size`
@@ -435,23 +427,25 @@ class Noisydata():
         specified in [1]. The median of these reconstructions is used as a
         "clean prediction" of the channel.
 
-        Notes
-        -----
-            Only clean (i.e., not noisy) channels should be passed with `data`
-            and `chn_pos`.
-
         Parameters
         ----------
         chn_pos : ndarray, shape(n_chns, 3)
-        3D coordinates of the electrodes used to collect
-        the EEG data.
+            3D coordinates of the electrodes used to collect
+            the EEG data.
 
-        data : ndarray, shape(n_chns, n_timepoints)
-            The EEG data.
+        chn_pos_good : ndarray, shape(n_good_chns, 3)
+            3D coordinates of only the "clean" electrodes used to collect
+            the EEG data.
+
+        good_chn_labs : array_like, shape(n_good_chns,)
+            The channel labels of the channels in `chn_good_pos`.
 
         n_pred_chns : int
             Number of channels used for each interpolation during
             ransac.
+
+        data : ndarray, shape(n_chns, n_timepoints)
+            The EEG data.
 
         n_samples : int
             Number of interpolations(reconstructions), from which
@@ -489,9 +483,65 @@ class Noisydata():
         eeg_predictions = np.zeros((n_chns, n_timepts, n_samples))
         for sample in range(n_samples):
             eeg_predictions[..., sample] = self._get_ransac_pred(chn_pos,
+                                                                 chn_pos_good,
+                                                                 good_chn_labs,
                                                                  n_pred_chns,
                                                                  data)
 
         # Form median from all predictions
         ransac_eeg = np.median(eeg_predictions, axis=-1, overwrite_input=True)
         return ransac_eeg
+
+    def _get_ransac_pred(self, chn_pos, chn_pos_good,
+                         good_chn_labs, n_pred_chns, data):
+        """Make a single ransac prediction.
+
+        Parameters
+        ----------
+        chn_pos : ndarray, shape(n_chns, 3)
+            3D coordinates of the electrodes used to collect
+            the EEG data.
+
+        chn_pos_good : ndarray, shape(n_good_chns, 3)
+            3D coordinates of only the "clean" electrodes used to collect
+            the EEG data.
+
+        good_chn_labs : array_like, shape(n_good_chns,)
+            The channel labels of the channels in `chn_good_pos`.
+
+        n_pred_chns : int
+            Number of channels used for each interpolation during
+            ransac.
+
+        data : ndarray, shape(n_chns, n_timepoints)
+            The EEG data.
+
+        Returns
+        -------
+        ransac_pred : ndarray of shape(n_chns, n_timepts)
+            A single prediction based on ransac. Several of these
+            should be averaged (e.g., median) to get `ransac_eeg`
+
+        See Also
+        --------
+        _run_ransac, find_bad_by_ransac
+
+        """
+        # Pick a subset of clean channels for reconstruction
+        reconstr_idx = np.random.choice(np.arange(chn_pos_good.shape[0]),
+                                        size=n_pred_chns,
+                                        replace=False)
+
+        # Get positions and according labels
+        reconstr_labels = good_chn_labs[reconstr_idx]
+        reconstr_pos = chn_pos_good[reconstr_idx, :]
+
+        # Map the labels to their indices within the complete data
+        # Do not use mne.pick_channels, because it will return a sorted list.
+        reconstr_picks = [list(self.ch_names).index(chn_lab) for chn_lab
+                          in reconstr_labels]
+
+        # Interpolate
+        interpol_mat = _make_interpolation_matrix(reconstr_pos, chn_pos)
+        ransac_pred = np.matmul(interpol_mat, data[reconstr_picks, :])
+        return ransac_pred
