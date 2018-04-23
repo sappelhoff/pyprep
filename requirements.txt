@@ -8,6 +8,3 @@ vtk
 mayavi
 PySurfer
 mne
-
-
--e git+https://github.com/sappelhoff/remedian#egg=remedian
