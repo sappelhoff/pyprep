@@ -1,15 +1,19 @@
 """Test the noisy module."""
-from pyprep.noisy import (mad,
-                          iqr,
-                          find_bad_by_nan,
-                          find_bad_by_flat,
-                          find_bad_by_deviation,
-                          find_bad_by_hf_noise,
-                          find_bad_by_correlation,
-                          find_bad_by_ransac,
-                          find_noisy_channels)
+
+import numpy as np
+import mne
+
+from pyprep.noisy import Noisydata
 
 
-def test_bogus():
-    """Test bogus."""
-    assert True
+def test_init():
+    """Test the class initialization."""
+    # Make a random raw mne object
+    sfreq = 1000.
+    t = np.arange(0, 10, 1./sfreq)
+    n_chns = 3
+    X = np.random.random((n_chns, t.shape[0]))
+    info = mne.create_info(n_chns, sfreq)
+    raw = mne.io.RawArray(X, info)
+    nd = Noisydata(raw)
+    assert nd
