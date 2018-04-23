@@ -12,6 +12,9 @@ from statsmodels.robust.scale import mad
 class Noisydata():
     """For a given raw data object, detect bad EEG channels.
 
+    This class implements the functionality of the `findNoisyChannels` function
+    as part of the PREP (preprocessing pipeline) for EEG data described in [1].
+
     Parameters
     ----------
     instance : raw mne object
@@ -28,13 +31,26 @@ class Noisydata():
 
     Attributes
     ----------
-    _channel_correlations : ndarray
+    _channel_correlations : ndarray, shape(k_windows, n_chans)
+        For each k_window the correlation measure for each channel, where
+        the correlation measure is an index of how well a channel correlates
+        with all other channels.
 
-    _ransac_channel_correlations : ndarray
+    _ransac_channel_correlations : ndarray, shape(k_windows, n_chans)
+        For each k_window the correlation for each channel with itself across
+        the original data versus the ransac predicted data.
 
-    _channel_deviations : ndarray
+    _channel_deviations : ndarray, shape(n_chans,)
+        The robust z-score deviation aggregates per channel.
 
-    _channel_hf_noise : ndarray
+    _channel_hf_noise : ndarray, shape(n_chans,)
+        The robust z-score estimates of high frequency noise per channel.
+
+    References
+    ----------
+    .. [1] Bigdely-Shamlo, N., Mullen, T., Kothe, C., Su, K. M., Robbins, K. A.
+       (2015). The PREP pipeline: standardized preprocessing for large-scale
+       EEG analysis. Frontiers in Neuroinformatics, 9, 16.
 
     """
 
@@ -312,7 +328,7 @@ class Noisydata():
     def find_bad_by_ransac(self, n_samples=50, fraction_good=0.25,
                            corr_thresh=0.75, fraction_bad=0.4,
                            corr_window_secs=4.):
-        u"""Detect channels that are not predicted well by other channels.
+        """Detect channels that are not predicted well by other channels.
 
         Here, a ransac approach (see [1], and a short discussion in [2]) is
         adopted to predict a "clean EEG" dataset. After identifying clean EEG
@@ -348,13 +364,13 @@ class Noisydata():
 
         References
         ----------
-        .. [1] M. A. Fischler, R. C. Bolles, 1981. Random sample consensus: A
+        .. [1] Fischler, M.A., Bolles, R.C. (1981). Random rample consensus: A
            Paradigm for Model Fitting with Applications to Image Analysis and
-           Automated Cartography,  Communications of the ACM 24, p. 381–395.
+           Automated Cartography. Communications of the ACM, 24, 381-395
 
-        .. [2] Mainak Jas, Denis A. Engemann, Yousra Bekhti, Federico Raimondo,
-           Alexandre Gramfort, 2017. Autoreject: Automated Artifact Rejection
-           for MEG and EEG Data. NeuroImage, 159, p. 417-429
+        .. [2] Jas, M., Engemann, D.A., Bekhti, Y., Raimondo, F., Gramfort, A.
+           (2017). Autoreject: Automated Artifact Rejection for MEG and EEG
+           Data. NeuroImage, 159, 417-429
 
         """
         # First, identify all bad channels by other means:

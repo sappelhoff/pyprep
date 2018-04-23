@@ -1,9 +1,18 @@
 .. image:: https://travis-ci.org/sappelhoff/pyprep.svg?branch=master
     :target: https://travis-ci.org/sappelhoff/pyprep
+    :alt: Travis CI Status
 
 .. image:: https://codecov.io/gh/sappelhoff/pyprep/branch/master/graph/badge.svg
     :target: https://codecov.io/gh/sappelhoff/pyprep
+    :alt: Codecov Status
 
+.. image:: https://readthedocs.org/projects/pyprep/badge/?version=latest
+    :target: http://pyprep.readthedocs.io/en/latest/?badge=latest
+    :alt: Documentation Status
+
+.. image:: https://badge.fury.io/py/pyprep.svg
+    :target: https://badge.fury.io/py/pyprep
+    :alt: PyPi Version
 
 pyprep
 ======
@@ -16,7 +25,7 @@ Installation
 Probably easiest through:
 
 ::
-    
+
     pip install git+https://github.com/sappelhoff/pyprep.git
 
 Alternatively:
