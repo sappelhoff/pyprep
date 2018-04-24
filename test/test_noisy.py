@@ -93,7 +93,18 @@ def test_find_bad_by_flat(raw=raw):
 
 def test_find_bad_by_deviation(raw=raw):
     """Test find_bad_by_deviation."""
-    pass
+    raw_tmp = raw.copy()
+    m, n = raw_tmp._data.shape
+
+    # Now insert one random channel with high deviations
+    rand_chn_idx = int(np.random.randint(0, m, 1))
+    rand_chn_lab = raw_tmp.ch_names[rand_chn_idx]
+    raw_tmp._data[rand_chn_idx, :] = np.ones_like(raw_tmp._data[1, :])
+
+    # See if we find the correct one
+    nd = Noisydata(raw_tmp)
+    nd.find_bad_by_deviation()
+    assert nd.bad_by_deviation == [rand_chn_lab]
 
 
 def test_find_bad_by_correlation(raw=raw):
