@@ -221,7 +221,7 @@ def test_find_bad_by_ransac(raw=raw):
     # For now, simply see if it runs
     # Need better data to test properly
     nd = Noisydata(raw)
-    nd.find_bad_by_ransac()
+    nd.find_all_bads(ransac=True)  # equivalent to nd.find_bad_by_ransac()
     bads = nd.bad_by_ransac
     if bads == []:
         assert True
