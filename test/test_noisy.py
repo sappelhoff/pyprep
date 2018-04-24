@@ -65,18 +65,12 @@ def make_random_mne_object(sfreq=1000., t_secs=600, n_freq_comps=5,
 # We make new random mne objects until we have one without inherent bad chans
 # This is required so that we can then selectively insert noise in the tests.
 found_good_test_object = False
-iters = 0
 while not found_good_test_object:
     raw, n_freq_comps, freq_range = make_random_mne_object()
     nd = Noisydata(raw)
     nd.find_all_bads(ransac=False)
     if nd.get_bads() == []:
         found_good_test_object = True
-    elif iters > 10:
-        # Usually, we should have found a good one in 10 iters ... try again?
-        raise IOError('Could not generate a proper mne object for testing.')
-    else:
-        iters += 1
 
 
 def test_init(raw=raw):
@@ -223,10 +217,7 @@ def test_find_bad_by_ransac(raw=raw):
     nd = Noisydata(raw)
     nd.find_all_bads(ransac=True)  # equivalent to nd.find_bad_by_ransac()
     bads = nd.bad_by_ransac
-    if bads == []:
-        assert True
-    else:
-        assert bads
+    assert (bads == []) or (len(bads) > 0)
 
 
 def test_ransac_too_few_preds(raw=raw):

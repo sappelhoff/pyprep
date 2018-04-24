@@ -7,13 +7,15 @@ A python implementation of the Preprocessing Pipeline (PREP) for EEG data.
 
 Working with [MNE-Python](https://www.martinos.org/mne/stable/index.html) for EEG data processing and analysis.
 
+For a basic use example, see [the documentation.](http://pyprep.readthedocs.io/en/latest/examples.html)
+
 # Installation
 
 Probably easiest through:
 
-`pip install git+https://github.com/sappelhoff/pyprep.git`
+`pip install pyprep`
 
-Alternatively:
+For development version:
 
 
 ```bash
