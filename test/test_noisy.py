@@ -8,29 +8,75 @@ import mne
 from pyprep.noisy import Noisydata
 
 
-# Make a random MNE object
-sfreq = 1000.
-t = np.arange(0, 600, 1./sfreq)  # 10 minutes recording
-signal_len = t.shape[0]
-ch_names = ['Fpz', 'AFz', 'Fz', 'FCz', 'Cz', 'CPz', 'Pz', 'POz', 'Oz',
-            'C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'T7', 'T8', 'T9', 'T10']
-ch_types = ['eeg' for chn in ch_names]
-n_chans = len(ch_names)
+def make_random_mne_object(sfreq=1000., t_secs=600, n_freq_comps=5,
+                           freq_range=[10, 60]):
+    """Make a random MNE object to use for testing.
 
-# Make a random signal
-signal = np.zeros((n_chans, signal_len))
-for chan in range(n_chans):
-    # Each channel signal is a sum of random sine waves
-    for freq_i in range(5):
-        freq = np.random.randint(10, 60, signal_len)
-        signal[chan, :] += np.sin(2*np.pi*t*freq)
+    Parameters
+    ----------
+    sfreq : float
+        Sampling frequency in Hz.
 
-signal *= 1e-6  # scale to Volts
+    t_secs : int
+        Recording length in seconds.
 
-# Make mne object
-info = mne.create_info(ch_names=ch_names, sfreq=sfreq,
-                       ch_types=ch_types)
-raw = mne.io.RawArray(signal, info)
+    n_freq_comps : int
+        Number of signal components summed to make a signal.
+
+    freq_range : list, len==2
+        Signals will contain freqs from this range.
+
+    Returns
+    -------
+    raw : mne raw object
+        The mne object for performing the tests.
+
+    n_freq_comps : int
+
+    freq_range : list, len==2
+
+    """
+    t = np.arange(0, t_secs, 1./sfreq)
+    signal_len = t.shape[0]
+    ch_names = ['Fpz', 'AFz', 'Fz', 'FCz', 'Cz', 'CPz', 'Pz', 'POz', 'Oz',
+                'C1', 'C2', 'C3', 'C4', 'C5', 'C6']
+    ch_types = ['eeg' for chn in ch_names]
+    n_chans = len(ch_names)
+
+    # Make a random signal
+    signal = np.zeros((n_chans, signal_len))
+    low = freq_range[0]
+    high = freq_range[1]
+    for chan in range(n_chans):
+        # Each channel signal is a sum of random freq sine waves
+        for freq_i in range(n_freq_comps):
+            freq = np.random.randint(low, high, signal_len)
+            signal[chan, :] += np.sin(2*np.pi*t*freq)
+
+    signal *= 1e-6  # scale to Volts
+
+    # Make mne object
+    info = mne.create_info(ch_names=ch_names, sfreq=sfreq,
+                           ch_types=ch_types)
+    raw = mne.io.RawArray(signal, info)
+    return raw, n_freq_comps, freq_range
+
+
+# We make new random mne objects until we have one without inherent bad chans
+# This is required so that we can then selectively insert noise in the tests.
+found_good_test_object = False
+iters = 0
+while not found_good_test_object:
+    raw, n_freq_comps, freq_range = make_random_mne_object()
+    nd = Noisydata(raw)
+    nd.find_all_bads(ransac=False)
+    if nd.get_bads() == []:
+        found_good_test_object = True
+    elif iters > 10:
+        # Usually, we should have found a good one in 10 iters ... try again?
+        raise IOError('Could not generate a proper mne object for testing.')
+    else:
+        iters += 1
 
 
 def test_init(raw=raw):
@@ -39,7 +85,7 @@ def test_init(raw=raw):
     nd = Noisydata(raw)
     assert nd
 
-    # Initialization with another object should raise
+    # Initialization with another object should raise an error
     assert_raises(AssertionError, Noisydata, {'key': 1})
     assert_raises(AssertionError, Noisydata, [1, 2, 3])
     assert_raises(AssertionError, Noisydata, np.random.random((3, 3)))
@@ -52,7 +98,7 @@ def test_get_bads(raw=raw):
 
     # Do not test ransac yet ... need better data to confirm
     nd.find_all_bads(ransac=False)
-    bads = nd.get_bads(verbose=True)
+    bads = nd.get_bads(verbose=True)  # also test the printout
     assert bads == []
 
 
@@ -96,7 +142,7 @@ def test_find_bad_by_deviation(raw=raw):
     raw_tmp = raw.copy()
     m, n = raw_tmp._data.shape
 
-    # Now insert one random channel with high deviations
+    # Now insert one random channel with very low deviations
     rand_chn_idx = int(np.random.randint(0, m, 1))
     rand_chn_lab = raw_tmp.ch_names[rand_chn_idx]
     raw_tmp._data[rand_chn_idx, :] = np.ones_like(raw_tmp._data[1, :])
@@ -106,8 +152,21 @@ def test_find_bad_by_deviation(raw=raw):
     nd.find_bad_by_deviation()
     assert nd.bad_by_deviation == [rand_chn_lab]
 
+    # Insert a channel with very high deviation
+    raw_tmp = raw.copy()
+    rand_chn_idx = int(np.random.randint(0, m, 1))
+    rand_chn_lab = raw_tmp.ch_names[rand_chn_idx]
+    arbitrary_scaling = 5
+    raw_tmp._data[rand_chn_idx, :] *= arbitrary_scaling
 
-def test_find_bad_by_correlation(raw=raw):
+    # See if we find the correct one
+    nd = Noisydata(raw_tmp)
+    nd.find_bad_by_deviation()
+    assert nd.bad_by_deviation == [rand_chn_lab]
+
+
+def test_find_bad_by_correlation(raw=raw, freq_range=freq_range,
+                                 n_freq_comps=n_freq_comps):
     """Test find_bad_by_flat."""
     raw_tmp = raw.copy()
     m, n = raw_tmp._data.shape
@@ -118,10 +177,12 @@ def test_find_bad_by_correlation(raw=raw):
     rand_chn_lab = raw_tmp.ch_names[rand_chn_idx]
 
     # Use cosine instead of sine to create a signal
+    low = freq_range[0]
+    high = freq_range[1]
     signal = np.zeros((1, n))
-    for freq_i in range(5):
-        freq = np.random.randint(10, 60, n)
-        signal[0, :] += np.cos(2*np.pi*t*freq)
+    for freq_i in range(n_freq_comps):
+        freq = np.random.randint(low, high, n)
+        signal[0, :] += np.cos(2*np.pi*raw.times*freq)
 
     raw_tmp._data[rand_chn_idx, :] = signal * 1e-6
 
@@ -131,7 +192,7 @@ def test_find_bad_by_correlation(raw=raw):
     assert nd.bad_by_correlation == [rand_chn_lab]
 
 
-def test_find_bad_by_hf_noise(raw=raw):
+def test_find_bad_by_hf_noise(raw=raw, n_freq_comps=n_freq_comps):
     """Test find_bad_by_flat."""
     raw_tmp = raw.copy()
     m, n = raw_tmp._data.shape
@@ -141,11 +202,11 @@ def test_find_bad_by_hf_noise(raw=raw):
     rand_chn_idx = int(np.random.randint(0, m, 1))
     rand_chn_lab = raw_tmp.ch_names[rand_chn_idx]
 
-    # Use freqs between 90 and 100 to insert hf noise
+    # Use freqs between 90 and 100 Hz to insert hf noise
     signal = np.zeros((1, n))
-    for freq_i in range(5):
+    for freq_i in range(n_freq_comps):
         freq = np.random.randint(90, 100, n)
-        signal[0, :] += np.sin(2*np.pi*t*freq)
+        signal[0, :] += np.sin(2*np.pi*raw.times*freq)
 
     raw_tmp._data[rand_chn_idx, :] = signal * 1e-6
 
