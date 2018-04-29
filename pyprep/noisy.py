@@ -1,12 +1,88 @@
-"""Module contains class for bad channel detection."""
+"""Module contains functions and classes for noisy EEG data detection."""
 
 from psutil import virtual_memory
 
 import mne
 from mne.channels.interpolation import _make_interpolation_matrix
+from mne.preprocessing import find_outliers
 import numpy as np
 from scipy.stats import iqr
 from statsmodels.robust.scale import mad
+
+
+def find_bad_epochs(epochs, picks=None, thresh=3.29053):
+    """Find bad epochs based on amplitude, deviation, and variance.
+
+    Inspired by [1], based on code by Marijn van Vliet [2]. This
+    function is working on z-scores. You might want to select the
+    thresholds according to how much of the data is expected to
+    fall within the absolute bounds:
+
+    95.0% --> 1.95996
+
+    97.0% --> 2.17009
+
+    99.0% --> 2.57583
+
+    99.9% --> 3.29053
+
+    Notes
+    -----
+    For this function to work, bad channels should have been identified
+    and removed or interpolated beforehand. Additionally, baseline
+    correction or highpass filtering is recommended to reduce signal
+    drifts over time.
+
+    Parameters
+    ----------
+    epochs : mne epochs object
+        The epochs to analyze.
+
+    picks : list of int | None
+        Channels to operate on. Defaults to all clean EEG channels. Drops
+        EEG channels marked as bad.
+
+    thresh : float
+        Epochs that surpass the threshold with their z-score based
+        on amplitude, deviation, or variance, will be considered
+        bad.
+
+    Returns
+    -------
+    bads : list of int
+        Indices of the bad epochs.
+
+    References
+    ----------
+    .. [1] Nolan, H., Whelan, R., & Reilly, R. B. (2010). FASTER:
+       fully automated statistical thresholding for EEG artifact
+       rejection. Journal of neuroscience methods, 192(1), 152-162.
+
+    .. [2] https://gist.github.com/wmvanvliet/d883c3fe1402c7ced6fc
+
+    """
+    if picks is None:
+        picks = mne.pick_types(epochs.info, meg=False,
+                               eeg=True, exclude='bads')
+
+    def calc_deviation(data):
+        ch_mean = np.mean(data, axis=2)
+        return ch_mean - np.mean(ch_mean, axis=0)
+
+    metrics = {'amplitude': lambda x: np.mean(np.ptp(x, axis=2), axis=1),
+               'deviation': lambda x: np.mean(calc_deviation(x), axis=1),
+               'variance': lambda x: np.mean(np.var(x, axis=2), axis=1)}
+
+    data = epochs.get_data()[:, picks, :]
+
+    bads = []
+    for m in metrics.keys():
+        signal = metrics[m](data)
+        bad_idx = find_outliers(signal, thresh)
+        bads.append(bad_idx)
+
+    # MNE starts counting epochs at 1, so adjust indices
+    return np.unique(np.concatenate(bads)+1).tolist()
 
 
 class Noisydata():
@@ -397,9 +473,10 @@ class Noisydata():
         n_pred_chns = int(np.ceil(fraction_good * n_chans_good))
 
         if n_pred_chns <= 3:
-            raise IOError('Too few channels available to reliably perform ransac.'
-                          ' Perhaps, too many channels have failed quality tests.'
-                          ' You could call `.find_all_bads` with the ransac=False option.')
+            raise IOError('Too few channels available to reliably perform'
+                          ' ransac. Perhaps, too many channels have failed'
+                          ' quality tests. You could call `.find_all_bads`'
+                          ' with the ransac=False option.')
 
         # Make the ransac predictions
         ransac_eeg = self._run_ransac(chn_pos=self.chn_pos,
