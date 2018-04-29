@@ -11,6 +11,7 @@ Welcome to pyprep's documentation!
    :caption: Contents:
 
    examples
+   whats_new
 
 
 Indices and tables

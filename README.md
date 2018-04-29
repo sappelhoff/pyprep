@@ -9,6 +9,8 @@ Working with [MNE-Python](https://www.martinos.org/mne/stable/index.html) for EE
 
 For a basic use example, see [the documentation.](http://pyprep.readthedocs.io/en/latest/examples.html)
 
+Also contains a function to detect outlier epochs inspired by the FASTER algorithm.
+
 # Installation
 
 Probably easiest through:
@@ -26,3 +28,5 @@ pip install -e . #install pyprep
 ```
 # Reference
 Bigdely-Shamlo, N., Mullen, T., Kothe, C., Su, K.-M., & Robbins, K. A. (2015). The PREP pipeline: standardized preprocessing for large-scale EEG analysis. Frontiers in Neuroinformatics, 9, 16. doi: [10.3389/fninf.2015.00016](https://doi.org/10.3389/fninf.2015.00016)
+
+Nolan, H., Whelan, R., & Reilly, R. B. (2010). FASTER: fully automated statistical thresholding for EEG artifact rejection. Journal of neuroscience methods, 192(1), 152-162. doi: [10.1016/j.jneumeth.2010.07.015](https://doi.org/10.1016/j.jneumeth.2010.07.015)

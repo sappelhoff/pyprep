@@ -38,3 +38,16 @@ A straight forward example with random data:
     nd._channel_hf_noise
 
     # and so on ...
+
+For finding bad epochs, it is recommended to highpass the data or apply
+baseline correction. Furthermore, bad channels should be identified and removed
+or interpolated beforehand.
+
+.. code-block:: python
+    import numpy as np
+    import mne
+
+    from pyprep.noisy importfind_bad_epochs
+
+    # You can also define picks, and the threshold to be used
+    bads = find_bad_epochs(epochs, picks=None, thresh=3.29053)
