@@ -5,7 +5,7 @@ from nose.tools import assert_raises
 import numpy as np
 import mne
 
-from pyprep.noisy import Noisydata
+from pyprep.noisy import Noisydata, find_bad_epochs
 
 
 def make_random_mne_object(sfreq=1000., t_secs=600, n_freq_comps=5,
@@ -71,6 +71,26 @@ while not found_good_test_object:
     nd.find_all_bads(ransac=False)
     if nd.get_bads() == []:
         found_good_test_object = True
+
+# Make some arbitrary events sampled from the mid-section of raw.times
+n_events = 3
+ival_secs = [0.2, 0.8]
+marker_samples = np.random.choice(raw.times[5:-5],
+                                  size=n_events,
+                                  replace=False)
+events = np.asarray([marker_samples,
+                     np.zeros(n_events),
+                     np.ones(n_events)], dtype='int64')
+# Make epochs from the MNE _data
+epochs = mne.Epochs(raw, events, tmin=ival_secs[0], tmax=ival_secs[1],
+                    baseline=None, verbose=False)
+
+
+def test_find_bad_epochs(epochs=epochs):
+    """Test the FASTER find bad epochs function."""
+    bads = find_bad_epochs(epochs)
+    assert isinstance(bads, list)
+    assert bads == []
 
 
 def test_init(raw=raw):
