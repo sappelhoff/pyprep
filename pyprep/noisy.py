@@ -397,9 +397,9 @@ class Noisydata():
         n_pred_chns = int(np.ceil(fraction_good * n_chans_good))
 
         if n_pred_chns <= 3:
-            raise IOError('Too many channels have failed quality tests to'
-                          ' perform ransac. You could call `.find_all_bads`'
-                          ' with the ransac=False option')
+            raise IOError('Too few channels available to reliably perform ransac.'
+                          ' Perhaps, too many channels have failed quality tests.'
+                          ' You could call `.find_all_bads` with the ransac=False option.')
 
         # Make the ransac predictions
         ransac_eeg = self._run_ransac(chn_pos=self.chn_pos,
