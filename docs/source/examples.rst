@@ -44,6 +44,7 @@ baseline correction. Furthermore, bad channels should be identified and removed
 or interpolated beforehand.
 
 .. code-block:: python
+
     import numpy as np
     import mne
 
