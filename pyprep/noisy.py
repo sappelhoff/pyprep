@@ -81,8 +81,7 @@ def find_bad_epochs(epochs, picks=None, thresh=3.29053):
         bad_idx = find_outliers(signal, thresh)
         bads.append(bad_idx)
 
-    # MNE starts counting epochs at 1, so adjust indices
-    return np.unique(np.concatenate(bads)+1).tolist()
+    return np.unique(np.concatenate(bads)).tolist()
 
 
 class Noisydata():

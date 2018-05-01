@@ -10,7 +10,7 @@ with io.open(path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(name='pyprep',
-      version='0.2.1',
+      version='0.2.2',
       description=('A Python implementation of the preprocessing pipeline'
                    ' (PREP) for EEG data.'),
       long_description=long_description,
