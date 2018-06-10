@@ -26,6 +26,13 @@ cd pyprep #go to pyprep directory
 pip install -r requirements.txt #install all dependencies
 pip install -e . #install pyprep
 ```
+
+# Contributions
+
+... contributions are welcome. You should have read the references below. After
+that, feel free to submit pull requests. Be sure to always include tests for
+all new code that you introduce (whenever possible).
+
 # Reference
 Bigdely-Shamlo, N., Mullen, T., Kothe, C., Su, K.-M., & Robbins, K. A. (2015). The PREP pipeline: standardized preprocessing for large-scale EEG analysis. Frontiers in Neuroinformatics, 9, 16. doi: [10.3389/fninf.2015.00016](https://doi.org/10.3389/fninf.2015.00016)
 
