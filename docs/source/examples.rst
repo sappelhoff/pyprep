@@ -48,7 +48,7 @@ or interpolated beforehand.
     import numpy as np
     import mne
 
-    from pyprep.noisy importfind_bad_epochs
+    from pyprep.noisy import find_bad_epochs
 
     # You can also define picks, and the threshold to be used
     bads = find_bad_epochs(epochs, picks=None, thresh=3.29053)
