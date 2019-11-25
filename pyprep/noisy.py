@@ -148,8 +148,8 @@ class Noisydata():
                                             ch_names=self.raw_copy.ch_names)
         self.raw_copy.set_montage(montage)
         self.raw_copy.pick_types(eeg=True, stim=False)
-        self.raw_copy.filter(l_freq=low_cut, h_freq=None,
-                             method='fir', fir_design='firwin', verbose=False)
+        # self.raw_copy.filter(l_freq=low_cut, h_freq=None,
+        #                      method='fir', fir_design='firwin', verbose=False)
         self.x = self.raw_copy.get_data() * 1e6
         self.raw_copy.filter(l_freq=None, h_freq=high_cut,
                              method='fir', fir_design='firwin', verbose=False)
@@ -168,8 +168,6 @@ class Noisydata():
         self.bad_by_correlation = []
         self.bad_by_ransac = []
 
-        return None
-
     def find_all_bads(self, ransac=True):
         """Call all functions that detect bad channels.
 
@@ -186,11 +184,11 @@ class Noisydata():
         """
         self.find_bad_by_nan()
         self.find_bad_by_flat()
-        self.find_bad_by_deviation()
-        self.find_bad_by_hf_noise()
-        self.find_bad_by_correlation()
+        self.find_bad_by_deviation(deviation_thresh=5)
+        self.find_bad_by_hf_noise(hf_noise_thresh=5)
+        self.find_bad_by_correlation(fraction_bad=0.01)
         if ransac:
-            self.find_bad_by_ransac()
+            self.find_bad_by_ransac(corr_window_secs=5)
         return None
 
     def get_bads(self, verbose=False):
