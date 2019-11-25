@@ -184,11 +184,11 @@ class Noisydata():
         """
         self.find_bad_by_nan()
         self.find_bad_by_flat()
-        self.find_bad_by_deviation(deviation_thresh=5)
-        self.find_bad_by_hf_noise(hf_noise_thresh=5)
-        self.find_bad_by_correlation(fraction_bad=0.01)
+        self.find_bad_by_deviation()
+        self.find_bad_by_hf_noise()
+        self.find_bad_by_correlation()
         if ransac:
-            self.find_bad_by_ransac(corr_window_secs=5)
+            self.find_bad_by_ransac()
         return None
 
     def get_bads(self, verbose=False):
