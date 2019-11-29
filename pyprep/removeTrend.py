@@ -4,7 +4,13 @@ import scipy
 import logging
 
 
-def removeTrend(EEG, detrendType='High pass', sample_rate=160.0, detrendCutoff=1.0, detrendChannels=None):
+def removeTrend(
+    EEG,
+    detrendType="High pass",
+    sample_rate=160.0,
+    detrendCutoff=1.0,
+    detrendChannels=None,
+):
 
     """Performs high pass filtering or detrending.
     Parameters
@@ -28,38 +34,54 @@ def removeTrend(EEG, detrendType='High pass', sample_rate=160.0, detrendCutoff=1
     Filtering is implemented using the MNE filter function mne.filter.filter_data.
     Local detrending is the python implementation of the chronux_2 runline command.
     """
+    if len(EEG.shape) == 1:
+        EEG = np.reshape(EEG, (1, EEG.shape[0]))
 
-    if detrendType=='High pass':
-        EEG=mne.filter.filter_data(EEG,sfreq=sample_rate,l_freq=1,h_freq=None,picks=detrendChannels)
+    if detrendType == "High pass":
+        EEG = mne.filter.filter_data(
+            EEG, sfreq=sample_rate, l_freq=1, h_freq=None, picks=detrendChannels
+        )
 
-    elif detrendType=='High pass sinc':
+    elif detrendType == "High pass sinc":
         fOrder = np.round(14080 * sample_rate / 512)
-        fOrder = np.int(fOrder + fOrder%2)
-        EEG=mne.filter.filter_data(data=EEG,sfreq=sample_rate, l_freq=1, h_freq=None, picks=detrendChannels,filter_length=fOrder,fir_window='blackman')
-    elif detrendType=='Local detrend':
+        fOrder = np.int(fOrder + fOrder % 2)
+        EEG = mne.filter.filter_data(
+            data=EEG,
+            sfreq=sample_rate,
+            l_freq=1,
+            h_freq=None,
+            picks=detrendChannels,
+            filter_length=fOrder,
+            fir_window="blackman",
+        )
+    elif detrendType == "Local detrend":
         if detrendChannels == None:
-            detrendChannels=np.arange(0,64)
-        windowSize = 1.5 / detrendCutoff;
+            detrendChannels = np.arange(0, EEG.shape[0])
+        windowSize = 1.5 / detrendCutoff
         windowSize = np.minimum(windowSize, EEG.shape[1])
-        stepSize = 0.02;
-        EEG=np.transpose(EEG)
-        n=np.round(sample_rate*windowSize)
-        dn=np.round(sample_rate*stepSize)
+        stepSize = 0.02
+        EEG = np.transpose(EEG)
+        n = np.round(sample_rate * windowSize)
+        dn = np.round(sample_rate * stepSize)
 
         if dn > n or dn < 1:
-            logging.error("Step size should be less than the window size and contain at least 1 sample")
-        if n==EEG.shape[0]:
-            data=scipy.signal.detrend(EEG,axis=0)
+            logging.error(
+                "Step size should be less than the window size and contain at least 1 sample"
+            )
+        if n == EEG.shape[0]:
+            data = scipy.signal.detrend(EEG, axis=0)
         else:
             for ch in detrendChannels:
-                EEG[:,ch]=runline(EEG[:,ch],np.int(n),np.int(dn))
-        EEG=np.transpose(EEG)
+                EEG[:, ch] = runline(EEG[:, ch], np.int(n), np.int(dn))
+        EEG = np.transpose(EEG)
     else:
-        logging.warning("No filtering/detreding performed since the detrend type did not match")
+        logging.warning(
+            "No filtering/detreding performed since the detrend type did not match"
+        )
     return EEG
 
 
-def runline(y,n,dn):
+def runline(y, n, dn):
     """ Python implementation of chronux_2 runline command for performing local linear regression.
     Parameters
     __________
@@ -75,7 +97,6 @@ def runline(y,n,dn):
     y: np.ndarray
        Detrended EEG signal for one channel.
     """
-
     nt = y.shape[0]
     y_line = np.zeros((nt, 1))
     norm = np.zeros((nt, 1))
@@ -84,33 +105,25 @@ def runline(y,n,dn):
     xwt = (np.arange(1, n + 1) - n / 2) / (n / 2)
     wt = np.power(1 - np.power(np.absolute(xwt), 3), 3)
     for j in range(0, nwin):
-        tseg = y[dn * j:dn * j + n]
+        tseg = y[dn * j : dn * j + n]
         y1 = np.mean(tseg)
         y2 = np.mean(np.multiply(np.arange(1, n + 1), tseg)) * (2 / (n + 1))
         a = np.multiply(np.subtract(y2, y1), 6 / (n - 1))
         b = np.subtract(y1, a * (n + 1) / 2)
         yfit[j, :] = np.multiply(np.arange(1, n + 1), a) + b
-        y_line[j * dn:j * dn + n] = y_line[j * dn:j * dn + n] + np.reshape(np.multiply(yfit[j, :], wt), (n, 1))
-        norm[j * dn:j * dn + n] = norm[j * dn:j * dn + n] + np.reshape(wt, (n, 1))
+        y_line[j * dn : j * dn + n] = y_line[j * dn : j * dn + n] + np.reshape(
+            np.multiply(yfit[j, :], wt), (n, 1)
+        )
+        norm[j * dn : j * dn + n] = norm[j * dn : j * dn + n] + np.reshape(wt, (n, 1))
 
     for i in range(0, len(norm)):
         if norm[i] > 0:
             y_line[i] = y_line[i] / norm[i]
     indx = (nwin - 1) * dn + n - 1
     npts = len(y) - indx + 1
-    y_line[indx - 1:] = np.reshape((np.multiply(np.arange(n + 1, n + npts + 1), a) + b), (npts, 1))
+    y_line[indx - 1 :] = np.reshape(
+        (np.multiply(np.arange(n + 1, n + npts + 1), a) + b), (npts, 1)
+    )
     for i in range(0, len(y_line)):
         y[i] = y[i] - y_line[i]
     return y
-
-raw = mne.io.read_raw_edf("C:\\Users\\Aamna\\Desktop\\NDD\\S002R01.edf", preload=True)
-raw.rename_channels(lambda s: s.strip("."))
-a=mne.channels.read_montage(kind='standard_1020',ch_names=raw.info['ch_names'])
-mne.set_log_level("WARNING")
-raw.set_montage(a)
-eeg=raw.get_data()
-EEG=removeTrend(eeg,sample_rate=160,detrendType='Local detrend',detrendCutoff=1,detrendChannels=[1,2,3])
-
-
-
-
