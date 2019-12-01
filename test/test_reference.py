@@ -69,7 +69,7 @@ def make_reference_mne_object(sfreq=1000., t_secs=200, n_freq_comps=5,
 found_good_test_object = False
 while not found_good_test_object:
     raw, n_freq_comps, freq_range = make_reference_mne_object()
-    reference_signal = np.mean(raw.get_data(), axis=0)
+    reference_signal = np.median(raw.get_data(), axis=0)
     referenced_signal = remove_reference(raw.get_data(), reference_signal)
     raw_copy = raw.copy()
     raw_copy._data = referenced_signal

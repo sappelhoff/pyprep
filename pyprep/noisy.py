@@ -148,8 +148,8 @@ class Noisydata():
                                             ch_names=self.raw_copy.ch_names)
         self.raw_copy.set_montage(montage)
         self.raw_copy.pick_types(eeg=True, stim=False)
-        # self.raw_copy.filter(l_freq=low_cut, h_freq=None,
-        #                      method='fir', fir_design='firwin', verbose=False)
+        self.raw_copy.filter(l_freq=low_cut, h_freq=None,
+                             method='fir', fir_design='firwin', verbose=False)
         self.x = self.raw_copy.get_data() * 1e6
         self.raw_copy.filter(l_freq=None, h_freq=high_cut,
                              method='fir', fir_design='firwin', verbose=False)

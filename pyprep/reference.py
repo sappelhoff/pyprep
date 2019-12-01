@@ -69,7 +69,7 @@ def robust_reference(raw, params, montage_kind='standard_1020', ransac=True):
 
     # Get initial estimate of the reference by the specified method
     signal = raw_copy.get_data()
-    reference_signal = np.nanmean(raw_copy.get_data(picks=reference_channels), axis=0)
+    reference_signal = np.nanmedian(raw_copy.get_data(picks=reference_channels), axis=0)
     reference_index = [ch_names.index(ch) for ch in reference_channels]
     signal_tmp = remove_reference(signal, reference_signal, reference_index)
 
