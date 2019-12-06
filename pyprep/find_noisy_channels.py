@@ -103,7 +103,6 @@ class NoisyChannels:
             print(
                 "\n{} by ransac: {}".format(len(self.bad_by_ransac), self.bad_by_ransac)
             )
-
         return bads
 
     def find_all_noisy_channels(self, ransac=True):
@@ -117,7 +116,6 @@ class NoisyChannels:
 
         self.find_bad_by_nan_flat()
         self.find_bad_by_deviation()
-        self.find_bad_by_correlation()
         self.find_bad_by_SNR()
         if ransac:
             self.find_bad_by_ransac()
@@ -615,3 +613,17 @@ def filter_design(N_order, amp, freq, sample_rate):
     )
     kernel = np.multiply(kernel[0 : N_order + 1], (np.transpose(hamming_window[:])))
     return kernel
+
+
+raw = mne.io.read_raw_edf("C:\\Users\\Aamna\\Desktop\\NDD\\S001R04.edf", preload=True)
+raw.rename_channels(lambda s: s.strip("."))
+a=mne.channels.read_montage(kind='standard_1020',ch_names=raw.info['ch_names'])
+mne.set_log_level("WARNING")
+raw.set_montage(a)
+nd=NoisyChannels(raw)
+nd.find_all_noisy_channels()
+bads=nd.get_bads()
+print(bads)
+print(raw.info['ch_names'])
+nd.get_bads(verbose=True)
+
