@@ -12,14 +12,14 @@ def test_findnoisychannels():
     mne.set_log_level("WARNING")
     raw.set_montage(a)
     nd = NoisyChannels(raw)
-    nd.find_all_noisy_channels(ransac=True)
+    nd.find_all_bads(ransac=True)
     bads = nd.get_bads()
     iterations = 10  # remove any noisy channels by interpolating the bads for 10 iterations
     for iter in range(0, iterations):
         raw.info["bads"] = bads
         raw.interpolate_bads()
         nd = NoisyChannels(raw)
-        nd.find_all_noisy_channels(ransac=True)
+        nd.find_all_bads(ransac=True)
         bads = nd.get_bads()
 
     # make sure no bad channels exist in the data
