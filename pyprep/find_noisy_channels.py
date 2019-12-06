@@ -105,7 +105,7 @@ class NoisyChannels:
             )
         return bads
 
-    def find_all_noisy_channels(self, ransac=True):
+    def find_all_bads(self, ransac=True):
 
         """ Calls all the functions to detect bad channels.
         Parameters
@@ -615,15 +615,5 @@ def filter_design(N_order, amp, freq, sample_rate):
     return kernel
 
 
-raw = mne.io.read_raw_edf("C:\\Users\\Aamna\\Desktop\\NDD\\S001R04.edf", preload=True)
-raw.rename_channels(lambda s: s.strip("."))
-a=mne.channels.read_montage(kind='standard_1020',ch_names=raw.info['ch_names'])
-mne.set_log_level("WARNING")
-raw.set_montage(a)
-nd=NoisyChannels(raw)
-nd.find_all_noisy_channels()
-bads=nd.get_bads()
-print(bads)
-print(raw.info['ch_names'])
-nd.get_bads(verbose=True)
+
 
