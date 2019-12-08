@@ -131,7 +131,7 @@ class NoisyChannels:
         for i in range(0, self.original_dimensions[0]):
             nan_channel_mask[i] = np.sum(np.isnan(self.EEGData[i, :])) > 0
         for i in range(0, self.original_dimensions[0]):
-            no_signal_channel_mask[i] = robust.mad(self.EEGData[i, :]) < 10 ** (
+            no_signal_channel_mask[i] = robust.mad(self.EEGData[i, :], c=1) < 10 ** (
                 -10
             ) or np.std(self.EEGData[i, :]) < 10 ** (-10)
         nan_channels = self.channels_interpolate[nan_channel_mask]
@@ -207,7 +207,7 @@ class NoisyChannels:
             for i in range(0, dimension[1]):
                 EEG_filt[:, i] = signal.filtfilt(bandpass_filter, 1, data_tmp[:, i])
             noisiness = np.divide(
-                robust.mad(np.subtract(data_tmp, EEG_filt)), robust.mad(EEG_filt)
+                robust.mad(np.subtract(data_tmp, EEG_filt), c=1), robust.mad(EEG_filt,c=1)
             )
             noisiness_median = np.nanmedian(noisiness)
             noiseSD = (
@@ -290,8 +290,8 @@ class NoisyChannels:
             )
             channel_correlation[k, :] = np.quantile(abs_corr, 0.98, axis=0)
             noiselevels[k, :] = np.divide(
-                robust.mad(np.subtract(data_portion, eeg_portion)),
-                robust.mad(eeg_portion),
+                robust.mad(np.subtract(data_portion, eeg_portion), c=1),
+                robust.mad(eeg_portion, c=1),
             )
             channel_deviations[k, :] = 0.7413 * iqr(data_portion, axis=0)
         for i in range(0, w_correlation):
