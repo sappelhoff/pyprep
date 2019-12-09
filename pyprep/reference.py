@@ -108,12 +108,12 @@ class Reference:
         noisy_detector = NoisyChannels(self.raw)
         noisy_detector.find_all_bads(ransac=self.ransac)
         self.noisy_channels_original = {'bad_by_nan': noisy_detector.bad_by_nan,
-                               'bad_by_flat': noisy_detector.bad_by_flat,
-                               'bad_by_deviation': noisy_detector.bad_by_deviation,
-                               'bad_by_hf_noise': noisy_detector.bad_by_hf_noise,
-                               'bad_by_correlation': noisy_detector.bad_by_correlation,
-                               'bad_by_ransac': noisy_detector.bad_by_ransac,
-                               'bad_all': noisy_detector.get_bads()}
+                                        'bad_by_flat': noisy_detector.bad_by_flat,
+                                        'bad_by_deviation': noisy_detector.bad_by_deviation,
+                                        'bad_by_hf_noise': noisy_detector.bad_by_hf_noise,
+                                        'bad_by_correlation': noisy_detector.bad_by_correlation,
+                                        'bad_by_ransac': noisy_detector.bad_by_ransac,
+                                        'bad_all': noisy_detector.get_bads()}
         self.noisy_channels = self.noisy_channels_original.copy()
         logger.info('Bad channels: {}'.format(self.noisy_channels))
 
