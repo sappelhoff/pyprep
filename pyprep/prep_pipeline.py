@@ -16,8 +16,14 @@ class PrepPipeline:
         raw : raw mne object
         params : dict
             Parameters of PREP which include at least the following keys:
-            ref_chs
-            reref_chs
+            ref_chs : list
+                A list of channel names to be used for
+%               rereferencing [default: all channels]
+            reref_chs: list
+                A list of channel names to be used for
+%               line-noise removed, and referenced [default: all channels]
+            line_freqs : 1d array
+                A list of line frequencies to be removed
         montage_kind : str
             Which kind of montage should be used to infer the electrode
             positions? E.g., 'standard_1020'
