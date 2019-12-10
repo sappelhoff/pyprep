@@ -27,11 +27,15 @@ setup(name='pyprep',
       ],
       keywords='EEG artifact preprocessing data',
       packages=find_packages(),
-      install_requires=['numpy>=1.14.1', 'scipy>=1.0.0', 'statsmodels>=0.8.0',
-                        'mne>=0.15.0', 'psutil>=5.4.3'],
-      python_requires='>=2.7',
+      install_requires=['numpy>=1.14.1',
+                        'scipy>=1.0.0',
+                        'statsmodels>=0.8.0',
+                        'mne>=0.15.0',
+                        'psutil>=5.4.3'],
+      python_requires='>=3.6',
       extras_require={
-        'test': ['nose>=1.3.7']
+        'test': ['nose>=1.3.7',
+                 'pytest']
       },
       project_urls={
         'Bug Reports': 'https://github.com/sappelhoff/pyprep/issues',

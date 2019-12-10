@@ -2,6 +2,7 @@ import numpy as np
 import pyprep.removeTrend as removeTrend
 import pytest
 
+
 def test_highpass():
     """Test for checking high pass filters"""
 
@@ -37,4 +38,3 @@ def test_detrend():
     )
     error3 = signal_detrend - signal
     assert np.sqrt(np.mean(error3 ** 2)) < 0.1
-

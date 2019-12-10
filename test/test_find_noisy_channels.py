@@ -15,7 +15,9 @@ def test_findnoisychannels():
     nd = NoisyChannels(raw)
     nd.find_all_bads(ransac=True)
     bads = nd.get_bads()
-    iterations = 10  # remove any noisy channels by interpolating the bads for 10 iterations
+    iterations = (
+        10  # remove any noisy channels by interpolating the bads for 10 iterations
+    )
     for iter in range(0, iterations):
         raw.info["bads"] = bads
         raw.interpolate_bads()
@@ -70,7 +72,7 @@ def test_findnoisychannels():
     # Use cosine instead of sine to create a signal
     low = 10
     high = 30
-    n_freq=5
+    n_freq = 5
     signal = np.zeros((1, n))
     for freq_i in range(n_freq):
         freq = np.random.randint(low, high, n)
@@ -79,7 +81,6 @@ def test_findnoisychannels():
     nd = NoisyChannels(raw_tmp)
     nd.find_bad_by_correlation()
     assert nd.bad_by_correlation == [rand_chn_lab]
-
 
     # Test for high freq noise detection
     raw_tmp = raw.copy()
@@ -116,4 +117,3 @@ def test_findnoisychannels():
     nd.find_bad_by_ransac()
     bads = nd.bad_by_ransac
     assert bads == raw_tmp.ch_names[0:6]
-

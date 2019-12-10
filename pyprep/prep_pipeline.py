@@ -35,6 +35,7 @@ class PrepPipeline:
         .. [1] Bigdely-Shamlo, N., Mullen, T., Kothe, C., Su, K. M., Robbins, K. A.
            (2015). The PREP pipeline: standardized preprocessing for lar
     """
+
     def __init__(self, raw, prep_params, montage_kind="standard_1020", ransac=True):
         self.raw = raw.copy()
         self.ch_names = self.raw.ch_names
@@ -44,21 +45,27 @@ class PrepPipeline:
         self.ch_names_eeg = self.raw.ch_names
         self.EEG_raw = self.raw.get_data() * 1e6
         self.prep_params = prep_params
-        self.sfreq = self.raw.info['sfreq']
+        self.sfreq = self.raw.info["sfreq"]
         self.ransac = ransac
 
     def fit(self):
         noisy_detector = NoisyChannels(self.raw)
         noisy_detector.find_bad_by_nan_flat()
         unusable_channels = union(noisy_detector.bad_by_nan, noisy_detector.bad_by_flat)
-        reference_channels = set_diff(self.prep_params['ref_chs'], unusable_channels)
+        reference_channels = set_diff(self.prep_params["ref_chs"], unusable_channels)
         # Step 1: 1Hz high pass filtering
         self.EEG_new = removeTrend(self.EEG_raw, sample_rate=self.sfreq)
 
         # Step 2: Removing line noise
-        linenoise = self.prep_params['line_freqs']
-        self.EEG_clean = mne.filter.notch_filter(self.EEG_new, Fs=self.sfreq, freqs=linenoise,
-                                            method='spectrum_fit', mt_bandwidth=2, p_value=0.01)
+        linenoise = self.prep_params["line_freqs"]
+        self.EEG_clean = mne.filter.notch_filter(
+            self.EEG_new,
+            Fs=self.sfreq,
+            freqs=linenoise,
+            method="spectrum_fit",
+            mt_bandwidth=2,
+            p_value=0.01,
+        )
 
         # Add Trend back
         self.EEG = self.EEG_raw - self.EEG_new + self.EEG_clean
