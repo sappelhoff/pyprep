@@ -8,7 +8,7 @@ import mne
 from pyprep.noisy import Noisydata, find_bad_epochs
 
 
-def make_random_mne_object(sfreq=1000., t_secs=200, n_freq_comps=5,
+def make_random_mne_object(sfreq=1000., t_secs=600, n_freq_comps=5,
                            freq_range=[10, 60]):
     """Make a random MNE object to use for testing.
 
