@@ -3,10 +3,11 @@ from pyprep.find_noisy_channels import NoisyChannels
 import mne
 import pytest
 
+
 def test_findnoisychannels():
 
     # using sample EEG data (https://physionet.org/content/eegmmidb/1.0.0/)
-    raw = mne.io.read_raw_edf("D:/JHU/NDD/Motor Imagery Data/S001R01.edf", preload=True)
+    raw = mne.io.read_raw_edf("./test/test_data/S001R01.edf", preload=True)
     raw.rename_channels(lambda s: s.strip("."))
     a = mne.channels.read_montage(kind="standard_1020", ch_names=raw.info["ch_names"])
     mne.set_log_level("WARNING")
