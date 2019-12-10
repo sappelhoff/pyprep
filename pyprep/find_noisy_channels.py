@@ -207,7 +207,8 @@ class NoisyChannels:
             for i in range(0, dimension[1]):
                 EEG_filt[:, i] = signal.filtfilt(bandpass_filter, 1, data_tmp[:, i])
             noisiness = np.divide(
-                robust.mad(np.subtract(data_tmp, EEG_filt), c=1), robust.mad(EEG_filt,c=1)
+                robust.mad(np.subtract(data_tmp, EEG_filt), c=1),
+                robust.mad(EEG_filt, c=1),
             )
             noisiness_median = np.nanmedian(noisiness)
             noiseSD = (
@@ -613,7 +614,3 @@ def filter_design(N_order, amp, freq, sample_rate):
     )
     kernel = np.multiply(kernel[0 : N_order + 1], (np.transpose(hamming_window[:])))
     return kernel
-
-
-
-
