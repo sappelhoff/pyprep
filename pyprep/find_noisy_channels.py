@@ -1,3 +1,4 @@
+"""This module finds bad channels."""
 from statsmodels import robust
 from psutil import virtual_memory
 import mne
@@ -11,9 +12,9 @@ from cmath import sqrt
 
 
 class NoisyChannels:
+    """This class implements the functionality of the `findNoisyChannels` function.
 
-    """This class implements the functionality of the `findNoisyChannels` function
-    as part of the PREP (preprocessing pipeline) for EEG data recorded using 10-20 montage style described in [1].
+    It is a part of the PREP (preprocessing pipeline) for EEG data recorded using 10-20 montage style described in [1].
 
     References
     __________
@@ -23,9 +24,7 @@ class NoisyChannels:
     """
 
     def __init__(self, raw):
-
         """Initialize the class."""
-
         # Make sure that we got an MNE object
         assert isinstance(raw, mne.io.BaseRaw)
 
@@ -55,14 +54,15 @@ class NoisyChannels:
         self.bad_by_ransac = []
 
     def get_bads(self, verbose=False):
-
         """Get a list of all bad channels.
+
+        This function makes a list of all the bad channels and prints them if verbose is True.
+
         Parameters
         __________
         verbose : boolean
             If verbose, print a summary of bad channels.
         """
-
         bads = (
             self.bad_by_nan
             + self.bad_by_flat
@@ -106,14 +106,15 @@ class NoisyChannels:
         return bads
 
     def find_all_bads(self, ransac=True):
+        """Call all the functions to detect bad channels.
 
-        """ Calls all the functions to detect bad channels.
+        This function calls all the bad-channel detecting functions.
+
         Parameters
         __________
         ransac: boolean
                 To detect channels by ransac or not.
         """
-
         self.find_bad_by_nan_flat()
         self.find_bad_by_deviation()
         self.find_bad_by_SNR()
@@ -122,9 +123,7 @@ class NoisyChannels:
         return None
 
     def find_bad_by_nan_flat(self):
-
-        """ Detects channels that have zero or NaN values."""
-
+        """Detect channels that have zero or NaN values."""
         nan_channel_mask = [False] * self.original_dimensions[0]
         no_signal_channel_mask = [False] * self.original_dimensions[0]
 
@@ -155,15 +154,15 @@ class NoisyChannels:
         return None
 
     def find_bad_by_deviation(self, deviation_threshold=5.0):
+        """Robust z-score of the robust standard deviation for each channel is calculated.
 
-        """The robust z-score of the robust standard deviation for each channel is calculated.
         Channels having a z-score greater than 5 are detected as bad.
+
         Parameters
          __________
         deviation_threshold: float
                              z-score threshold above which channels will be labelled bad.
         """
-
         deviation_channel_mask = [False] * (self.new_dimensions[0])
         channel_deviation = np.zeros(self.new_dimensions[0])
         for i in range(0, self.new_dimensions[0]):
@@ -183,11 +182,9 @@ class NoisyChannels:
         return None
 
     def find_bad_by_hfnoise(self, HF_zscore_threshold=5.0):
+        """Noisiness of the channel is determined by finding the ratio of the median absolute deviation of high frequency to low frequency components.
 
-        """ Here, the noisiness of the channel is determined by finding the ratio of the
-        median absolute deviation of high frequency to low frequency components. Low pass 50 Hz
-        filter is used to separate the frequency components. A robust z-score is then calculated
-        relative to all the channels.
+        Low pass 50 Hz filter is used to separate the frequency components. A robust z-score is then calculated relative to all the channels.
 
         Parameters
         __________
@@ -239,12 +236,13 @@ class NoisyChannels:
     def find_bad_by_correlation(
         self, correlation_secs=1.0, correlation_threshold=0.4, frac_bad=0.01
     ):
+        """Find correlation between the low frequency components of the EEG below 50 Hz.
 
-        """ Finds correlation between the low frequency components of the EEG below 50 Hz. Correlation
-        is done using a sliding non-overlapping time window. The maximum absolute correlation is
+        Correlation is done using a sliding non-overlapping time window. The maximum absolute correlation is
         as the 98th percentile of the absolute values of the correlations with the other channels
         If the maximum correlation is less than 0.4 then the channel is designated as bad by corre-
         lation.
+
         Parameters
         __________
         correlation_secs: float
@@ -326,8 +324,7 @@ class NoisyChannels:
         return None
 
     def find_bad_by_SNR(self):
-
-        """Determines channels that fail both by correlation and HF noise."""
+        """Determine the channels that fail both by correlation and HF noise."""
         self.find_bad_by_correlation()
         set_hf = set(self.bad_by_hf_noise)
         set_correlation = set(self.bad_by_correlation)
@@ -343,8 +340,8 @@ class NoisyChannels:
         fraction_bad=0.4,
         corr_window_secs=5.0,
     ):
-
         """Detect channels that are not predicted well by other channels.
+
         Here, a ransac approach (see [1], and a short discussion in [2]) is
         adopted to predict a "clean EEG" dataset. After identifying clean EEG
         channels through the other methods, the clean EEG dataset is
@@ -354,6 +351,7 @@ class NoisyChannels:
         and the ransac predicted data are correlated and channels, which do not
         correlate well with themselves across the two datasets are considered
         `bad_by_ransac`.
+
         Parameters
         __________
         n_samples : int
@@ -464,9 +462,11 @@ class NoisyChannels:
     def run_ransac(
         self, chn_pos, chn_pos_good, good_chn_labs, n_pred_chns, data, n_samples
     ):
-        """Detects noisy channels apart from the ones described previously. It creates
-        a random subset of the so-far good channels
+        """Detect noisy channels apart from the ones described previously.
+
+        It creates a random subset of the so-far good channels
         and predicts the values of the channels not in the subset.
+
         Parameters
         __________
         chn_pos: ndarray
@@ -491,7 +491,6 @@ class NoisyChannels:
         Date: 2018
         Availability: https://github.com/sappelhoff/pyprep/blob/master/pyprep/noisy.py
         """
-
         # Before running, make sure we have enough memory
         try:
             available_gb = virtual_memory().available * 1e-9
@@ -521,29 +520,30 @@ class NoisyChannels:
         return ransac_eeg
 
     def get_ransac_pred(self, chn_pos, chn_pos_good, good_chn_labs, n_pred_chns, data):
-        """Performs RANSAC prediction
-            Parameters
-            __________
-            chn_pos: ndarray
-                     3-D coordinates of the electrode position
-            chn_pos_good: ndarray
-                          3-D coordinates of all the channels not detected noisy so far
-            good_chn_labs: array_like
-                            channel labels for the ch_pos_good channels
-            n_pred_chns: int
-                         channel numbers used for interpolation for RANSAC
-            data: ndarry
-                  2-D EEG data
+        """Perform RANSAC prediction.
 
-            Returns
-            _______
-            ransac_pred: ndarray
-                        Single RANSAC prediction
-            Title: noisy
-            Author: Stefan Appelhoff
-            Date: 2018
-            Availability: https://github.com/sappelhoff/pyprep/blob/master/pyprep/noisy.py
-    """
+        Parameters
+        __________
+        chn_pos: ndarray
+                 3-D coordinates of the electrode position
+        chn_pos_good: ndarray
+                      3-D coordinates of all the channels not detected noisy so far
+        good_chn_labs: array_like
+                        channel labels for the ch_pos_good channels
+        n_pred_chns: int
+                     channel numbers used for interpolation for RANSAC
+        data: ndarry
+              2-D EEG data
+
+        Returns
+        _______
+        ransac_pred: ndarray
+                    Single RANSAC prediction
+        Title: noisy
+        Author: Stefan Appelhoff
+        Date: 2018
+        Availability: https://github.com/sappelhoff/pyprep/blob/master/pyprep/noisy.py
+        """
         # Pick a subset of clean channels for reconstruction
         reconstr_idx = np.random.choice(
             np.arange(chn_pos_good.shape[0]), size=n_pred_chns, replace=False
@@ -566,9 +566,7 @@ class NoisyChannels:
 
 
 def filter_design(N_order, amp, freq, sample_rate):
-
-    """Creates a FIR low-pass filter that filters the EEG data using frequency
-    sampling method.
+    """Create a FIR low-pass filter that filters the EEG data using frequency sampling method.
 
     Parameters
     __________
@@ -584,7 +582,6 @@ def filter_design(N_order, amp, freq, sample_rate):
     _______
     kernel: ndarray
             filter kernel
-
     """
     nfft = np.maximum(512, 2 ** (np.ceil(math.log(100) / math.log(2))))
     hamming_window = np.subtract(
@@ -610,7 +607,7 @@ def filter_design(N_order, amp, freq, sample_rate):
         ),
     )
     kernel = np.real(
-        np.fft.ifft(np.concatenate([freq, np.conj(freq[len(freq) - 2 : 0 : -1])]))
+        np.fft.ifft(np.concatenate([freq, np.conj(freq[len(freq) -2 : 0 : -1])]))
     )
     kernel = np.multiply(kernel[0 : N_order + 1], (np.transpose(hamming_window[:])))
     return kernel
