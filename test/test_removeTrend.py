@@ -1,5 +1,5 @@
 import numpy as np
-import removeTrend as removeTrend
+import pyprep.removeTrend as removeTrend
 import pytest
 
 def test_highpass():
