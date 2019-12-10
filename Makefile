@@ -59,7 +59,7 @@ check-manifest:
 black:
 	@if command -v black > /dev/null; then \
 		echo "Running black"; \
-		black --check pyprep examples; \
+		black --check pyprep; \
 	else \
 		echo "black not found, please install it!"; \
 		exit 1; \

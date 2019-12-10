@@ -1,4 +1,4 @@
-"""This module can high-pass filter and locally detrend the EEG signal."""
+"""High-pass filter and locally detrend the EEG signal."""
 import numpy as np
 import mne
 import scipy
@@ -15,7 +15,7 @@ def removeTrend(
     """Perform high pass filtering or detrending.
 
     Parameters
-    __________
+    ----------
     EEG: np.ndarray
          The input EEG data.
     detrendType: str
@@ -26,12 +26,14 @@ def removeTrend(
                    High pass cut-off frequency.
     detrendChannels: list
                      List of all the channels that require detrending/filtering (default: All channels).
+
     Returns
-    ______
+    -------
     EEG: np.ndarray
          Filtered/detrended EEG data.
+
     Notes
-    _____
+    -----
     Filtering is implemented using the MNE filter function mne.filter.filter_data.
     Local detrending is the python implementation of the chronux_2 runline command.
     """
@@ -86,7 +88,7 @@ def runline(y, n, dn):
     """Python implementation of chronux_2 runline command for performing local linear regression.
 
     Parameters
-    __________
+    ----------
     y: np.ndarray
        Input from one EEG channel.
     n: int
@@ -95,9 +97,10 @@ def runline(y, n, dn):
         length of the window step size.
 
     Returns
-    _______
+    -------
     y: np.ndarray
        Detrended EEG signal for one channel.
+
     """
     nt = y.shape[0]
     y_line = np.zeros((nt, 1))

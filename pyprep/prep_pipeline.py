@@ -2,7 +2,7 @@
 import mne
 import numpy as np
 
-from pyprep.utilities import union, set_diff
+from pyprep.utilities import _union, _set_diff
 from pyprep.removeTrend import removeTrend
 from pyprep.find_noisy_channels import NoisyChannels
 from pyprep.reference import Reference
@@ -55,8 +55,10 @@ class PrepPipeline:
         """Run the whole PREP pipeline."""
         noisy_detector = NoisyChannels(self.raw)
         noisy_detector.find_bad_by_nan_flat()
-        unusable_channels = union(noisy_detector.bad_by_nan, noisy_detector.bad_by_flat)
-        reference_channels = set_diff(self.prep_params["ref_chs"], unusable_channels)
+        unusable_channels = _union(
+            noisy_detector.bad_by_nan, noisy_detector.bad_by_flat
+        )
+        reference_channels = _set_diff(self.prep_params["ref_chs"], unusable_channels)
         # Step 1: 1Hz high pass filtering
         self.EEG_new = removeTrend(self.EEG_raw, sample_rate=self.sfreq)
 

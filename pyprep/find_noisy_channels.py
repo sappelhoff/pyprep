@@ -1,4 +1,4 @@
-"""This module finds bad channels."""
+"""finds bad channels."""
 from statsmodels import robust
 from psutil import virtual_memory
 import mne
@@ -6,21 +6,21 @@ from scipy.stats import iqr
 import numpy as np
 from scipy import signal
 from mne.channels.interpolation import _make_interpolation_matrix
-import math
-import scipy.interpolate
-from cmath import sqrt
+
+from pyprep.utilities import filter_design
 
 
 class NoisyChannels:
-    """This class implements the functionality of the `findNoisyChannels` function.
+    """Implements the functionality of the `findNoisyChannels` function.
 
     It is a part of the PREP (preprocessing pipeline) for EEG data recorded using 10-20 montage style described in [1].
 
     References
-    __________
+    ----------
     [1] Bigdely-Shamlo, N., Mullen, T., Kothe, C., Su, K. M., Robbins, K. A.
     (2015). The PREP pipeline: standardized preprocessing for large-scale
     EEG analysis. Frontiers in Neuroinformatics, 9, 16.
+
     """
 
     def __init__(self, raw):
@@ -59,9 +59,10 @@ class NoisyChannels:
         This function makes a list of all the bad channels and prints them if verbose is True.
 
         Parameters
-        __________
+        ----------
         verbose : boolean
             If verbose, print a summary of bad channels.
+
         """
         bads = (
             self.bad_by_nan
@@ -111,9 +112,10 @@ class NoisyChannels:
         This function calls all the bad-channel detecting functions.
 
         Parameters
-        __________
+        ----------
         ransac: boolean
                 To detect channels by ransac or not.
+
         """
         self.find_bad_by_nan_flat()
         self.find_bad_by_deviation()
@@ -159,7 +161,7 @@ class NoisyChannels:
         Channels having a z-score greater than 5 are detected as bad.
 
         Parameters
-         __________
+        ----------
         deviation_threshold: float
                              z-score threshold above which channels will be labelled bad.
         """
@@ -187,7 +189,7 @@ class NoisyChannels:
         Low pass 50 Hz filter is used to separate the frequency components. A robust z-score is then calculated relative to all the channels.
 
         Parameters
-        __________
+        ----------
         HF_zscore_threshold: float
                              z-score threshold above which channels would be labelled as bad.
         """
@@ -199,7 +201,6 @@ class NoisyChannels:
                 N_order=100,
                 amp=np.array([1, 1, 0, 0]),
                 freq=np.array([0, 90 / self.sample_rate, 100 / self.sample_rate, 1]),
-                sample_rate=self.sample_rate,
             )
             for i in range(0, dimension[1]):
                 EEG_filt[:, i] = signal.filtfilt(bandpass_filter, 1, data_tmp[:, i])
@@ -244,7 +245,7 @@ class NoisyChannels:
         lation.
 
         Parameters
-        __________
+        ----------
         correlation_secs: float
                           length of the correlation time window (default: 1 secs).
         correlation_threshold: float
@@ -353,7 +354,7 @@ class NoisyChannels:
         `bad_by_ransac`.
 
         Parameters
-        __________
+        ----------
         n_samples : int
             Number of samples used for computation of ransac.
         fraction_good : float
@@ -369,8 +370,9 @@ class NoisyChannels:
             channel as `bad_by_ransac`.
         corr_window_secs : float
             Size of the correlation window in seconds.
+
         References
-        __________
+        ----------
         .. [1] Fischler, M.A., Bolles, R.C. (1981). Random rample consensus: A
            Paradigm for Model Fitting with Applications to Image Analysis and
            Automated Cartography. Communications of the ACM, 24, 381-395
@@ -468,7 +470,7 @@ class NoisyChannels:
         and predicts the values of the channels not in the subset.
 
         Parameters
-        __________
+        ----------
         chn_pos: ndarray
                  3-D coordinates of the electrode position
         chn_pos_good: ndarray
@@ -483,7 +485,7 @@ class NoisyChannels:
                     number of interpolations from which a median will be computed
 
         Returns
-        _______
+        -------
         ransac_eeg: ndarray
                     The EEG data predicted by RANSAC
         Title: noisy
@@ -523,7 +525,7 @@ class NoisyChannels:
         """Perform RANSAC prediction.
 
         Parameters
-        __________
+        ----------
         chn_pos: ndarray
                  3-D coordinates of the electrode position
         chn_pos_good: ndarray
@@ -536,7 +538,7 @@ class NoisyChannels:
               2-D EEG data
 
         Returns
-        _______
+        -------
         ransac_pred: ndarray
                     Single RANSAC prediction
         Title: noisy
@@ -563,51 +565,3 @@ class NoisyChannels:
         interpol_mat = _make_interpolation_matrix(reconstr_pos, chn_pos)
         ransac_pred = np.matmul(interpol_mat, data[reconstr_picks, :])
         return ransac_pred
-
-
-def filter_design(N_order, amp, freq, sample_rate):
-    """Create a FIR low-pass filter that filters the EEG data using frequency sampling method.
-
-    Parameters
-    __________
-    N_order: int
-             order of the filter
-    amp: list of int
-         amplitude vector for the frequencies
-    freq: list of int
-          frequency vector for which amplitude can be either 0 or 1
-    sample_rate: int
-          Sampling rate of the EEG signal
-    Returns
-    _______
-    kernel: ndarray
-            filter kernel
-    """
-    nfft = np.maximum(512, 2 ** (np.ceil(math.log(100) / math.log(2))))
-    hamming_window = np.subtract(
-        0.54,
-        np.multiply(
-            0.46,
-            np.cos(
-                np.divide(np.multiply(2 * math.pi, np.arange(N_order + 1)), N_order)
-            ),
-        ),
-    )
-    pchip_interpolate = scipy.interpolate.PchipInterpolator(
-        np.round(np.multiply(nfft, freq)), amp
-    )
-    freq = pchip_interpolate(np.arange(nfft + 1))
-    freq = np.multiply(
-        freq,
-        np.exp(
-            np.divide(
-                np.multiply(-(0.5 * N_order) * sqrt(-1) * math.pi, np.arange(nfft + 1)),
-                nfft,
-            )
-        ),
-    )
-    kernel = np.real(
-        np.fft.ifft(np.concatenate([freq, np.conj(freq[len(freq) -2 : 0 : -1])]))
-    )
-    kernel = np.multiply(kernel[0 : N_order + 1], (np.transpose(hamming_window[:])))
-    return kernel

@@ -1,9 +1,9 @@
-"""This module contains functions of referencing part of PREP."""
+"""functions of referencing part of PREP."""
 import mne
 import numpy as np
 import logging
 
-from pyprep.utilities import union, set_diff
+from pyprep.utilities import _union, _set_diff
 
 # from pyprep.noisy import Noisydata
 from pyprep.find_noisy_channels import NoisyChannels
@@ -22,23 +22,23 @@ class Reference:
     as part of the PREP (preprocessing pipeline) for EEG data described in [1].
 
     Parameters
-        ----------
-        raw : raw mne object
-        params : dict
-            Parameters of PREP which include at least the following keys:
-            ref_chs
-            reref_chs
-        montage_kind : str
-            Which kind of montage should be used to infer the electrode
-            positions? E.g., 'standard_1020'
-        ransac : boolean
-            Whether or not to use ransac
+    ----------
+    raw : raw mne object
+    params : dict
+        Parameters of PREP which include at least the following keys:
+        ref_chs
+        reref_chs
+    montage_kind : str
+        Which kind of montage should be used to infer the electrode
+        positions? E.g., 'standard_1020'
+    ransac : boolean
+        Whether or not to use ransac
 
-        References
-        ----------
-        .. [1] Bigdely-Shamlo, N., Mullen, T., Kothe, C., Su, K. M., Robbins, K. A.
-           (2015). The PREP pipeline: standardized preprocessing for large-scale
-           raw analysis. Frontiers in Neuroinformatics, 9, 16.
+    References
+    ----------
+    .. [1] Bigdely-Shamlo, N., Mullen, T., Kothe, C., Su, K. M., Robbins, K. A.
+       (2015). The PREP pipeline: standardized preprocessing for large-scale
+       raw analysis. Frontiers in Neuroinformatics, 9, 16.
     """
 
     def __init__(self, raw, params, ransac=True):
@@ -89,7 +89,7 @@ class Reference:
         self.bad_before_interpolation = noisy_detector.get_bads(verbose=True)
         self.EEG_before_interpolation = self.EEG.copy()
 
-        bad_channels = union(self.bad_before_interpolation, self.unusable_channels)
+        bad_channels = _union(self.bad_before_interpolation, self.unusable_channels)
         self.raw.info["bads"] = bad_channels
         self.raw.interpolate_bads()
         reference_correct = (
@@ -148,11 +148,11 @@ class Reference:
         self.noisy_channels = self.noisy_channels_original.copy()
         logger.info("Bad channels: {}".format(self.noisy_channels))
 
-        self.unusable_channels = union(
+        self.unusable_channels = _union(
             noisy_detector.bad_by_nan, noisy_detector.bad_by_flat
         )
-        # unusable_channels = union(unusable_channels, noisy_detector.bad_by_SNR)
-        self.reference_channels = set_diff(
+        # unusable_channels = _union(unusable_channels, noisy_detector.bad_by_SNR)
+        self.reference_channels = _set_diff(
             self.reference_channels, self.unusable_channels
         )
 
@@ -179,26 +179,26 @@ class Reference:
             raw_tmp._data = signal_tmp * 1e-6
             noisy_detector = NoisyChannels(raw_tmp)
             noisy_detector.find_all_bads(ransac=self.ransac)
-            self.noisy_channels["bad_by_nan"] = union(
+            self.noisy_channels["bad_by_nan"] = _union(
                 self.noisy_channels["bad_by_nan"], noisy_detector.bad_by_nan
             )
-            self.noisy_channels["bad_by_flat"] = union(
+            self.noisy_channels["bad_by_flat"] = _union(
                 self.noisy_channels["bad_by_flat"], noisy_detector.bad_by_flat
             )
-            self.noisy_channels["bad_by_deviation"] = union(
+            self.noisy_channels["bad_by_deviation"] = _union(
                 self.noisy_channels["bad_by_deviation"], noisy_detector.bad_by_deviation
             )
-            self.noisy_channels["bad_by_hf_noise"] = union(
+            self.noisy_channels["bad_by_hf_noise"] = _union(
                 self.noisy_channels["bad_by_hf_noise"], noisy_detector.bad_by_hf_noise
             )
-            self.noisy_channels["bad_by_correlation"] = union(
+            self.noisy_channels["bad_by_correlation"] = _union(
                 self.noisy_channels["bad_by_correlation"],
                 noisy_detector.bad_by_correlation,
             )
-            self.noisy_channels["bad_by_ransac"] = union(
+            self.noisy_channels["bad_by_ransac"] = _union(
                 self.noisy_channels["bad_by_ransac"], noisy_detector.bad_by_ransac
             )
-            self.noisy_channels["bad_all"] = union(
+            self.noisy_channels["bad_all"] = _union(
                 self.noisy_channels["bad_all"], noisy_detector.get_bads()
             )
             logger.info("Bad channels: {}".format(self.noisy_channels))
