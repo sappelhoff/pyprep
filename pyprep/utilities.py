@@ -1,3 +1,6 @@
+"""Module contains frequently used functions dealing with channel lists."""
+
+
 def union(list1, list2):
     return list(set(list1 + list2))
 

@@ -1,3 +1,4 @@
+"""This module contains functions of referencing part of PREP."""
 import mne
 import numpy as np
 import logging
@@ -15,7 +16,8 @@ logger = logging.getLogger(__name__)
 
 
 class Reference:
-    """
+    """For a given mne raw object, estimate the 'true' reference with all the bad channels interpolated.
+
     This class implements the functionality of the `performReference` function
     as part of the PREP (preprocessing pipeline) for EEG data described in [1].
 
@@ -40,6 +42,7 @@ class Reference:
     """
 
     def __init__(self, raw, params, ransac=True):
+        """Initialize the class."""
         self.raw = raw.copy()
         self.ch_names = self.raw.ch_names
         self.raw.pick_types(eeg=True, eog=False, meg=False)
@@ -51,6 +54,17 @@ class Reference:
         self.ransac = ransac
 
     def perform_reference(self):
+        """Estimate the true signal mean and interpolate bad channels.
+
+        This function implements the functionality of the `performReference` function
+        as part of the PREP pipeline on mne raw object.
+
+        Notes
+        -----
+            This function calls robust_reference first
+            Currently this function only implements the functionality of default settings, i.e., doRobustPost
+
+        """
         # Phase 1: Estimate the true signal mean with robust referencing
         self.robust_reference()
         if self.noisy_channels["bad_all"]:
@@ -71,10 +85,10 @@ class Reference:
         noisy_detector = NoisyChannels(self.raw)
         noisy_detector.find_all_bads(ransac=self.ransac)
 
-        # Noisy channels before interpolation
+        # Record Noisy channels and EEG before interpolation
         self.bad_before_interpolation = noisy_detector.get_bads(verbose=True)
+        self.EEG_before_interpolation = self.EEG.copy()
 
-        self.raw._data = self.EEG * 1e-6
         bad_channels = union(self.bad_before_interpolation, self.unusable_channels)
         self.raw.info["bads"] = bad_channels
         self.raw.interpolate_bads()
@@ -85,7 +99,9 @@ class Reference:
         self.EEG = self.remove_reference(
             self.EEG, reference_correct, rereferenced_index
         )
-        self.reference_signal = self.reference_signal + reference_correct
+        # reference signal after interpolation
+        self.reference_signal_new = self.reference_signal + reference_correct
+        # MNE Raw object after interpolation
         self.raw._data = self.EEG * 1e-6
 
         # Still noisy channels after interpolation
@@ -94,15 +110,15 @@ class Reference:
         noisy_detector.find_all_bads(ransac=self.ransac)
         self.still_noisy_channels = noisy_detector.get_bads()
         self.raw.info["bads"] = self.still_noisy_channels
-        return self.raw
+        return self
 
     def robust_reference(self):
-        """
-        Detect bad channels by robust referencing
-        This function implements the functionality of the `robustReference` function
-        as part of the PREP pipeline for raw data.
+        """Detect bad channels and estimate the robust reference signal.
 
-         Parameters
+        This function implements the functionality of the `robustReference` function
+        as part of the PREP pipeline on mne raw object.
+
+        Parameters
         ----------
             ransac : boolean
                 Whether or not to use ransac
@@ -110,10 +126,9 @@ class Reference:
         Returns
         -------
             noisy_channels: dictionary
-                A dictionary of names of noisy channels detected from all methods
+                A dictionary of names of noisy channels detected from all methods after referencing
             reference_signal: 1D Array
                 Estimation of the 'true' signal mean
-
 
         """
         self.raw._data = removeTrend(self.raw.get_data(), sample_rate=self.sfreq)
@@ -228,9 +243,10 @@ class Reference:
 
     @staticmethod
     def remove_reference(signal, reference, index=None):
-        """
-        Remove the reference signal from the original EEG signal,
-        with some unusable channels excluded.
+        """Remove the reference signal from the original EEG signal.
+
+        This function implements the functionality of the `removeReference` function
+        as part of the PREP pipeline on mne raw object.
 
         Parameters
         ----------

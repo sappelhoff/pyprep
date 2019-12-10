@@ -1,3 +1,4 @@
+"""Module for PREP pipeline."""
 import mne
 import numpy as np
 
@@ -8,20 +9,19 @@ from pyprep.reference import Reference
 
 
 class PrepPipeline:
-    """
+    """Early stage preprocessing (PREP) of EEG data.
+
     This class implements the functionality  of the PREP (preprocessing pipeline) for EEG data described in [1].
 
     Parameters
-        ----------
+    ----------
         raw : raw mne object
-        params : dict
+        prep_params : dict
             Parameters of PREP which include at least the following keys:
             ref_chs : list
-                A list of channel names to be used for
-%               rereferencing [default: all channels]
+                A list of channel names to be used for rereferencing [default: all channels]
             reref_chs: list
-                A list of channel names to be used for
-%               line-noise removed, and referenced [default: all channels]
+                A list of channel names to be used for line-noise removed, and referenced [default: all channels]
             line_freqs : 1d array
                 A list of line frequencies to be removed
         montage_kind : str
@@ -30,13 +30,16 @@ class PrepPipeline:
         ransac : boolean
             Whether or not to use ransac
 
-        References
-        ----------
-        .. [1] Bigdely-Shamlo, N., Mullen, T., Kothe, C., Su, K. M., Robbins, K. A.
-           (2015). The PREP pipeline: standardized preprocessing for lar
+    References
+    ----------
+    .. [1] Bigdely-Shamlo, N., Mullen, T., Kothe, C., Su, K. M., Robbins, K. A.
+       (2015). The PREP pipeline: standardized preprocessing for large-scale
+       EEG analysis. Frontiers in Neuroinformatics, 9, 16.
+
     """
 
     def __init__(self, raw, prep_params, montage_kind="standard_1020", ransac=True):
+        """Initialize PREP class."""
         self.raw = raw.copy()
         self.ch_names = self.raw.ch_names
         montage = mne.channels.read_montage(kind=montage_kind, ch_names=self.ch_names)
@@ -49,6 +52,7 @@ class PrepPipeline:
         self.ransac = ransac
 
     def fit(self):
+        """Run the whole PREP pipeline."""
         noisy_detector = NoisyChannels(self.raw)
         noisy_detector.find_bad_by_nan_flat()
         unusable_channels = union(noisy_detector.bad_by_nan, noisy_detector.bad_by_flat)
@@ -76,7 +80,9 @@ class PrepPipeline:
         self.raw = reference.perform_reference()
         self.noisy_channels_original = reference.noisy_channels_original
         self.bad_before_interpolation = reference.bad_before_interpolation
-        self.reference_signal = reference.reference_signal
+        self.EEG_before_interpolation = reference.EEG_before_interpolation
+        self.reference_before_interpolation = reference.reference_signal
+        self.reference_after_interpolation = reference.reference_signal_new
         self.interpolated_channels = reference.interpolated_channels
         self.still_noisy_channels = reference.still_noisy_channels
 
