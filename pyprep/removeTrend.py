@@ -1,3 +1,4 @@
+"""This module can high-pass filter and locally detrend the EEG signal."""
 import numpy as np
 import mne
 import scipy
@@ -11,8 +12,8 @@ def removeTrend(
     detrendCutoff=1.0,
     detrendChannels=None,
 ):
+    """Perform high pass filtering or detrending.
 
-    """Performs high pass filtering or detrending.
     Parameters
     __________
     EEG: np.ndarray
@@ -82,7 +83,8 @@ def removeTrend(
 
 
 def runline(y, n, dn):
-    """ Python implementation of chronux_2 runline command for performing local linear regression.
+    """Python implementation of chronux_2 runline command for performing local linear regression.
+
     Parameters
     __________
     y: np.ndarray
