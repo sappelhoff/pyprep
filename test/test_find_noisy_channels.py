@@ -61,7 +61,7 @@ def test_findnoisychannels():
     raw_tmp._data[rand_chn_idx, :] *= arbitrary_scaling
     nd = NoisyChannels(raw_tmp)
     nd.find_bad_by_deviation()
-    assert ([rand_chn_lab] in nd.bad_by_deviation or nd.bad_by_deviation == [rand_chn_lab])
+    assert (rand_chn_lab in nd.bad_by_deviation or nd.bad_by_deviation == [rand_chn_lab])
 
     # Test for correlation between EEG channels
     raw_tmp = raw.copy()
