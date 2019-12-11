@@ -1,5 +1,6 @@
 """This module finds bad channels."""
 from statsmodels import robust
+from removeTrend import removeTrend
 from psutil import virtual_memory
 import mne
 from scipy.stats import iqr
@@ -29,10 +30,11 @@ class NoisyChannels:
         assert isinstance(raw, mne.io.BaseRaw)
 
         self.raw_mne = raw.copy()
+        self.sample_rate = raw.info["sfreq"]
         self.EEGData = self.raw_mne.get_data(picks="eeg")
+        self.EEGData = removeTrend(self.EEGData, sample_rate=self.sample_rate)
         self.EEGData_beforeFilt = self.EEGData
         self.ch_names_original = np.asarray(raw.info["ch_names"])
-        self.sample_rate = raw.info["sfreq"]
         self.n_chans_original = len(self.ch_names_original)
         self.n_chans_new = self.n_chans_original
         self.signal_len = len(self.raw_mne.times)
@@ -234,7 +236,7 @@ class NoisyChannels:
         return None
 
     def find_bad_by_correlation(
-        self, correlation_secs=1.0, correlation_threshold=0.4, frac_bad=0.01
+        self, correlation_secs=1.0, correlation_threshold=0.4, frac_bad=0.1
     ):
         """Find correlation between the low frequency components of the EEG below 50 Hz.
 
