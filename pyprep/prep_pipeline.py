@@ -79,7 +79,8 @@ class PrepPipeline:
 
         # Step 3: Referencing
         reference = Reference(self.raw, self.prep_params, ransac=self.ransac)
-        self.raw = reference.perform_reference()
+        reference.perform_reference()
+        self.raw = reference.raw
         self.noisy_channels_original = reference.noisy_channels_original
         self.bad_before_interpolation = reference.bad_before_interpolation
         self.EEG_before_interpolation = reference.EEG_before_interpolation

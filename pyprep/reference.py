@@ -131,10 +131,11 @@ class Reference:
                 Estimation of the 'true' signal mean
 
         """
-        self.raw._data = removeTrend(self.raw.get_data(), sample_rate=self.sfreq)
+        raw = self.raw.copy()
+        raw._data = removeTrend(raw.get_data(), sample_rate=self.sfreq)
 
         # Determine unusable channels and remove them from the reference channels
-        noisy_detector = NoisyChannels(self.raw)
+        noisy_detector = NoisyChannels(raw)
         noisy_detector.find_all_bads(ransac=self.ransac)
         self.noisy_channels_original = {
             "bad_by_nan": noisy_detector.bad_by_nan,
@@ -157,9 +158,9 @@ class Reference:
         )
 
         # Get initial estimate of the reference by the specified method
-        signal = self.raw.get_data() * 1e6
+        signal = raw.get_data() * 1e6
         self.reference_signal = (
-            np.nanmedian(self.raw.get_data(picks=self.reference_channels), axis=0) * 1e6
+            np.nanmedian(raw.get_data(picks=self.reference_channels), axis=0) * 1e6
         )
         reference_index = [
             self.ch_names_eeg.index(ch) for ch in self.reference_channels
@@ -169,7 +170,7 @@ class Reference:
         )
 
         # Remove reference from signal, iteratively interpolating bad channels
-        raw_tmp = self.raw.copy()
+        raw_tmp = raw.copy()
 
         iterations = 0
         noisy_channels_old = []
