@@ -1,12 +1,12 @@
 import numpy as np
-from find_noisy_channels import NoisyChannels
+from pyprep.find_noisy_channels import NoisyChannels
 import mne
 import pytest
 
 def test_findnoisychannels():
 
     # using sample EEG data (https://physionet.org/content/eegmmidb/1.0.0/)
-    raw = mne.io.read_raw_edf("C:\\Users\\Aamna\\Desktop\\NDD\\S001R01.edf", preload=True)
+    raw = mne.io.read_raw_edf("./test/test_data/S001R01.edf", preload=True)
     raw.rename_channels(lambda s: s.strip("."))
     a = mne.channels.read_montage(kind="standard_1020", ch_names=raw.info["ch_names"])
     mne.set_log_level("WARNING")
@@ -14,7 +14,9 @@ def test_findnoisychannels():
     nd = NoisyChannels(raw)
     nd.find_all_bads(ransac=True)
     bads = nd.get_bads()
-    iterations = 10  # remove any noisy channels by interpolating the bads for 10 iterations
+    iterations = (
+        10  # remove any noisy channels by interpolating the bads for 10 iterations
+    )
     for iter in range(0, iterations):
         raw.info["bads"] = bads
         raw.interpolate_bads()
@@ -69,7 +71,7 @@ def test_findnoisychannels():
     # Use cosine instead of sine to create a signal
     low = 10
     high = 30
-    n_freq=5
+    n_freq = 5
     signal = np.zeros((1, n))
     for freq_i in range(n_freq):
         freq = np.random.randint(low, high, n)

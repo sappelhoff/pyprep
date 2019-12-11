@@ -1,6 +1,6 @@
 """finds bad channels."""
 from statsmodels import robust
-from removeTrend import removeTrend
+from pyprep.removeTrend import removeTrend
 from psutil import virtual_memory
 import mne
 from scipy.stats import iqr
