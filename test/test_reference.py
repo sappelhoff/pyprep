@@ -19,14 +19,14 @@ def test_basic_input():
     raw_tmp = raw.copy()
     params = {"ref_chs": ch_names, "reref_chs": ch_names}
     reference = Reference(raw_tmp, params, ransac=False)
-    raw_new = reference.perform_reference()
+    reference.perform_reference()
     assert type(reference.noisy_channels) == dict
     assert type(reference.noisy_channels_original) == dict
     assert type(reference.bad_before_interpolation) == list
     assert type(reference.reference_signal) == np.ndarray
     assert type(reference.interpolated_channels) == list
     assert type(reference.still_noisy_channels) == list
-    assert type(raw_new) == mne.io.edf.edf.RawEDF
+    assert type(reference.raw) == mne.io.edf.edf.RawEDF
 
 
 def test_all_bad_input():
