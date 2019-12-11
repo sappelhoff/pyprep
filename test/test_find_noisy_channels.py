@@ -3,6 +3,7 @@ from pyprep.find_noisy_channels import NoisyChannels
 import mne
 import pytest
 
+
 def test_findnoisychannels():
 
     # using sample EEG data (https://physionet.org/content/eegmmidb/1.0.0/)
@@ -52,7 +53,7 @@ def test_findnoisychannels():
     raw_tmp._data[rand_chn_idx, :] = raw_tmp._data[rand_chn_idx, :] / 10
     nd = NoisyChannels(raw_tmp)
     nd.find_bad_by_deviation()
-    assert ([rand_chn_lab] in nd.bad_by_deviation or nd.bad_by_deviation == [rand_chn_lab])
+    assert (rand_chn_lab in nd.bad_by_deviation)
     # Inserting one random channel with a high deviation
     raw_tmp = raw.copy()
     rand_chn_idx = int(np.random.randint(0, m, 1))
@@ -61,7 +62,7 @@ def test_findnoisychannels():
     raw_tmp._data[rand_chn_idx, :] *= arbitrary_scaling
     nd = NoisyChannels(raw_tmp)
     nd.find_bad_by_deviation()
-    assert (rand_chn_lab in nd.bad_by_deviation or nd.bad_by_deviation == [rand_chn_lab])
+    assert (rand_chn_lab in nd.bad_by_deviation)
 
     # Test for correlation between EEG channels
     raw_tmp = raw.copy()
@@ -79,7 +80,7 @@ def test_findnoisychannels():
     raw_tmp._data[rand_chn_idx, :] = signal * 1e-6
     nd = NoisyChannels(raw_tmp)
     nd.find_bad_by_correlation()
-    assert ([rand_chn_lab] in nd.bad_by_correlation or nd.bad_by_correlation == [rand_chn_lab])
+    assert (rand_chn_lab in nd.bad_by_correlation)
 
 
     # Test for high freq noise detection
@@ -95,7 +96,7 @@ def test_findnoisychannels():
     raw_tmp._data[rand_chn_idx, :] = signal * 1e-6
     nd = NoisyChannels(raw_tmp)
     nd.find_bad_by_hfnoise()
-    assert ([rand_chn_lab] in nd.bad_by_hf_noise or nd.bad_by_hf_noise == [rand_chn_lab])
+    assert (rand_chn_lab in nd.bad_by_hf_noise)
 
     # Test for signal to noise ratio in EEG data
     raw_tmp = raw.copy()
@@ -106,7 +107,7 @@ def test_findnoisychannels():
     raw_tmp[rand_chn_idx, :] = np.sin(2 * np.pi * raw.times * 90) * 1e-6
     nd = NoisyChannels(raw_tmp)
     nd.find_bad_by_SNR()
-    assert ([rand_chn_lab] in nd.bad_by_SNR or nd.bad_by_SNR == [rand_chn_lab])
+    assert (rand_chn_lab in nd.bad_by_SNR)
 
     # Test for finding bad channels by RANSAC
     raw_tmp = raw.copy()
