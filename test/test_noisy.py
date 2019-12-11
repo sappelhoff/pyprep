@@ -166,6 +166,8 @@ def test_find_bad_by_flat(raw=raw):
 
 
 def test_find_bad_by_deviation(raw=raw):
+    np.random.seed(12345)
+
     """Test find_bad_by_deviation."""
     raw_tmp = raw.copy()
     m, n = raw_tmp._data.shape
