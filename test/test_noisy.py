@@ -8,8 +8,9 @@ import mne
 from pyprep.noisy import Noisydata, find_bad_epochs
 
 
-def make_random_mne_object(sfreq=1000., t_secs=600, n_freq_comps=5,
-                           freq_range=[10, 60]):
+def make_random_mne_object(
+    sfreq=1000.0, t_secs=600, n_freq_comps=5, freq_range=[10, 60]
+):
     """Make a random MNE object to use for testing.
 
     Parameters
@@ -36,11 +37,26 @@ def make_random_mne_object(sfreq=1000., t_secs=600, n_freq_comps=5,
     freq_range : list, len==2
 
     """
-    t = np.arange(0, t_secs, 1./sfreq)
+    t = np.arange(0, t_secs, 1.0 / sfreq)
     signal_len = t.shape[0]
-    ch_names = ['Fpz', 'AFz', 'Fz', 'FCz', 'Cz', 'CPz', 'Pz', 'POz', 'Oz',
-                'C1', 'C2', 'C3', 'C4', 'C5', 'C6']
-    ch_types = ['eeg' for chn in ch_names]
+    ch_names = [
+        "Fpz",
+        "AFz",
+        "Fz",
+        "FCz",
+        "Cz",
+        "CPz",
+        "Pz",
+        "POz",
+        "Oz",
+        "C1",
+        "C2",
+        "C3",
+        "C4",
+        "C5",
+        "C6",
+    ]
+    ch_types = ["eeg" for chn in ch_names]
     n_chans = len(ch_names)
 
     # Make a random signal
@@ -51,13 +67,12 @@ def make_random_mne_object(sfreq=1000., t_secs=600, n_freq_comps=5,
         # Each channel signal is a sum of random freq sine waves
         for freq_i in range(n_freq_comps):
             freq = np.random.randint(low, high, signal_len)
-            signal[chan, :] += np.sin(2*np.pi*t*freq)
+            signal[chan, :] += np.sin(2 * np.pi * t * freq)
 
     signal *= 1e-6  # scale to Volts
 
     # Make mne object
-    info = mne.create_info(ch_names=ch_names, sfreq=sfreq,
-                           ch_types=ch_types)
+    info = mne.create_info(ch_names=ch_names, sfreq=sfreq, ch_types=ch_types)
     raw = mne.io.RawArray(signal, info)
     return raw, n_freq_comps, freq_range
 
@@ -75,15 +90,14 @@ while not found_good_test_object:
 # Make some arbitrary events sampled from the mid-section of raw.times
 n_events = 3
 ival_secs = [0.2, 0.8]
-marker_samples = np.random.choice(raw.times[5:-5],
-                                  size=n_events,
-                                  replace=False)
-events = np.asarray([marker_samples,
-                     np.zeros(n_events),
-                     np.ones(n_events)], dtype='int64')
+marker_samples = np.random.choice(raw.times[5:-5], size=n_events, replace=False)
+events = np.asarray(
+    [marker_samples, np.zeros(n_events), np.ones(n_events)], dtype="int64"
+)
 # Make epochs from the MNE _data
-epochs = mne.Epochs(raw, events, tmin=ival_secs[0], tmax=ival_secs[1],
-                    baseline=None, verbose=False)
+epochs = mne.Epochs(
+    raw, events, tmin=ival_secs[0], tmax=ival_secs[1], baseline=None, verbose=False
+)
 
 
 def test_find_bad_epochs(epochs=epochs):
@@ -100,7 +114,7 @@ def test_init(raw=raw):
     assert nd
 
     # Initialization with another object should raise an error
-    assert_raises(AssertionError, Noisydata, {'key': 1})
+    assert_raises(AssertionError, Noisydata, {"key": 1})
     assert_raises(AssertionError, Noisydata, [1, 2, 3])
     assert_raises(AssertionError, Noisydata, np.random.random((3, 3)))
 
@@ -124,7 +138,7 @@ def test_find_bad_by_nan(raw=raw):
     # Insert a nan value for a random channel
     rand_chn_idx = int(np.random.randint(0, m, 1))
     rand_chn_lab = raw_tmp.ch_names[rand_chn_idx]
-    raw_tmp._data[rand_chn_idx, n-1] = np.nan
+    raw_tmp._data[rand_chn_idx, n - 1] = np.nan
 
     # Now find it and assert it's the correct one.
     nd = Noisydata(raw_tmp)
@@ -152,6 +166,8 @@ def test_find_bad_by_flat(raw=raw):
 
 
 def test_find_bad_by_deviation(raw=raw):
+    np.random.seed(12345)
+
     """Test find_bad_by_deviation."""
     raw_tmp = raw.copy()
     m, n = raw_tmp._data.shape
@@ -179,8 +195,9 @@ def test_find_bad_by_deviation(raw=raw):
     assert nd.bad_by_deviation == [rand_chn_lab]
 
 
-def test_find_bad_by_correlation(raw=raw, freq_range=freq_range,
-                                 n_freq_comps=n_freq_comps):
+def test_find_bad_by_correlation(
+    raw=raw, freq_range=freq_range, n_freq_comps=n_freq_comps
+):
     """Test find_bad_by_flat."""
     raw_tmp = raw.copy()
     m, n = raw_tmp._data.shape
@@ -196,7 +213,7 @@ def test_find_bad_by_correlation(raw=raw, freq_range=freq_range,
     signal = np.zeros((1, n))
     for freq_i in range(n_freq_comps):
         freq = np.random.randint(low, high, n)
-        signal[0, :] += np.cos(2*np.pi*raw.times*freq)
+        signal[0, :] += np.cos(2 * np.pi * raw.times * freq)
 
     raw_tmp._data[rand_chn_idx, :] = signal * 1e-6
 
@@ -220,7 +237,7 @@ def test_find_bad_by_hf_noise(raw=raw, n_freq_comps=n_freq_comps):
     signal = np.zeros((1, n))
     for freq_i in range(n_freq_comps):
         freq = np.random.randint(90, 100, n)
-        signal[0, :] += np.sin(2*np.pi*raw.times*freq)
+        signal[0, :] += np.sin(2 * np.pi * raw.times * freq)
 
     raw_tmp._data[rand_chn_idx, :] = signal * 1e-6
 
@@ -262,5 +279,13 @@ def test_ransac_too_little_ram(raw=raw):
 
     # Set n_samples very very high to trigger a memory error
     n_samples = 1e100
-    assert_raises(MemoryError, nd._run_ransac, chn_pos, chn_pos_good,
-                  good_chn_labs, n_pred_chns, data, n_samples)
+    assert_raises(
+        MemoryError,
+        nd._run_ransac,
+        chn_pos,
+        chn_pos_good,
+        good_chn_labs,
+        n_pred_chns,
+        data,
+        n_samples,
+    )
