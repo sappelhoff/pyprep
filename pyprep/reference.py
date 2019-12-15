@@ -28,9 +28,6 @@ class Reference:
         Parameters of PREP which include at least the following keys:
         ref_chs
         reref_chs
-    montage_kind : str
-        Which kind of montage should be used to infer the electrode
-        positions? E.g., 'standard_1020'
     ransac : boolean
         Whether or not to use ransac
 
