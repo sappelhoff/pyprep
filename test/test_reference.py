@@ -9,8 +9,9 @@ from pyprep.noisy import Noisydata
 
 raw = mne.io.read_raw_edf("./test/test_data/S001R01.edf", preload=True)
 raw.rename_channels(lambda s: s.strip("."))
+raw.rename_channels(lambda s: s.replace("c", "C").replace("o", "O").replace("f", "F").replace("t", "T").replace("Tp", "TP").replace("Cp", "CP"))
 ch_names = raw.info["ch_names"]
-montage = mne.channels.read_montage(kind="standard_1020", ch_names=ch_names)
+montage = mne.channels.make_standard_montage(kind="standard_1020")
 raw.set_montage(montage)
 
 

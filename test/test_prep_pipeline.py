@@ -9,7 +9,9 @@ mne.set_log_level("WARNING")
 
 raw = mne.io.read_raw_edf("./test/test_data/S004R01.edf", preload=True)
 raw.rename_channels(lambda s: s.strip("."))
+raw.rename_channels(lambda s: s.replace("c", "C").replace("o", "O").replace("f", "F").replace("t", "T").replace("Tp", "TP").replace("Cp", "CP"))
 montage_kind = "standard_1020"
+montage = mne.channels.make_standard_montage(montage_kind)
 
 
 def test_prep_pipeline(raw=raw):
@@ -21,7 +23,7 @@ def test_prep_pipeline(raw=raw):
     sample_rate = raw_copy.info["sfreq"]
     prep_params = {'ref_chs': ch_names_eeg,
                    'reref_chs': ch_names_eeg, 'line_freqs': np.arange(60,sample_rate/2,60)}
-    prep = PrepPipeline(raw_copy, prep_params, montage_kind=montage_kind)
+    prep = PrepPipeline(raw_copy, prep_params, montage)
     prep.fit()
 
     EEG_raw = raw_copy.get_data(picks='eeg')*1e6

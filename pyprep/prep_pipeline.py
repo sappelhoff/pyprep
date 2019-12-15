@@ -24,9 +24,8 @@ class PrepPipeline:
                 A list of channel names to be used for line-noise removed, and referenced [default: all channels]
             line_freqs : 1d array
                 A list of line frequencies to be removed
-        montage_kind : str
-            Which kind of montage should be used to infer the electrode
-            positions? E.g., 'standard_1020'
+        montage : DigMontage
+            Digital montage of EEG data
         ransac : boolean
             Whether or not to use ransac
 
@@ -38,11 +37,10 @@ class PrepPipeline:
 
     """
 
-    def __init__(self, raw, prep_params, montage_kind="standard_1020", ransac=True):
+    def __init__(self, raw, prep_params, montage, ransac=True):
         """Initialize PREP class."""
         self.raw = raw.copy()
         self.ch_names = self.raw.ch_names
-        montage = mne.channels.read_montage(kind=montage_kind, ch_names=self.ch_names)
         self.raw.set_montage(montage)
         self.raw.pick_types(eeg=True, eog=False, meg=False)
         self.ch_names_eeg = self.raw.ch_names

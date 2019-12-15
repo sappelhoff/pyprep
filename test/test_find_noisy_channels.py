@@ -9,7 +9,10 @@ def test_findnoisychannels():
     # using sample EEG data (https://physionet.org/content/eegmmidb/1.0.0/)
     raw = mne.io.read_raw_edf("./test/test_data/S001R01.edf", preload=True)
     raw.rename_channels(lambda s: s.strip("."))
-    a = mne.channels.read_montage(kind="standard_1020", ch_names=raw.info["ch_names"])
+    raw.rename_channels(
+        lambda s: s.replace("c", "C").replace("o", "O").replace("f", "F").replace("t", "T").replace("Tp", "TP").replace(
+            "Cp", "CP"))
+    a = mne.channels.make_standard_montage(kind="standard_1020")
     mne.set_log_level("WARNING")
     raw.set_montage(a)
     nd = NoisyChannels(raw)
