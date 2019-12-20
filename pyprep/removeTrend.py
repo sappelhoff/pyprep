@@ -1,16 +1,17 @@
 """High-pass filter and locally detrend the EEG signal."""
-import numpy as np
-import mne
-import scipy
 import logging
+
+import mne
+import numpy as np
+import scipy
 
 
 def removeTrend(
-    EEG,
-    detrendType="High pass",
-    sample_rate=160.0,
-    detrendCutoff=1.0,
-    detrendChannels=None,
+        EEG,
+        detrendType="High pass",
+        sample_rate=160.0,
+        detrendCutoff=1.0,
+        detrendChannels=None,
 ):
     """Perform high pass filtering or detrending.
 
@@ -110,23 +111,23 @@ def runline(y, n, dn):
     xwt = (np.arange(1, n + 1) - n / 2) / (n / 2)
     wt = np.power(1 - np.power(np.absolute(xwt), 3), 3)
     for j in range(0, nwin):
-        tseg = y[dn * j : dn * j + n]
+        tseg = y[dn * j: dn * j + n]
         y1 = np.mean(tseg)
         y2 = np.mean(np.multiply(np.arange(1, n + 1), tseg)) * (2 / (n + 1))
         a = np.multiply(np.subtract(y2, y1), 6 / (n - 1))
         b = np.subtract(y1, a * (n + 1) / 2)
         yfit[j, :] = np.multiply(np.arange(1, n + 1), a) + b
-        y_line[j * dn : j * dn + n] = y_line[j * dn : j * dn + n] + np.reshape(
+        y_line[j * dn: j * dn + n] = y_line[j * dn: j * dn + n] + np.reshape(
             np.multiply(yfit[j, :], wt), (n, 1)
         )
-        norm[j * dn : j * dn + n] = norm[j * dn : j * dn + n] + np.reshape(wt, (n, 1))
+        norm[j * dn: j * dn + n] = norm[j * dn: j * dn + n] + np.reshape(wt, (n, 1))
 
     for i in range(0, len(norm)):
         if norm[i] > 0:
             y_line[i] = y_line[i] / norm[i]
     indx = (nwin - 1) * dn + n - 1
     npts = len(y) - indx + 1
-    y_line[indx - 1 :] = np.reshape(
+    y_line[indx - 1:] = np.reshape(
         (np.multiply(np.arange(n + 1, n + npts + 1), a) + b), (npts, 1)
     )
     for i in range(0, len(y_line)):

@@ -58,7 +58,7 @@ def filter_design(N_order, amp, freq):
         ),
     )
     kernel = np.real(
-        np.fft.ifft(np.concatenate([freq, np.conj(freq[len(freq) - 2 : 0 : -1])]))
+        np.fft.ifft(np.concatenate([freq, np.conj(freq[len(freq) - 2: 0: -1])]))
     )
-    kernel = np.multiply(kernel[0 : N_order + 1], (np.transpose(hamming_window[:])))
+    kernel = np.multiply(kernel[0: N_order + 1], (np.transpose(hamming_window[:])))
     return kernel

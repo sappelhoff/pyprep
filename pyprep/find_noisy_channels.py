@@ -1,13 +1,13 @@
 """finds bad channels."""
-from statsmodels import robust
-from pyprep.removeTrend import removeTrend
-from psutil import virtual_memory
 import mne
-from scipy.stats import iqr
 import numpy as np
-from scipy import signal
 from mne.channels.interpolation import _make_interpolation_matrix
+from psutil import virtual_memory
+from scipy import signal
+from scipy.stats import iqr
+from statsmodels import robust
 
+from pyprep.removeTrend import removeTrend
 from pyprep.utilities import filter_design
 
 
@@ -67,14 +67,14 @@ class NoisyChannels:
 
         """
         bads = (
-            self.bad_by_nan
-            + self.bad_by_flat
-            + self.bad_by_deviation
-            + self.bad_by_hf_noise
-            + self.bad_by_SNR
-            + self.bad_by_correlation
-            + self.bad_by_dropout
-            + self.bad_by_ransac
+                self.bad_by_nan
+                + self.bad_by_flat
+                + self.bad_by_deviation
+                + self.bad_by_hf_noise
+                + self.bad_by_SNR
+                + self.bad_by_correlation
+                + self.bad_by_dropout
+                + self.bad_by_ransac
         )
         bads = list(set(bads))
 
@@ -212,8 +212,8 @@ class NoisyChannels:
             )
             noisiness_median = np.nanmedian(noisiness)
             noiseSD = (
-                np.median(np.absolute(np.subtract(noisiness, np.median(noisiness))))
-                * 1.4826
+                    np.median(np.absolute(np.subtract(noisiness, np.median(noisiness))))
+                    * 1.4826
             )
             zscore_HFNoise = np.divide(
                 np.subtract(noisiness, noisiness_median), noiseSD
@@ -221,8 +221,8 @@ class NoisyChannels:
             HFnoise_channel_mask = [False] * self.new_dimensions[0]
             for i in range(0, self.new_dimensions[0]):
                 HFnoise_channel_mask[i] = zscore_HFNoise[
-                    i
-                ] > HF_zscore_threshold or np.isnan(zscore_HFNoise[i])
+                                              i
+                                          ] > HF_zscore_threshold or np.isnan(zscore_HFNoise[i])
             HFNoise_channels = self.channels_interpolate[HFnoise_channel_mask]
         else:
             EEG_filt = data_tmp
@@ -237,7 +237,7 @@ class NoisyChannels:
         return None
 
     def find_bad_by_correlation(
-        self, correlation_secs=1.0, correlation_threshold=0.4, frac_bad=0.1
+            self, correlation_secs=1.0, correlation_threshold=0.4, frac_bad=0.1
     ):
         """Find correlation between the low frequency components of the EEG below 50 Hz.
 
@@ -272,13 +272,13 @@ class NoisyChannels:
         len_correlation_window = len(correlation_window)
         EEGData = np.transpose(self.EEGData)
         EEG_new_win = np.reshape(
-            np.transpose(EEGData[0 : len_correlation_window * w_correlation, :]),
+            np.transpose(EEGData[0: len_correlation_window * w_correlation, :]),
             (self.new_dimensions[0], len_correlation_window, w_correlation),
             order="F",
         )
         data_win = np.reshape(
             np.transpose(
-                self.EEGData_beforeFilt[0 : len_correlation_window * w_correlation, :]
+                self.EEGData_beforeFilt[0: len_correlation_window * w_correlation, :]
             ),
             (self.new_dimensions[0], len_correlation_window, w_correlation),
             order="F",
@@ -336,12 +336,12 @@ class NoisyChannels:
         return None
 
     def find_bad_by_ransac(
-        self,
-        n_samples=50,
-        fraction_good=0.25,
-        corr_thresh=0.75,
-        fraction_bad=0.4,
-        corr_window_secs=5.0,
+            self,
+            n_samples=50,
+            fraction_good=0.25,
+            corr_thresh=0.75,
+            fraction_bad=0.4,
+            corr_window_secs=5.0,
     ):
         """Detect channels that are not predicted well by other channels.
 
@@ -448,7 +448,7 @@ class NoisyChannels:
             # Take only correlations of data with pred
             # and use diag to exctract correlation of
             # data_i with pred_i
-            R = np.diag(R[0 : self.n_chans_new, self.n_chans_new :])
+            R = np.diag(R[0: self.n_chans_new, self.n_chans_new:])
             channel_correlations[k, :] = R
 
         # Thresholding
@@ -464,7 +464,7 @@ class NoisyChannels:
         return None
 
     def run_ransac(
-        self, chn_pos, chn_pos_good, good_chn_labs, n_pred_chns, data, n_samples
+            self, chn_pos, chn_pos_good, good_chn_labs, n_pred_chns, data, n_samples
     ):
         """Detect noisy channels apart from the ones described previously.
 

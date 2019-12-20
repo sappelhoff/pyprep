@@ -1,11 +1,10 @@
 """Module for PREP pipeline."""
 import mne
-import numpy as np
 
-from pyprep.utilities import _union, _set_diff
-from pyprep.removeTrend import removeTrend
 from pyprep.find_noisy_channels import NoisyChannels
 from pyprep.reference import Reference
+from pyprep.removeTrend import removeTrend
+from pyprep.utilities import _union, _set_diff
 
 
 class PrepPipeline:
