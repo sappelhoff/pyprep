@@ -67,7 +67,7 @@ class Reference:
             self.raw.info["bads"] = self.noisy_channels["bad_all"]
             self.raw.interpolate_bads()
         self.reference_signal = (
-                np.nanmean(self.raw.get_data(picks=self.reference_channels), axis=0) * 1e6
+            np.nanmean(self.raw.get_data(picks=self.reference_channels), axis=0) * 1e6
         )
         rereferenced_index = [
             self.ch_names_eeg.index(ch) for ch in self.rereferenced_channels
@@ -89,7 +89,7 @@ class Reference:
         self.raw.info["bads"] = bad_channels
         self.raw.interpolate_bads()
         reference_correct = (
-                np.nanmean(self.raw.get_data(picks=self.reference_channels), axis=0) * 1e6
+            np.nanmean(self.raw.get_data(picks=self.reference_channels), axis=0) * 1e6
         )
         self.EEG = self.raw.get_data() * 1e6
         self.EEG = self.remove_reference(
@@ -156,7 +156,7 @@ class Reference:
         # Get initial estimate of the reference by the specified method
         signal = raw.get_data() * 1e6
         self.reference_signal = (
-                np.nanmedian(raw.get_data(picks=self.reference_channels), axis=0) * 1e6
+            np.nanmedian(raw.get_data(picks=self.reference_channels), axis=0) * 1e6
         )
         reference_index = [
             self.ch_names_eeg.index(ch) for ch in self.reference_channels
@@ -201,12 +201,12 @@ class Reference:
             logger.info("Bad channels: {}".format(self.noisy_channels))
 
             if (
-                    iterations > 1
-                    and (
+                iterations > 1
+                and (
                     not self.noisy_channels["bad_all"]
                     or set(self.noisy_channels["bad_all"]) == set(noisy_channels_old)
-            )
-                    or iterations > max_iteration_num
+                )
+                or iterations > max_iteration_num
             ):
                 break
             noisy_channels_old = self.noisy_channels["bad_all"].copy()
@@ -225,8 +225,8 @@ class Reference:
             else:
                 signal_tmp = signal
             self.reference_signal = (
-                    np.nanmean(raw_tmp.get_data(picks=self.reference_channels), axis=0)
-                    * 1e6
+                np.nanmean(raw_tmp.get_data(picks=self.reference_channels), axis=0)
+                * 1e6
             )
 
             signal_tmp = self.remove_reference(
@@ -282,6 +282,6 @@ class Reference:
                 )
             signal_referenced = signal.copy()
             signal_referenced[np.asarray(index), :] = (
-                    signal[np.asarray(index), :] - reference
+                signal[np.asarray(index), :] - reference
             )
         return signal_referenced

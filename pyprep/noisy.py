@@ -130,7 +130,7 @@ class Noisydata:
     """
 
     def __init__(
-            self, instance, montage_kind="standard_1020", low_cut=0.01, high_cut=50.0
+        self, instance, montage_kind="standard_1020", low_cut=0.01, high_cut=50.0
     ):
         """Initialize the class."""
         # Make sure that we got an MNE object
@@ -212,12 +212,12 @@ class Noisydata:
 
         """
         bads = (
-                self.bad_by_flat
-                + self.bad_by_nan
-                + self.bad_by_deviation
-                + self.bad_by_hf_noise
-                + self.bad_by_correlation
-                + self.bad_by_ransac
+            self.bad_by_flat
+            + self.bad_by_nan
+            + self.bad_by_deviation
+            + self.bad_by_hf_noise
+            + self.bad_by_correlation
+            + self.bad_by_ransac
         )
         bads = list(set(bads))
 
@@ -362,7 +362,7 @@ class Noisydata:
         return None
 
     def find_bad_by_correlation(
-            self, corr_thresh=0.4, fraction_bad=0.1, corr_window_secs=1.0
+        self, corr_thresh=0.4, fraction_bad=0.1, corr_window_secs=1.0
     ):
         """Detect channels that do not correlate well with the other channels.
 
@@ -433,12 +433,12 @@ class Noisydata:
         return None
 
     def find_bad_by_ransac(
-            self,
-            n_samples=50,
-            fraction_good=0.25,
-            corr_thresh=0.75,
-            fraction_bad=0.4,
-            corr_window_secs=4.0,
+        self,
+        n_samples=50,
+        fraction_good=0.25,
+        corr_thresh=0.75,
+        fraction_bad=0.4,
+        corr_window_secs=4.0,
     ):
         """Detect channels that are not predicted well by other channels.
 
@@ -547,7 +547,7 @@ class Noisydata:
             # Take only correlations of data with pred
             # and use diag to exctract correlation of
             # data_i with pred_i
-            R = np.diag(R[0: self.n_chans, self.n_chans:])
+            R = np.diag(R[0 : self.n_chans, self.n_chans :])
             channel_correlations[k, :] = R
 
         # Thresholding
@@ -565,7 +565,7 @@ class Noisydata:
         return None
 
     def _run_ransac(
-            self, chn_pos, chn_pos_good, good_chn_labs, n_pred_chns, data, n_samples
+        self, chn_pos, chn_pos_good, good_chn_labs, n_pred_chns, data, n_samples
     ):
         """Predict the EEG timecourse of a channel using a ransac approach.
 
