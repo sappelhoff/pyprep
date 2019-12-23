@@ -1,9 +1,8 @@
 """Test the noisy module."""
 
-from nose.tools import assert_raises
-
-import numpy as np
 import mne
+import numpy as np
+from nose.tools import assert_raises
 
 from pyprep.noisy import Noisydata, find_bad_epochs
 

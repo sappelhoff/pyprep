@@ -1,6 +1,6 @@
 import numpy as np
+
 import pyprep.removeTrend as removeTrend
-import pytest
 
 
 def test_highpass():

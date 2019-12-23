@@ -1,15 +1,27 @@
 """Test Robust Reference"""
-import pytest
-
-import numpy as np
-import mne
 import random
-from pyprep.reference import Reference
-from pyprep.noisy import Noisydata
 
-raw = mne.io.read_raw_edf("./test/test_data/S001R01.edf", preload=True)
+import mne
+import numpy as np
+import pytest
+from mne.datasets import eegbci
+
+from pyprep.reference import Reference
+
+# load in subject 1, run 1 dataset
+edf_fpath = eegbci.load_data(1, 1)[0]
+
+# using sample EEG data (https://physionet.org/content/eegmmidb/1.0.0/)
+raw = mne.io.read_raw_edf(edf_fpath, preload=True)
 raw.rename_channels(lambda s: s.strip("."))
-raw.rename_channels(lambda s: s.replace("c", "C").replace("o", "O").replace("f", "F").replace("t", "T").replace("Tp", "TP").replace("Cp", "CP"))
+raw.rename_channels(
+    lambda s: s.replace("c", "C")
+    .replace("o", "O")
+    .replace("f", "F")
+    .replace("t", "T")
+    .replace("Tp", "TP")
+    .replace("Cp", "CP")
+)
 ch_names = raw.info["ch_names"]
 montage = mne.channels.make_standard_montage(kind="standard_1020")
 raw.set_montage(montage)

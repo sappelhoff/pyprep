@@ -1,17 +1,25 @@
-import numpy as np
-from pyprep.find_noisy_channels import NoisyChannels
 import mne
-import pytest
+import numpy as np
+from mne.datasets import eegbci
+
+from pyprep.find_noisy_channels import NoisyChannels
 
 
 def test_findnoisychannels():
+    # load in subject 1, run 1 dataset
+    edf_fpath = eegbci.load_data(1, 1)[0]
 
     # using sample EEG data (https://physionet.org/content/eegmmidb/1.0.0/)
-    raw = mne.io.read_raw_edf("./test/test_data/S001R01.edf", preload=True)
+    raw = mne.io.read_raw_edf(edf_fpath, preload=True)
     raw.rename_channels(lambda s: s.strip("."))
     raw.rename_channels(
-        lambda s: s.replace("c", "C").replace("o", "O").replace("f", "F").replace("t", "T").replace("Tp", "TP").replace(
-            "Cp", "CP"))
+        lambda s: s.replace("c", "C")
+        .replace("o", "O")
+        .replace("f", "F")
+        .replace("t", "T")
+        .replace("Tp", "TP")
+        .replace("Cp", "CP")
+    )
     a = mne.channels.make_standard_montage(kind="standard_1020")
     mne.set_log_level("WARNING")
     raw.set_montage(a)
@@ -56,7 +64,7 @@ def test_findnoisychannels():
     raw_tmp._data[rand_chn_idx, :] = raw_tmp._data[rand_chn_idx, :] / 10
     nd = NoisyChannels(raw_tmp)
     nd.find_bad_by_deviation()
-    assert (rand_chn_lab in nd.bad_by_deviation)
+    assert rand_chn_lab in nd.bad_by_deviation
     # Inserting one random channel with a high deviation
     raw_tmp = raw.copy()
     rand_chn_idx = int(np.random.randint(0, m, 1))
@@ -65,7 +73,7 @@ def test_findnoisychannels():
     raw_tmp._data[rand_chn_idx, :] *= arbitrary_scaling
     nd = NoisyChannels(raw_tmp)
     nd.find_bad_by_deviation()
-    assert (rand_chn_lab in nd.bad_by_deviation)
+    assert rand_chn_lab in nd.bad_by_deviation
 
     # Test for correlation between EEG channels
     raw_tmp = raw.copy()
@@ -83,8 +91,7 @@ def test_findnoisychannels():
     raw_tmp._data[rand_chn_idx, :] = signal * 1e-6
     nd = NoisyChannels(raw_tmp)
     nd.find_bad_by_correlation()
-    assert (rand_chn_lab in nd.bad_by_correlation)
-
+    assert rand_chn_lab in nd.bad_by_correlation
 
     # Test for high freq noise detection
     raw_tmp = raw.copy()
@@ -99,7 +106,7 @@ def test_findnoisychannels():
     raw_tmp._data[rand_chn_idx, :] = signal * 1e-6
     nd = NoisyChannels(raw_tmp)
     nd.find_bad_by_hfnoise()
-    assert (rand_chn_lab in nd.bad_by_hf_noise)
+    assert rand_chn_lab in nd.bad_by_hf_noise
 
     # Test for signal to noise ratio in EEG data
     raw_tmp = raw.copy()
@@ -110,7 +117,7 @@ def test_findnoisychannels():
     raw_tmp[rand_chn_idx, :] = np.sin(2 * np.pi * raw.times * 90) * 1e-6
     nd = NoisyChannels(raw_tmp)
     nd.find_bad_by_SNR()
-    assert (rand_chn_lab in nd.bad_by_SNR)
+    assert rand_chn_lab in nd.bad_by_SNR
 
     # Test for finding bad channels by RANSAC
     raw_tmp = raw.copy()
@@ -122,4 +129,3 @@ def test_findnoisychannels():
     nd.find_bad_by_ransac()
     bads = nd.bad_by_ransac
     assert bads == raw_tmp.ch_names[0:6]
-
