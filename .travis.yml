@@ -11,6 +11,7 @@ install:
   - pip install -r requirements.txt
   - pip install -e .
   - pip install codecov pytest-cov black pydocstyle
+  - python -c 'import mne; mne.datasets.testing.data_path(verbose=True)';
 
 script:
   - pytest test/ -v --cov=./
