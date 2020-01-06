@@ -1,32 +1,14 @@
 import matplotlib.pyplot as plt
 import mne
 import numpy as np
+import pytest
 import scipy.io as sio
-from mne.datasets import eegbci
 
 from pyprep.prep_pipeline import PrepPipeline
 
-mne.set_log_level("WARNING")
 
-# load in subject 1, run 1 dataset
-edf_fpath = eegbci.load_data(4, 1)[0]
-
-# using sample EEG data (https://physionet.org/content/eegmmidb/1.0.0/)
-raw = mne.io.read_raw_edf(edf_fpath, preload=True)
-raw.rename_channels(lambda s: s.strip("."))
-raw.rename_channels(
-    lambda s: s.replace("c", "C")
-    .replace("o", "O")
-    .replace("f", "F")
-    .replace("t", "T")
-    .replace("Tp", "TP")
-    .replace("Cp", "CP")
-)
-montage_kind = "standard_1020"
-montage = mne.channels.make_standard_montage(montage_kind)
-
-
-def test_prep_pipeline(raw=raw):
+@pytest.mark.usefixtures("raw", "montage")
+def test_prep_pipeline(raw, montage):
     """Test prep pipeline"""
     eeg_index = mne.pick_types(raw.info, eeg=True, eog=False, meg=False)
     raw_copy = raw.copy()

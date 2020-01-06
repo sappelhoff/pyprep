@@ -4,30 +4,14 @@ import random
 import mne
 import numpy as np
 import pytest
-from mne.datasets import eegbci
 
 from pyprep.reference import Reference
 
-# load in subject 1, run 1 dataset
-edf_fpath = eegbci.load_data(1, 1)[0]
 
-# using sample EEG data (https://physionet.org/content/eegmmidb/1.0.0/)
-raw = mne.io.read_raw_edf(edf_fpath, preload=True)
-raw.rename_channels(lambda s: s.strip("."))
-raw.rename_channels(
-    lambda s: s.replace("c", "C")
-    .replace("o", "O")
-    .replace("f", "F")
-    .replace("t", "T")
-    .replace("Tp", "TP")
-    .replace("Cp", "CP")
-)
-ch_names = raw.info["ch_names"]
-montage = mne.channels.make_standard_montage(kind="standard_1020")
-raw.set_montage(montage)
+@pytest.mark.usefixtures("raw")
+def test_basic_input(raw):
+    ch_names = raw.info["ch_names"]
 
-
-def test_basic_input():
     """Test Reference output data type"""
     raw_tmp = raw.copy()
     params = {"ref_chs": ch_names, "reref_chs": ch_names}
@@ -42,7 +26,10 @@ def test_basic_input():
     assert type(reference.raw) == mne.io.edf.edf.RawEDF
 
 
-def test_all_bad_input():
+@pytest.mark.usefixtures("raw")
+def test_all_bad_input(raw):
+    ch_names = raw.info["ch_names"]
+
     """Test robust reference when all reference channels are bad"""
     raw_tmp = raw.copy()
     m, n = raw_tmp.get_data().shape

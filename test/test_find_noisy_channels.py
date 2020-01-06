@@ -1,28 +1,12 @@
-import mne
 import numpy as np
-from mne.datasets import eegbci
+import pytest
 
 from pyprep.find_noisy_channels import NoisyChannels
 
 
-def test_findnoisychannels():
-    # load in subject 1, run 1 dataset
-    edf_fpath = eegbci.load_data(1, 1)[0]
-
-    # using sample EEG data (https://physionet.org/content/eegmmidb/1.0.0/)
-    raw = mne.io.read_raw_edf(edf_fpath, preload=True)
-    raw.rename_channels(lambda s: s.strip("."))
-    raw.rename_channels(
-        lambda s: s.replace("c", "C")
-        .replace("o", "O")
-        .replace("f", "F")
-        .replace("t", "T")
-        .replace("Tp", "TP")
-        .replace("Cp", "CP")
-    )
-    a = mne.channels.make_standard_montage(kind="standard_1020")
-    mne.set_log_level("WARNING")
-    raw.set_montage(a)
+@pytest.mark.usefixtures("raw", "montage")
+def test_findnoisychannels(raw, montage):
+    raw.set_montage(montage)
     nd = NoisyChannels(raw)
     nd.find_all_bads(ransac=True)
     bads = nd.get_bads()
@@ -37,8 +21,7 @@ def test_findnoisychannels():
         bads = nd.get_bads()
 
     # make sure no bad channels exist in the data
-    if bads != []:
-        raw.drop_channels(ch_names=bads)
+    raw.drop_channels(ch_names=bads)
 
     # Test for NaN and flat channels
     raw_tmp = raw.copy()
