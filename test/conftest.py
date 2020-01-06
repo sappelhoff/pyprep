@@ -16,7 +16,7 @@ def raw():
     """Fixture for physionet EEG subject 4, dataset 1."""
     mne.set_log_level("WARNING")
     # load in subject 1, run 1 dataset
-    edf_fpath = eegbci.load_data(4, 1)[0]
+    edf_fpath = eegbci.load_data(4, 1, update_path=True)[0]
 
     # using sample EEG data (https://physionet.org/content/eegmmidb/1.0.0/)
     raw = mne.io.read_raw_edf(edf_fpath, preload=True)
