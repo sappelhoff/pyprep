@@ -14,6 +14,9 @@
 #
 import os
 import sys
+import sphinx_gallery  # noqa: F401
+from sphinx_gallery.sorting import ExampleTitleSortKey
+
 sys.path.insert(0, os.path.abspath('../..'))
 
 
@@ -41,7 +44,8 @@ release = u'0.2.3-dev'
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.viewcode',
-    'sphinx.ext.napoleon'
+    'sphinx.ext.napoleon',
+    'sphinx_gallery.gen_gallery',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -158,4 +162,21 @@ texinfo_documents = [
 ]
 
 
+sphinx_gallery_conf = {
+    'examples_dirs': '../examples',
+    'within_subsection_order': ExampleTitleSortKey,
+    'gallery_dirs': 'auto_examples',
+    'filename_pattern': '^((?!sgskip).)*$',
+    'backreferences_dir': 'generated',
+    'binder': {
+        # Required keys
+        'org': 'mne-tools',
+        'repo': 'mne-bids',
+        'branch': 'gh-pages',  # noqa: E501 Can be any branch, tag, or commit hash. Use a branch that hosts your docs.
+        'binderhub_url': 'https://mybinder.org',  # noqa: E501 Any URL of a binderhub deployment. Must be full URL (e.g. https://mybinder.org).
+        'dependencies': [
+            './environment.yml'
+        ],
+    }
+}
 # -- Extension configuration -------------------------------------------------
