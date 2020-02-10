@@ -11,7 +11,7 @@ working with [MNE-Python](https://www.martinos.org/mne/stable/index.html) for
 EEG data processing and analysis. Also contains a function to detect outlier
 epochs inspired by the FASTER algorithm.
 
-For a basic use example, see [the documentation.](http://pyprep.readthedocs.io/en/latest/examples.html)
+For a basic use example, see [the documentation.](http://pyprep.readthedocs.io/en/latest/)
 
 # Installation
 

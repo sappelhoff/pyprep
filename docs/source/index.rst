@@ -1,10 +1,10 @@
-.. pyprep documentation master file, created by
-   sphinx-quickstart on Mon Apr 23 14:56:06 2018.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
 Welcome to pyprep's documentation!
 ==================================
+
+A python implementation of the Preprocessing Pipeline (PREP) for EEG data,
+working with MNE-Python for EEG data processing and analysis.
+Also contains a function to detect outlier epochs inspired by the FASTER
+algorithm.
 
 .. toctree::
    :maxdepth: 2
@@ -12,11 +12,3 @@ Welcome to pyprep's documentation!
 
    examples
    whats_new
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
