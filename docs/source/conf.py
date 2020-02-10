@@ -6,7 +6,7 @@ sys.path.insert(0, os.path.abspath('../..'))
 
 # get the version
 version = None
-with open(os.path.join('..', 'pyprep', '__init__.py'), 'r') as fid:
+with open(os.path.join('..', '..', 'pyprep', '__init__.py'), 'r') as fid:
     for line in (line.strip() for line in fid):
         if line.startswith('__version__'):
             version = line.split('=')[1].strip().strip('\'')
