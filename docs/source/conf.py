@@ -1,33 +1,29 @@
-# -*- coding: utf-8 -*-
-#
-# Configuration file for the Sphinx documentation builder.
-#
-# This file does only contain a selection of the most common options. For a
-# full list see the documentation:
-# http://www.sphinx-doc.org/en/stable/config
-
-# -- Path setup --------------------------------------------------------------
-
-# If extensions (or modules to document with autodoc) are in another directory,
-# add these directories to sys.path here. If the directory is relative to the
-# documentation root, use os.path.abspath to make it absolute, like shown here.
-#
+"""Configure sphinx."""
 import os
 import sys
 
 sys.path.insert(0, os.path.abspath('../..'))
 
+# get the version
+version = None
+with open(os.path.join('..', 'pyprep', '__init__.py'), 'r') as fid:
+    for line in (line.strip() for line in fid):
+        if line.startswith('__version__'):
+            version = line.split('=')[1].strip().strip('\'')
+            break
+if version is None:
+    raise RuntimeError('Could not determine version')
+
 
 # -- Project information -----------------------------------------------------
-
 project = u'pyprep'
 copyright = u'2018, Stefan Appelhoff'
 author = u'Stefan Appelhoff'
 
 # The short X.Y version
-version = u'0.2.3-dev'
+version = version
 # The full version, including alpha/beta/rc tags
-release = u'0.2.3-dev'
+release = version
 
 
 # -- General configuration ---------------------------------------------------

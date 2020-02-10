@@ -25,7 +25,7 @@ def test_prep_pipeline(raw, montage):
 
     EEG_raw = raw_copy.get_data(picks="eeg") * 1e6
     EEG_raw_max = np.max(abs(EEG_raw), axis=None)
-    EEG_raw_matlab = sio.loadmat("./examples/Matlab results/EEG_raw.mat")
+    EEG_raw_matlab = sio.loadmat("./examples/matlab_results/EEG_raw.mat")
     EEG_raw_matlab = EEG_raw_matlab["save_data"]
     EEG_raw_diff = EEG_raw - EEG_raw_matlab
     EEG_raw_mse = (EEG_raw_diff / EEG_raw_max ** 2).mean(axis=None)
@@ -66,7 +66,7 @@ def test_prep_pipeline(raw, montage):
     cb = fig.colorbar(im, ax=axs, fraction=0.05, pad=0.04)
     cb.set_label("\u03BCVolt", fontsize=14)
 
-    EEG_new_matlab = sio.loadmat("./examples/Matlab results/EEGNew.mat")
+    EEG_new_matlab = sio.loadmat("./examples/matlab_results/EEGNew.mat")
     EEG_new_matlab = EEG_new_matlab["save_data"]
     EEG_new = prep.EEG_new
     EEG_new_max = np.max(abs(EEG_new), axis=None)
@@ -99,7 +99,7 @@ def test_prep_pipeline(raw, montage):
     # axs[1, 0].set_title('High pass filter', loc='left', fontsize=14)
     # axs[1, 0].set_ylabel('Channel Number', fontsize=14)
 
-    EEG_clean_matlab = sio.loadmat("./examples/Matlab results/EEG.mat")
+    EEG_clean_matlab = sio.loadmat("./examples/matlab_results/EEG.mat")
     EEG_clean_matlab = EEG_clean_matlab["save_data"]
     EEG_clean = prep.EEG
     EEG_max = np.max(abs(EEG_clean), axis=None)
@@ -134,7 +134,7 @@ def test_prep_pipeline(raw, montage):
 
     EEG = prep.EEG_before_interpolation
     EEG_max = np.max(abs(EEG), axis=None)
-    EEG_ref_mat = sio.loadmat("./examples/Matlab results/EEGref.mat")
+    EEG_ref_mat = sio.loadmat("./examples/matlab_results/EEGref.mat")
     EEG_ref_matlab = EEG_ref_mat["save_EEG"]
     reference_matlab = EEG_ref_mat["save_reference"]
     EEG_ref_diff = EEG - EEG_ref_matlab
@@ -172,7 +172,7 @@ def test_prep_pipeline(raw, montage):
 
     EEG_final = prep.raw.get_data() * 1e6
     EEG_final_max = np.max(abs(EEG_final), axis=None)
-    EEG_final_matlab = sio.loadmat("./examples/Matlab results/EEGinterp.mat")
+    EEG_final_matlab = sio.loadmat("./examples/matlab_results/EEGinterp.mat")
     EEG_final_matlab = EEG_final_matlab["save_data"]
     EEG_final_diff = EEG_final - EEG_final_matlab
     EEG_final_mse = ((EEG_final_diff / EEG_final_max) ** 2).mean(axis=None)

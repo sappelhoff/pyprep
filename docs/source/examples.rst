@@ -56,4 +56,4 @@ or interpolated beforehand.
 There is also a work in progress version of the full PREP pipeline implemented
 by Aamna Lawrence, Victor Xiang, and Adam Li. You can see the example
 notebook here:
-` ./examples/prep_demo.ipynb <https://nbviewer.jupyter.org/github/sappelhoff/pyprep/blob/master/examples/prep_demo.ipynb>`_
+`./examples/prep_demo.ipynb <https://nbviewer.jupyter.org/github/sappelhoff/pyprep/blob/master/examples/prep_demo.ipynb>`_

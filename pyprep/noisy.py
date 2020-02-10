@@ -547,7 +547,7 @@ class Noisydata:
             # Take only correlations of data with pred
             # and use diag to exctract correlation of
             # data_i with pred_i
-            R = np.diag(R[0 : self.n_chans, self.n_chans :])
+            R = np.diag(R[0: self.n_chans, self.n_chans:])
             channel_correlations[k, :] = R
 
         # Thresholding
