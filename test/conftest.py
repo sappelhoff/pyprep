@@ -23,10 +23,10 @@ def raw():
     raw.rename_channels(lambda s: s.strip("."))
     raw.rename_channels(
         lambda s: s.replace("c", "C")
-            .replace("o", "O")
-            .replace("f", "F")
-            .replace("t", "T")
-            .replace("Tp", "TP")
-            .replace("Cp", "CP")
+        .replace("o", "O")
+        .replace("f", "F")
+        .replace("t", "T")
+        .replace("Tp", "TP")
+        .replace("Cp", "CP")
     )
     return raw

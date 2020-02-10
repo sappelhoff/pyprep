@@ -8,7 +8,7 @@ from pyprep.noisy import Noisydata, find_bad_epochs
 
 
 def make_random_mne_object(
-        sfreq=1000.0, t_secs=600, n_freq_comps=5, freq_range=[10, 60]
+    sfreq=1000.0, t_secs=600, n_freq_comps=5, freq_range=[10, 60]
 ):
     """Make a random MNE object to use for testing.
 
@@ -106,8 +106,9 @@ def test_find_bad_epochs(epochs=epochs):
     assert bads == []
 
 
-@pytest.mark.parametrize('input', [raw, {"key": 1}, [1, 2, 3],
-                                   np.random.random((3, 3))])
+@pytest.mark.parametrize(
+    "input", [raw, {"key": 1}, [1, 2, 3], np.random.random((3, 3))]
+)
 def test_init(input):
     """Test the class initialization."""
     # Initialize with an mne object should work
@@ -197,7 +198,7 @@ def test_find_bad_by_deviation(raw=raw):
 
 
 def test_find_bad_by_correlation(
-        raw=raw, freq_range=freq_range, n_freq_comps=n_freq_comps
+    raw=raw, freq_range=freq_range, n_freq_comps=n_freq_comps
 ):
     """Test find_bad_by_flat."""
     raw_tmp = raw.copy()
@@ -282,5 +283,6 @@ def test_ransac_too_little_ram(raw=raw):
     # Set n_samples very very high to trigger a memory error
     n_samples = 1e100
     with pytest.raises(MemoryError):
-        nd._run_ransac(chn_pos, chn_pos_good, good_chn_labs, n_pred_chns,
-                       data, n_samples)
+        nd._run_ransac(
+            chn_pos, chn_pos_good, good_chn_labs, n_pred_chns, data, n_samples
+        )
