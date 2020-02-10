@@ -39,7 +39,6 @@ setup(name='pyprep',
       python_requires='>=3.6',
       extras_require={
         'test': ['pytest>=5.3'],
-        'docs': ['sphinx_gallery']
       },
       project_urls={
         'Documentation': 'https://pyprep.readthedocs.io/en/latest',

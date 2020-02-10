@@ -15,7 +15,6 @@
 import os
 import sys
 import sphinx_gallery  # noqa: F401
-from sphinx_gallery.sorting import ExampleTitleSortKey
 
 sys.path.insert(0, os.path.abspath('../..'))
 
@@ -110,36 +109,6 @@ html_static_path = ['_static']
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'pyprepdoc'
 
-
-# -- Options for LaTeX output ------------------------------------------------
-
-latex_elements = {
-    # The paper size ('letterpaper' or 'a4paper').
-    #
-    # 'papersize': 'letterpaper',
-
-    # The font size ('10pt', '11pt' or '12pt').
-    #
-    # 'pointsize': '10pt',
-
-    # Additional stuff for the LaTeX preamble.
-    #
-    # 'preamble': '',
-
-    # Latex figure (float) alignment
-    #
-    # 'figure_align': 'htbp',
-}
-
-# Grouping the document tree into LaTeX files. List of tuples
-# (source start file, target name, title,
-#  author, documentclass [howto, manual, or own class]).
-latex_documents = [
-    (master_doc, 'pyprep.tex', u'pyprep Documentation',
-     u'Stefan Appelhoff', 'manual'),
-]
-
-
 # -- Options for manual page output ------------------------------------------
 
 # One entry per manual page. List of tuples
@@ -148,35 +117,3 @@ man_pages = [
     (master_doc, 'pyprep', u'pyprep Documentation',
      [author], 1)
 ]
-
-
-# -- Options for Texinfo output ----------------------------------------------
-
-# Grouping the document tree into Texinfo files. List of tuples
-# (source start file, target name, title, author,
-#  dir menu entry, description, category)
-texinfo_documents = [
-    (master_doc, 'pyprep', u'pyprep Documentation',
-     author, 'pyprep', 'One line description of project.',
-     'Miscellaneous'),
-]
-
-
-sphinx_gallery_conf = {
-    'examples_dirs': '../examples',
-    'within_subsection_order': ExampleTitleSortKey,
-    'gallery_dirs': 'auto_examples',
-    'filename_pattern': '^((?!sgskip).)*$',
-    'backreferences_dir': 'generated',
-    'binder': {
-        # Required keys
-        'org': 'mne-tools',
-        'repo': 'mne-bids',
-        'branch': 'gh-pages',  # noqa: E501 Can be any branch, tag, or commit hash. Use a branch that hosts your docs.
-        'binderhub_url': 'https://mybinder.org',  # noqa: E501 Any URL of a binderhub deployment. Must be full URL (e.g. https://mybinder.org).
-        'dependencies': [
-            './environment.yml'
-        ],
-    }
-}
-# -- Extension configuration -------------------------------------------------
