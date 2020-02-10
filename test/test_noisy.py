@@ -2,7 +2,7 @@
 
 import mne
 import numpy as np
-from nose.tools import assert_raises
+import pytest
 
 from pyprep.noisy import Noisydata, find_bad_epochs
 
@@ -106,16 +106,18 @@ def test_find_bad_epochs(epochs=epochs):
     assert bads == []
 
 
-def test_init(raw=raw):
+@pytest.mark.parametrize('input', [raw, {"key": 1}, [1, 2, 3],
+                                   np.random.random((3, 3))])
+def test_init(input):
     """Test the class initialization."""
     # Initialize with an mne object should work
-    nd = Noisydata(raw)
-    assert nd
+    if isinstance(raw, mne.io.RawArray):
+        Noisydata(raw)
+        return
 
     # Initialization with another object should raise an error
-    assert_raises(AssertionError, Noisydata, {"key": 1})
-    assert_raises(AssertionError, Noisydata, [1, 2, 3])
-    assert_raises(AssertionError, Noisydata, np.random.random((3, 3)))
+    with pytest.raises(AssertionError):
+        Noisydata(raw)
 
 
 def test_get_bads(raw=raw):
@@ -165,9 +167,9 @@ def test_find_bad_by_flat(raw=raw):
 
 
 def test_find_bad_by_deviation(raw=raw):
+    """Test find_bad_by_deviation."""
     np.random.seed(12345)
 
-    """Test find_bad_by_deviation."""
     raw_tmp = raw.copy()
     m, n = raw_tmp._data.shape
 
@@ -257,12 +259,13 @@ def test_find_bad_by_ransac(raw=raw):
 
 
 def test_ransac_too_few_preds(raw=raw):
-    """Test that ransac throws an arror for few predictors."""
+    """Test that ransac throws an error for few predictors."""
     chns = np.random.choice(raw.ch_names, size=3, replace=False)
     raw_tmp = raw.copy()
     raw_tmp.pick_channels(chns)
     nd = Noisydata(raw_tmp)
-    assert_raises(IOError, nd.find_bad_by_ransac)
+    with pytest.raises(IOError):
+        nd.find_bad_by_ransac()
 
 
 def test_ransac_too_little_ram(raw=raw):
@@ -278,13 +281,6 @@ def test_ransac_too_little_ram(raw=raw):
 
     # Set n_samples very very high to trigger a memory error
     n_samples = 1e100
-    assert_raises(
-        MemoryError,
-        nd._run_ransac,
-        chn_pos,
-        chn_pos_good,
-        good_chn_labs,
-        n_pred_chns,
-        data,
-        n_samples,
-    )
+    with pytest.raises(MemoryError):
+        nd._run_ransac(chn_pos, chn_pos_good, good_chn_labs, n_pred_chns,
+                       data, n_samples)
