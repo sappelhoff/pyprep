@@ -15,9 +15,18 @@ For a basic use example, see [the documentation.](http://pyprep.readthedocs.io/e
 
 # Installation
 
-`pip install pyprep`
+pyprep requires Python version `3.6` or higher to run properly. It is
+furthermore recommended to run pyprep in a dedicated virtual environment
+(using e.g., [`conda`](https://docs.conda.io/en/latest/miniconda.html), or
+[`venv`](https://docs.python.org/3/library/venv.html)). See
+the following links for more information on virtual environments:
 
-For installation of the development version use:
+- https://docs.python.org/3/tutorial/venv.html
+- https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html
+
+For installing the **stable** version of pyprep, simply call `pip install pyprep`.
+
+For installation of the **development** version use:
 
 ```Text
 git clone https://github.com/sappelhoff/pyprep
