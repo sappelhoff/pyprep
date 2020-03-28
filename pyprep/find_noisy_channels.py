@@ -24,15 +24,17 @@ class NoisyChannels:
 
     """
 
-    def __init__(self, raw):
+    def __init__(self, raw, do_detrend = True):
         """Initialize the class."""
         # Make sure that we got an MNE object
         assert isinstance(raw, mne.io.BaseRaw)
 
         self.raw_mne = raw.copy()
         self.sample_rate = raw.info["sfreq"]
+        if do_detrend:
+            self.raw_mne._data = removeTrend(self.raw_mne.get_data(),sample_rate = self.sample_rate)
+        
         self.EEGData = self.raw_mne.get_data(picks="eeg")
-        self.EEGData = removeTrend(self.EEGData, sample_rate=self.sample_rate)
         self.EEGData_beforeFilt = self.EEGData
         self.ch_names_original = np.asarray(raw.info["ch_names"])
         self.n_chans_original = len(self.ch_names_original)
@@ -237,7 +239,7 @@ class NoisyChannels:
         return None
 
     def find_bad_by_correlation(
-        self, correlation_secs=1.0, correlation_threshold=0.4, frac_bad=0.1
+        self, correlation_secs=1.0, correlation_threshold=0.4, frac_bad=0.01
     ):
         """Find correlation between the low frequency components of the EEG below 50 Hz.
 
