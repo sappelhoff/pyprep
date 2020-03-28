@@ -131,7 +131,7 @@ class Reference:
         raw._data = removeTrend(raw.get_data(), sample_rate=self.sfreq)
 
         # Determine unusable channels and remove them from the reference channels
-        noisy_detector = NoisyChannels(raw)
+        noisy_detector = NoisyChannels(raw,do_detrend=False)
         noisy_detector.find_all_bads(ransac=self.ransac)
         self.noisy_channels_original = {
             "bad_by_nan": noisy_detector.bad_by_nan,
