@@ -1,4 +1,5 @@
 """Module contains functions and classes for noisy EEG data detection."""
+from distutils.version import LooseVersion
 
 import mne
 import numpy as np
@@ -144,9 +145,13 @@ class Noisydata:
         # Set montage, pick data type, get data and transform to uVolts
         # We also filter all data at `low_cut` Hz highpass and obtain some data
         # bandpassed between `low_cut` and `high_cut` Hz.
-        montage = mne.channels.read_montage(
-            kind=montage_kind, ch_names=self.raw_copy.ch_names
-        )
+        if LooseVersion(mne.__version__) < LooseVersion("0.20"):
+            montage = mne.channels.read_montage(
+                kind=montage_kind, ch_names=self.raw_copy.ch_names
+            )
+        else:
+            montage = mne.channels.make_standard_montage(montage_kind)
+
         self.raw_copy.set_montage(montage)
         self.raw_copy.pick_types(eeg=True, stim=False)
         self.raw_copy.filter(
