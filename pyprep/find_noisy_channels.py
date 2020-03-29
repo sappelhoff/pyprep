@@ -24,7 +24,7 @@ class NoisyChannels:
 
     """
 
-    def __init__(self, raw, do_detrend = True):
+    def __init__(self, raw, do_detrend=True):
         """Initialize the class."""
         # Make sure that we got an MNE object
         assert isinstance(raw, mne.io.BaseRaw)
@@ -32,7 +32,7 @@ class NoisyChannels:
         self.raw_mne = raw.copy()
         self.sample_rate = raw.info["sfreq"]
         if do_detrend:
-            self.raw_mne._data = removeTrend(self.raw_mne.get_data(),sample_rate = self.sample_rate)
+            self.raw_mne._data = removeTrend(self.raw_mne.get_data(), sample_rate=self.sample_rate)
         
         self.EEGData = self.raw_mne.get_data(picks="eeg")
         self.EEGData_beforeFilt = self.EEGData
