@@ -6,3 +6,6 @@ scikit-learn>=0.19.1
 matplotlib>=1.5.1
 psutil>=5.4.3
 pytest>=5.3
+sphinx
+sphinx_bootstrap_theme
+numpydoc

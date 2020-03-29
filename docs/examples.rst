@@ -1,3 +1,5 @@
+:orphan:
+
 Examples
 ========
 A straight forward example with random data:

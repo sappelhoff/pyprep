@@ -1,5 +1,15 @@
+:orphan:
+
+.. _whats_new:
+
 What's New
 ==========
+
+Here we list a changelog of pyprep.
+
+.. contents:: Contents
+   :local:
+   :depth: 1
 
 .. currentmodule:: pyprep
 
