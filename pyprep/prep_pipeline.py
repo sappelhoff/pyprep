@@ -10,23 +10,28 @@ from pyprep.utilities import _union, _set_diff
 class PrepPipeline:
     """Early stage preprocessing (PREP) of EEG data.
 
-    This class implements the functionality  of the PREP (preprocessing pipeline) for EEG data described in [1].
+    This class implements the functionality  of the PREP (preprocessing pipeline) for EEG data described in [1]_.
 
     Parameters
     ----------
-        raw : raw mne object
-        prep_params : dict
-            Parameters of PREP which include at least the following keys:
-            ref_chs : list
-                A list of channel names to be used for rereferencing [default: all channels]
-            reref_chs: list
-                A list of channel names to be used for line-noise removed, and referenced [default: all channels]
-            line_freqs : 1d array
-                A list of line frequencies to be removed
-        montage : DigMontage
-            Digital montage of EEG data
-        ransac : boolean
-            Whether or not to use ransac
+    raw : mne.raw
+        The data.
+    prep_params : dict
+        Parameters of PREP which include at least the following keys:
+
+        - ref_chs : list
+            - A list of channel names to be used for rereferencing [default: all channels]
+
+        - reref_chs : list
+            - A list of channel names to be used for line-noise removed, and referenced [default: all channels]
+
+        - line_freqs : 1d array
+            - A list of line frequencies to be removed
+
+    montage : DigMontage
+        Digital montage of EEG data
+    ransac : boolean
+        Whether or not to use ransac
 
     References
     ----------

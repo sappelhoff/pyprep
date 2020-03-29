@@ -13,7 +13,7 @@ from statsmodels.robust.scale import mad
 def find_bad_epochs(epochs, picks=None, thresh=3.29053):
     """Find bad epochs based on amplitude, deviation, and variance.
 
-    Inspired by [1], based on code by Marijn van Vliet [2]. This
+    Inspired by [1]_, based on code by Marijn van Vliet [2]_. This
     function is working on z-scores. You might want to select the
     thresholds according to how much of the data is expected to
     fall within the absolute bounds:
@@ -89,7 +89,8 @@ class Noisydata:
     """For a given raw data object, detect bad EEG channels.
 
     This class implements the functionality of the `findNoisyChannels` function
-    as part of the PREP (preprocessing pipeline) for EEG data described in [1].
+    as part of the PREP (preprocessing pipeline) for EEG data described in
+    [3]_.
 
     Parameters
     ----------
@@ -124,7 +125,7 @@ class Noisydata:
 
     References
     ----------
-    .. [1] Bigdely-Shamlo, N., Mullen, T., Kothe, C., Su, K. M., Robbins, K. A.
+    .. [3] Bigdely-Shamlo, N., Mullen, T., Kothe, C., Su, K. M., Robbins, K. A.
        (2015). The PREP pipeline: standardized preprocessing for large-scale
        EEG analysis. Frontiers in Neuroinformatics, 9, 16.
 
@@ -447,7 +448,7 @@ class Noisydata:
     ):
         """Detect channels that are not predicted well by other channels.
 
-        Here, a ransac approach (see [1], and a short discussion in [2]) is
+        Here, a ransac approach (see [3]_, and a short discussion in [4]_) is
         adopted to predict a "clean EEG" dataset. After identifying clean EEG
         channels through the other methods, the clean EEG dataset is
         constructed by repeatedly sampling a small subset of clean EEG channels
@@ -481,11 +482,11 @@ class Noisydata:
 
         References
         ----------
-        .. [1] Fischler, M.A., Bolles, R.C. (1981). Random rample consensus: A
+        .. [3] Fischler, M.A., Bolles, R.C. (1981). Random rample consensus: A
            Paradigm for Model Fitting with Applications to Image Analysis and
            Automated Cartography. Communications of the ACM, 24, 381-395
 
-        .. [2] Jas, M., Engemann, D.A., Bekhti, Y., Raimondo, F., Gramfort, A.
+        .. [4] Jas, M., Engemann, D.A., Bekhti, Y., Raimondo, F., Gramfort, A.
            (2017). Autoreject: Automated Artifact Rejection for MEG and EEG
            Data. NeuroImage, 159, 417-429
 
@@ -576,7 +577,7 @@ class Noisydata:
 
         Given the EEG data and electrode positions, form `sample_size`
         reconstructions of one channel based on spherical spline interpolation
-        specified in [1]. The median of these reconstructions is used as a
+        specified in [5]_. The median of these reconstructions is used as a
         "clean prediction" of the channel.
 
         Parameters
@@ -610,7 +611,7 @@ class Noisydata:
 
         References
         ----------
-        .. [1] Perrin, F., Pernier, J., Bertrand, O. and Echallier, JF. (1989).
+        .. [5] Perrin, F., Pernier, J., Bertrand, O. and Echallier, JF. (1989).
            Spherical splines for scalp potential and current density mapping.
            Electroencephalography Clinical Neurophysiology, Feb; 72(2):184-7.
 

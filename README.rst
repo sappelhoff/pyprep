@@ -43,7 +43,7 @@ Installation
 
 ``pyprep`` requires Python version ``3.6`` or higher to run properly. It is
 furthermore recommended to run ``pyprep`` in a dedicated virtual environment
-(using e.g., `conda <https://docs.conda.io/en/latest/miniconda.html>`_)
+(using e.g., `conda <https://docs.conda.io/en/latest/miniconda.html>`_).
 
 For installing the **stable** version of ``pyprep``, simply call
 ``pip install pyprep``.

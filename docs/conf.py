@@ -27,19 +27,19 @@ release = version
 
 # -- General configuration ---------------------------------------------------
 
-master_doc = "index"
-
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    "sphinx.ext.autodoc",
+    "sphinx.ext.autosummary",
     "sphinx.ext.viewcode",
-    "sphinx.ext.napoleon",
     "sphinx.ext.githubpages",
     "numpydoc",
 ]
 
+master_doc = "index"
+autosummary_generate = True
+numpydoc_show_class_members = False  # https://stackoverflow.com/a/34604043/5201771
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -66,6 +66,7 @@ html_theme_options = {
     "bootstrap_version": "3",
     "navbar_links": [
         ("Examples", "examples"),
+        ("API", "api"),
         ("What's new", "whats_new"),
         ("GitHub", "https://github.com/sappelhoff/pyprep", True),
     ],
