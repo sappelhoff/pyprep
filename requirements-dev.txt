@@ -1,6 +1,5 @@
 pytest>=5.3
 pytest-cov
-codecov
 pydocstyle
 black
 sphinx

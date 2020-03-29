@@ -34,5 +34,4 @@ jobs:
       run: |
         pytest test/ -v --cov=./
     - name: Upload coverage report
-      run: |
-        codecov
+      uses: codecov/codecov-action@v1

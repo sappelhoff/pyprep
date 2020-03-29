@@ -15,6 +15,3 @@ install:
 script:
   - pytest test/ -v --cov=./
   - make check
-
-after_success:
-- codecov
