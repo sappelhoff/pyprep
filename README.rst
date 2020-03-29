@@ -1,8 +1,8 @@
 
 
-.. image:: https://github.com/sappelhoff/pyprep/workflows/Python%20package/badge.svg
-   :target: https://github.com/sappelhoff/pyprep/actions?query=workflow%3A%22Python+package%22
-   :alt: Python package
+.. image:: https://github.com/sappelhoff/pyprep/workflows/Python%20tests/badge.svg
+   :target: https://github.com/sappelhoff/pyprep/actions?query=workflow%3A%22Python+tests%22
+   :alt: Python tests
 
 
 .. image:: https://travis-ci.org/sappelhoff/pyprep.svg?branch=master

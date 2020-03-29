@@ -1,11 +1,7 @@
 numpy>=1.14.1
 scipy>=1.0.0
+matplotlib>=1.5.1
 statsmodels>=0.8.0
 mne>=0.19.0
 scikit-learn>=0.19.1
-matplotlib>=1.5.1
 psutil>=5.4.3
-pytest>=5.3
-sphinx
-sphinx_bootstrap_theme
-numpydoc

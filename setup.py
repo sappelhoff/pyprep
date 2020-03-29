@@ -45,14 +45,9 @@ setup(
         "scipy>=1.0.0",
         "statsmodels>=0.8.0",
         "mne>=0.19.0",
-        "scikit-learn>=0.19.1",
-        "matplotlib>=1.5.1",
         "psutil>=5.4.3",
     ],
     python_requires=">=3.6",
-    extras_require={
-        "test": ["pytest>=5.3", "codecov", "pytest-cov", "black", "pydocstyle"]
-    },
     project_urls={
         "Documentation": "https://pyprep.readthedocs.io/en/latest",
         "Bug Reports": "https://github.com/sappelhoff/pyprep/issues",
