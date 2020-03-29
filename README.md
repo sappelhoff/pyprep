@@ -1,3 +1,4 @@
+[![Python package](https://github.com/sappelhoff/pyprep/workflows/Python%20package/badge.svg)](https://github.com/sappelhoff/pyprep/actions?query=workflow%3A%22Python+package%22)
 [![Build Status](https://travis-ci.org/sappelhoff/pyprep.svg?branch=master)](https://travis-ci.org/sappelhoff/pyprep)
 [![codecov](https://codecov.io/gh/sappelhoff/pyprep/branch/master/graph/badge.svg)](https://codecov.io/gh/sappelhoff/pyprep)
 [![Documentation Status](https://readthedocs.org/projects/pyprep/badge/?version=latest)](http://pyprep.readthedocs.io/en/latest/?badge=latest)
