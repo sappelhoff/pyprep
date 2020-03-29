@@ -32,6 +32,8 @@ jobs:
         make check
     - name: Test with pytest
       run: |
-        pytest test/ -v --cov=./
+        pytest test/ --cov=pyprep/ --cov-report=xml --verbose
     - name: Upload coverage report
       uses: codecov/codecov-action@v1
+      with:
+        file: ./coverage.xml

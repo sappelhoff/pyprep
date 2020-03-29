@@ -5,11 +5,6 @@
    :alt: Python tests
 
 
-.. image:: https://travis-ci.org/sappelhoff/pyprep.svg?branch=master
-   :target: https://travis-ci.org/sappelhoff/pyprep
-   :alt: Build Status
-
-
 .. image:: https://codecov.io/gh/sappelhoff/pyprep/branch/master/graph/badge.svg
    :target: https://codecov.io/gh/sappelhoff/pyprep
    :alt: codecov
