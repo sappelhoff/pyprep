@@ -1,5 +1,5 @@
 matplotlib>=1.5.1
-pytest>=5.3
+pytest<5.4
 pytest-cov
 pytest-sugar
 black
