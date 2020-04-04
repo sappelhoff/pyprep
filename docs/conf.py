@@ -3,6 +3,7 @@ import os
 import sys
 from datetime import date
 
+import sphinx_gallery  # noqa: F401
 import sphinx_bootstrap_theme
 
 import pyprep
@@ -35,6 +36,7 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinx.ext.githubpages",
     "numpydoc",
+    'sphinx_gallery.gen_gallery',
 ]
 
 master_doc = "index"
@@ -65,7 +67,7 @@ html_theme_options = {
     "navbar_pagenav": False,  # no "Page" navigation in sidebar
     "bootstrap_version": "3",
     "navbar_links": [
-        ("Examples", "examples"),
+        ("Examples", "auto_examples/index"),
         ("API", "api"),
         ("What's new", "whats_new"),
         ("GitHub", "https://github.com/sappelhoff/pyprep", True),
@@ -82,3 +84,10 @@ intersphinx_mapping = {
     "matplotlib": ("https://matplotlib.org", None),
 }
 intersphinx_timeout = 5
+
+sphinx_gallery_conf = {
+    'examples_dirs': '../examples',
+    'gallery_dirs': 'auto_examples',
+    'filename_pattern': '^((?!sgskip).)*$',
+    'backreferences_dir': 'generated',
+}
