@@ -73,6 +73,7 @@ events = np.array([
 
 epochs = mne.Epochs(raw, events)
 
+###############################################################################
 # Now find the bad epochs
 # You can also define picks, and the threshold to be used
 bads = find_bad_epochs(epochs, picks=None, thresh=3.29053)
