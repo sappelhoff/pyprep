@@ -1,8 +1,25 @@
+include MANIFEST.in
+include README.rst
 include LICENSE
-include *.txt
-include *.yml
-include Makefile
-recursive-include docs *.py
-recursive-include docs *.rst
-recursive-include docs Makefile
-recursive-include test *.edf
+include requirements.txt
+include requirements-dev.txt
+include .pydocstyle.ini
+
+graft docs
+graft examples
+graft pyprep
+graft test
+
+
+### Exclude
+
+global-exclude *.py[co]
+global-exclude __pycache__
+
+recursive-exclude .github *
+
+exclude .codecov.yml
+exclude .gitignore
+exclude .mailmap
+exclude Makefile
+exclude .coveragerc
