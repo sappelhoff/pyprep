@@ -1,8 +1,11 @@
+matplotlib>=1.5.1
 pytest>=5.3
-pytest-sugar
 pytest-cov
-pydocstyle
+pytest-sugar
 black
+pydocstyle
 sphinx
+sphinx_gallery
+pillow
 sphinx_bootstrap_theme
 numpydoc
