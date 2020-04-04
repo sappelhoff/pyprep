@@ -33,6 +33,11 @@ jobs:
     - name: Test with pytest
       run: |
         pytest test/ --cov=pyprep/ --cov-report=xml --verbose
+    - name: Build docs
+      run: |
+        cd docs
+        make clean
+        make html
     - name: Upload coverage report
       uses: codecov/codecov-action@v1
       with:
