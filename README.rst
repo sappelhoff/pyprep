@@ -41,7 +41,9 @@ furthermore recommended to run ``pyprep`` in a dedicated virtual environment
 (using e.g., `conda <https://docs.conda.io/en/latest/miniconda.html>`_).
 
 For installing the **stable** version of ``pyprep``, simply call
-``pip install pyprep``.
+``pip install pyprep``. This should install dependencies automatically. You
+can also install the dependencies yourself by running
+``pip install -r requirements.txt`` from the project root.
 
 For installation of the **development** version use:
 
@@ -50,6 +52,7 @@ For installation of the **development** version use:
    git clone https://github.com/sappelhoff/pyprep
    cd pyprep
    pip install -r requirements.txt
+   pip install -r requirements-dev.txt
    pip install -e .
 
 Contributions
