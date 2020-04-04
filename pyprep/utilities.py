@@ -23,16 +23,17 @@ def filter_design(N_order, amp, freq):
 
     Parameters
     ----------
-    N_order: int
-             order of the filter
-    amp: list of int
-         amplitude vector for the frequencies
-    freq: list of int
-          frequency vector for which amplitude can be either 0 or 1
+    N_order : int
+        Order of the filter.
+    amp : list of int
+        Amplitude vector for the frequencies.
+    freq : list of int
+        Frequency vector for which amplitude can be either 0 or 1.
+
     Returns
     -------
-    kernel: ndarray
-            filter kernel
+    kernel : ndarray
+        Filter kernel.
     """
     nfft = np.maximum(512, 2 ** (np.ceil(math.log(100) / math.log(2))))
     hamming_window = np.subtract(

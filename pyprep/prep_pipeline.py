@@ -29,9 +29,9 @@ class PrepPipeline:
             - A list of line frequencies to be removed
 
     montage : DigMontage
-        Digital montage of EEG data
+        Digital montage of EEG data.
     ransac : boolean
-        Whether or not to use ransac
+        Whether or not to use ransac.
 
     References
     ----------

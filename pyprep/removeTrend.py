@@ -17,21 +17,22 @@ def removeTrend(
 
     Parameters
     ----------
-    EEG: np.ndarray
-         The input EEG data.
-    detrendType: str
-                 Type of detrending to be performed: high pass, high pass sinc, or local detrending.
-    sample_rate: float
-                 Rate at which the EEG data was sampled.
-    detrendCutoff: float
-                   High pass cut-off frequency.
-    detrendChannels: list
-                     List of all the channels that require detrending/filtering (default: All channels).
+    EEG : np.ndarray
+        The input EEG data.
+    detrendType : str
+        Type of detrending to be performed: high pass, high pass sinc, or local detrending.
+    sample_rate : float
+        Rate at which the EEG data was sampled.
+    detrendCutoff : float
+        High pass cut-off frequency.
+    detrendChannels : list | None
+        List of all the channels that require detrending/filtering. If None,
+        all channels are used (default).
 
     Returns
     -------
-    EEG: np.ndarray
-         Filtered/detrended EEG data.
+    EEG : np.ndarray
+        Filtered/detrended EEG data.
 
     Notes
     -----
@@ -90,11 +91,11 @@ def runline(y, n, dn):
 
     Parameters
     ----------
-    y: np.ndarray
-       Input from one EEG channel.
-    n: int
+    y : np.ndarray
+        Input from one EEG channel.
+    n : int
         length of the detrending window.
-    dn: int
+    dn : int
         length of the window step size.
 
     Returns
