@@ -4,7 +4,7 @@ from distutils.version import LooseVersion
 import mne
 import numpy as np
 from mne.channels.interpolation import _make_interpolation_matrix
-from mne.preprocessing import find_outliers
+from mne.preprocessing.bads import _find_outliers
 from psutil import virtual_memory
 from scipy.stats import iqr
 from statsmodels.robust.scale import mad
@@ -79,7 +79,7 @@ def find_bad_epochs(epochs, picks=None, thresh=3.29053):
     bads = []
     for m in metrics.keys():
         signal = metrics[m](data)
-        bad_idx = find_outliers(signal, thresh)
+        bad_idx = _find_outliers(signal, thresh)
         bads.append(bad_idx)
 
     return np.unique(np.concatenate(bads)).tolist()
