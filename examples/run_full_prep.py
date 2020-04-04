@@ -38,16 +38,20 @@ import matplotlib.pyplot as plt
 from pyprep.prep_pipeline import PrepPipeline
 
 ###############################################################################
+# Let's download some data for testing. Picking the 1st run of subject 4 here.
+
+data_paths = mne.datasets.eegbci.load_data(subject=4, runs=1)
+
+###############################################################################
 # General settings and file paths
 mne.set_log_level("WARNING")
 
-here = pathlib.Path("__file__").parent.absolute()
-
 # Raw data
-
-fname_test_file = os.path.join(here, 'test_data', 'S004R01.edf')
+fname_test_file = data_paths[0]
 
 # mat files for validation
+here = pathlib.Path("__file__").parent.absolute()
+
 fname_mat1 = os.path.join(here, 'matlab_results', 'EEG_raw.mat')
 fname_mat2 = os.path.join(here, 'matlab_results', 'EEGNew.mat')
 fname_mat3 = os.path.join(here, 'matlab_results', 'EEG.mat')
@@ -55,30 +59,13 @@ fname_mat4 = os.path.join(here, 'matlab_results', 'EEGref.mat')
 fname_mat5 = os.path.join(here, 'matlab_results', 'EEGinterp.mat')
 
 ###############################################################################
-# For the sake of the example we need a short function to remap channel names.
-
-
-def chn_name_mapping(ch_name):
-    """Map channel names to fit standard naming convention."""
-    ch_name = ch_name.strip('.')
-    ch_name = ch_name.upper()
-    if 'Z' in ch_name:
-        ch_name = ch_name.replace('Z', 'z')
-
-    if 'FP' in ch_name:
-        ch_name = ch_name.replace('FP', 'Fp')
-
-    return ch_name
-
-
-###############################################################################
 # Load data and prepare it
 # ------------------------
 
 raw = mne.io.read_raw_edf(fname_test_file, preload=True)
 
-# Rename channels to fit with standard conventions
-raw.rename_channels(chn_name_mapping)
+# The eegbci data has non-standard channel names. We need to rename them:
+mne.datasets.eegbci.standardize(raw)
 
 # Add a montage to the data
 montage_kind = "standard_1005"
