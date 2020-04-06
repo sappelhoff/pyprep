@@ -18,12 +18,14 @@ Here we list a changelog of pyprep.
 Current
 -------
 
+Changelog
+~~~~~~~~~
+- The detrend is now done over the NoisyChannels.raw_mne object to avoid detrend bug this and to force that any signal in there is detrended like in matlab's prep. Included a boolean which indicates if detrend should be done internally or not for the use of find_noisy_channels in reference.py.
+
+
 Bug
 ~~~
-
-- In find_noisy_channels the signal detrend was accidentally undone which destabilized the RANSAC.
-- The detrend is now done over the NoisyChannels.raw_mne object to avoid this and to force that any signal in there is detrended like in matlab's prep.
-- Included a boolean which indicates if detrend should be done internally or not for the use of find_noisy_channels in reference.py
+- In find_noisy_channels the signal detrend is accidentally undone which destabilized the RANSAC.
 
 
 Changelog
