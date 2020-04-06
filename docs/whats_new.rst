@@ -18,6 +18,14 @@ Here we list a changelog of pyprep.
 Current
 -------
 
+Bug
+~~~
+
+- In find_noisy_channels the signal detrend was accidentally undone which destabilized the RANSAC.
+- The detrend is now done over the NoisyChannels.raw_mne object to avoid this and to force that any signal in there is detrended like in matlab's prep.
+- Included a boolean which indicates if detrend should be done internally or not for the use of find_noisy_channels in reference.py
+
+
 Changelog
 ~~~~~~~~~
 
@@ -75,8 +83,10 @@ People who contributed to this software (in alphabetical order)
 * Aamna Lawrence
 * Adam Li
 * Victor Xiang
+* Yorguin Mantilla
 
 .. _Stefan Appelhoff: http://stefanappelhoff.com/
 .. _Aamna Lawrence: https://github.com/AamnaLawrence
 .. _Adam Li: https://github.com/adam2392/
 .. _Victor Xiang: https://github.com/Nick3151
+.. _Yorguin Mantilla: https://github.com/yjmantilla
