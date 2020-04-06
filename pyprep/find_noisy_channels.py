@@ -32,10 +32,15 @@ class NoisyChannels:
         self.raw_mne = raw.copy()
         self.sample_rate = raw.info["sfreq"]
         if do_detrend:
+<<<<<<< HEAD
             self.raw_mne._data = removeTrend(
                 self.raw_mne.get_data(), sample_rate=self.sample_rate
             )
 
+=======
+            self.raw_mne._data = removeTrend(self.raw_mne.get_data(), sample_rate=self.sample_rate)
+        
+>>>>>>> f249828a965fe3467462683228fa77092f21816b
         self.EEGData = self.raw_mne.get_data(picks="eeg")
         self.EEGData_beforeFilt = self.EEGData
         self.ch_names_original = np.asarray(raw.info["ch_names"])
