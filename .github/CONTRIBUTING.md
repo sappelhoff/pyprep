@@ -1,4 +1,3 @@
-
 # Workflow
 
 - assuming you are working with `git` from a command line
