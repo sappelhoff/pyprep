@@ -65,7 +65,7 @@ upstream	https://github.com/sappelhoff/pyprep (push)
 
 1. sync `master` through: `git checkout master` and `git pull upstream master`
 1. go back to your branch and rebase it: `git checkout my_feature` and then
-   `git rebase my_feature`
+   `git rebase master`
 
 Now it could be that you are lucky and there no conflicts ... in that case, the
 rebase just works and you can then finish up by *force pushing* your rebased
