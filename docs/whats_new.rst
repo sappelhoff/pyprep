@@ -21,6 +21,7 @@ Current
 Changelog
 ~~~~~~~~~
 
+- Included a boolean which indicates if detrend should be done internally or not for the use of find_noisy_channels in reference.py. `Yorguin Mantilla`_
 - Robust average referencing + tests by  `Victor Xiang`_
 - Removing trend in the EEG data by high pass filtering and local linear regression + tests `Aamna Lawrence`_
 - Finding noisy channels with comparable output to Matlab +tests-including test for ransac `Aamna Lawrence`_
@@ -29,6 +30,12 @@ Changelog
 - Finding the appropriate parameters in the MNE notch filter for implementing clean line noise functionality of Eeglab `Aamna Lawrence`_
 - Finding the reason for the difference between the Matlab and Pyprep’s output- Probably minor differences in the filter functions and also rounding done by functions like quantile `Victor Xiang`_  and `Aamna Lawrence`_
 - Overall debugging `Victor Xiang`_  and `Aamna Lawrence`_
+
+
+Bug
+~~~
+
+- In find_noisy_channels the signal detrend is accidentally undone which destabilized the RANSAC. The detrend is now done over the NoisyChannels.raw_mne object to avoid this bug and to force that any signal in there is detrended like in matlab's prep. By `Yorguin Mantilla`_ (`#29 <https://github.com/sappelhoff/pyprep/pull/9>`_)
 
 API
 ~~~
@@ -75,8 +82,10 @@ People who contributed to this software (in alphabetical order)
 * Aamna Lawrence
 * Adam Li
 * Victor Xiang
+* Yorguin Mantilla
 
 .. _Stefan Appelhoff: http://stefanappelhoff.com/
 .. _Aamna Lawrence: https://github.com/AamnaLawrence
 .. _Adam Li: https://github.com/adam2392/
 .. _Victor Xiang: https://github.com/Nick3151
+.. _Yorguin Mantilla: https://github.com/yjmantilla
