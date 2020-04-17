@@ -174,7 +174,7 @@ class Reference:
 
         while True:
             raw_tmp._data = signal_tmp * 1e-6
-            noisy_detector = NoisyChannels(raw_tmp)
+            noisy_detector = NoisyChannels(raw_tmp, do_detrend=False) # Detrend already at the beginning of function
             noisy_detector.find_all_bads(ransac=self.ransac)
             self.noisy_channels["bad_by_nan"] = _union(
                 self.noisy_channels["bad_by_nan"], noisy_detector.bad_by_nan

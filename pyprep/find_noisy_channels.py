@@ -346,6 +346,248 @@ class NoisyChannels:
         corr_thresh=0.75,
         fraction_bad=0.4,
         corr_window_secs=5.0,
+        ):
+        """Detect channels that are not predicted well by other channels.
+
+        Here, a ransac approach (see [1], and a short discussion in [2]) is
+        adopted to predict a "clean EEG" dataset. After identifying clean EEG
+        channels through the other methods, the clean EEG dataset is
+        constructed by repeatedly sampling a small subset of clean EEG channels
+        and interpolation the complete data. The median of all those
+        repetitions forms the clean EEG dataset. In a second step, the original
+        and the ransac predicted data are correlated and channels, which do not
+        correlate well with themselves across the two datasets are considered
+        `bad_by_ransac`.
+
+        Parameters
+        ----------
+        n_samples : int
+            Number of samples used for computation of ransac.
+        fraction_good : float
+            Fraction of channels used for robust reconstruction of the signal.
+            This needs to be in the range [0, 1], where obviously neither 0
+            nor 1 would make sense.
+        corr_thresh : float
+            The minimum correlation threshold that should be attained within a
+            data window.
+        fraction_bad : float
+            If this percentage of all data windows in which the correlation
+            threshold was not surpassed is exceeded, classify a
+            channel as `bad_by_ransac`.
+        corr_window_secs : float
+            Size of the correlation window in seconds.
+
+        References
+        ----------
+        .. [1] Fischler, M.A., Bolles, R.C. (1981). Random rample consensus: A
+           Paradigm for Model Fitting with Applications to Image Analysis and
+           Automated Cartography. Communications of the ACM, 24, 381-395
+        .. [2] Jas, M., Engemann, D.A., Bekhti, Y., Raimondo, F., Gramfort, A.
+           (2017). Autoreject: Automated Artifact Rejection for MEG and EEG
+           Data. NeuroImage, 159, 417-429
+
+        Title: noisy
+        Author: Stefan Appelhoff
+        Date: 2018
+        Availability: https://github.com/sappelhoff/pyprep/blob/master/pyprep/noisy.py
+        """
+        # First, identify all bad channels by other means:
+        bads = self.get_bads()
+
+        # Get all channel positions and the position subset of "clean channels"
+        good_idx = mne.pick_channels(list(self.ch_names_new), include=[], exclude=bads)
+        good_chn_labs = self.ch_names_new[good_idx]
+        n_chans_good = good_idx.shape[0]
+        chn_pos = self.raw_mne._get_channel_positions()
+        chn_pos_good = chn_pos[good_idx, :]
+
+        # Check if we have enough remaining channels
+        # after exclusion of bad channels
+        n_pred_chns = int(np.ceil(fraction_good * n_chans_good))
+
+        if n_pred_chns <= 3:
+            raise IOError(
+                        "Too few channels available to reliably perform"
+                        " ransac. Perhaps, too many channels have failed"
+                        " quality tests."
+            )
+
+        # Correlate ransac prediction and eeg data
+        correlation_frames = corr_window_secs * self.sample_rate
+        correlation_window = np.arange(correlation_frames)
+        n = correlation_window.shape[0]
+
+        correlation_offsets = np.arange(0, (self.signal_len -
+                                            correlation_frames),
+                                        correlation_frames)
+        w_correlation = correlation_offsets.shape[0]
+
+        # Preallocate
+        channel_correlations = np.ones((w_correlation, self.n_chans_new))
+        print('RANSAC PREDICTIONS:' + str(self.n_chans_new))
+
+        for chanx in range(self.EEGData.shape[0]):
+            # Make the ransac predictions
+            ransac_eeg = self.run_ransac(
+                chn_pos=chn_pos[[chanx],:],
+                chn_pos_good=chn_pos_good,
+                good_chn_labs=good_chn_labs,
+                n_pred_chns=n_pred_chns,
+                data=self.EEGData,
+                n_samples=n_samples,
+                )
+
+
+            # For the actual data
+            data_window = self.EEGData[chanx, : n * w_correlation]
+            data_window = data_window.reshape(1, n, w_correlation)
+
+            # For the ransac predicted eeg
+            pred_window = ransac_eeg[0, :n*w_correlation]
+            pred_window = pred_window.reshape(1, n, w_correlation)
+
+            # Perform correlations
+            for k in range(w_correlation):
+                data_portion = data_window[:, :, k]
+                pred_portion = pred_window[:, :, k]
+
+                R = np.corrcoef(data_portion, pred_portion)
+
+                # Take only correlations of data with pred
+                # and use diag to exctract correlation of
+                # data_i with pred_i
+                R = np.diag(R[0:1, 1:]) # This was a matrix but Im looking for a single value
+                channel_correlations[k,chanx] = R
+            print(chanx, end=' ')
+        
+        # Thresholding
+        thresholded_correlations = channel_correlations < corr_thresh
+        frac_bad_corr_windows = np.mean(thresholded_correlations, axis=0)
+        print('\nRANSAC DONE\n')
+        # find the corresponding channel names and return
+        bad_ransac_channels_idx = np.argwhere(frac_bad_corr_windows > fraction_bad)
+        bad_ransac_channels_name = self.ch_names_new[
+            bad_ransac_channels_idx.astype(int)
+        ]
+        self.bad_by_ransac = [i[0] for i in bad_ransac_channels_name]
+        
+        return None
+
+    def run_ransac(
+        self, chn_pos, chn_pos_good, good_chn_labs, n_pred_chns, data, n_samples
+    ):
+        """Detect noisy channels apart from the ones described previously.
+
+        It creates a random subset of the so-far good channels
+        and predicts the values of the channels not in the subset.
+
+        Parameters
+        ----------
+        chn_pos: ndarray
+                 3-D coordinates of the electrode position
+        chn_pos_good: ndarray
+                      3-D coordinates of all the channels not detected noisy so far
+        good_chn_labs: array_like
+                        channel labels for the ch_pos_good channels-
+        n_pred_chns: int
+                     channel numbers used for interpolation for RANSAC
+        data: ndarry
+              2-D EEG data
+        n_samples: int
+                    number of interpolations from which a median will be computed
+
+        Returns
+        -------
+        ransac_eeg: ndarray
+                    The EEG data predicted by RANSAC
+        Title: noisy
+        Author: Stefan Appelhoff
+        Date: 2018
+        Availability: https://github.com/sappelhoff/pyprep/blob/master/pyprep/noisy.py
+        """
+        # Before running, make sure we have enough memory
+        try:
+            available_gb = virtual_memory().available * 1e-9
+            needed_gb = (data.nbytes * 1e-9) * n_samples
+            assert available_gb > needed_gb
+        except AssertionError:
+            raise MemoryError(
+                "For given data of shape {} and the requested"
+                " number of {} samples, {} GB or memory would be"
+                " needed but only {} GB are available. You"
+                " could downsample the data or reduce the number"
+                " of requested samples."
+                "".format(data.shape, n_samples, needed_gb, available_gb)
+            )
+
+        # Memory seems to be fine ...
+        # Make the predictions
+        #n_chns, n_timepts = data.shape
+        # 2 next lines should be equivalent but support single channel processing
+        n_timepts = data.shape[1]
+        n_chns = chn_pos.shape[0]
+        eeg_predictions = np.zeros((n_chns, n_timepts, n_samples))
+        for sample in range(n_samples):
+            eeg_predictions[..., sample] = self.get_ransac_pred(
+                chn_pos, chn_pos_good, good_chn_labs, n_pred_chns, data
+            )
+
+        # Form median from all predictions
+        ransac_eeg = np.median(eeg_predictions, axis=-1, overwrite_input=True)
+        return ransac_eeg
+
+    def get_ransac_pred(self, chn_pos, chn_pos_good, good_chn_labs, n_pred_chns, data):
+        """Perform RANSAC prediction.
+
+        Parameters
+        ----------
+        chn_pos: ndarray
+                 3-D coordinates of the electrode position
+        chn_pos_good: ndarray
+                      3-D coordinates of all the channels not detected noisy so far
+        good_chn_labs: array_like
+                        channel labels for the ch_pos_good channels
+        n_pred_chns: int
+                     channel numbers used for interpolation for RANSAC
+        data: ndarry
+              2-D EEG data
+
+        Returns
+        -------
+        ransac_pred: ndarray
+                    Single RANSAC prediction
+        Title: noisy
+        Author: Stefan Appelhoff
+        Date: 2018
+        Availability: https://github.com/sappelhoff/pyprep/blob/master/pyprep/noisy.py
+        """
+        # Pick a subset of clean channels for reconstruction
+        reconstr_idx = np.random.choice(
+            np.arange(chn_pos_good.shape[0]), size=n_pred_chns, replace=False
+        )
+
+        # Get positions and according labels
+        reconstr_labels = good_chn_labs[reconstr_idx]
+        reconstr_pos = chn_pos_good[reconstr_idx, :]
+
+        # Map the labels to their indices within the complete data
+        # Do not use mne.pick_channels, because it will return a sorted list.
+        reconstr_picks = [
+            list(self.ch_names_new).index(chn_lab) for chn_lab in reconstr_labels
+        ]
+
+        # Interpolate
+        interpol_mat = _make_interpolation_matrix(reconstr_pos, chn_pos)
+        ransac_pred = np.matmul(interpol_mat, data[reconstr_picks, :])
+        return ransac_pred
+
+    def find_bad_by_ransac_hungry(
+        self,
+        n_samples=50,
+        fraction_good=0.25,
+        corr_thresh=0.75,
+        fraction_bad=0.4,
+        corr_window_secs=5.0,
     ):
         """Detect channels that are not predicted well by other channels.
 
@@ -467,107 +709,3 @@ class NoisyChannels:
         self.bad_by_ransac = [i[0] for i in bad_ransac_channels_name]
         return None
 
-    def run_ransac(
-        self, chn_pos, chn_pos_good, good_chn_labs, n_pred_chns, data, n_samples
-    ):
-        """Detect noisy channels apart from the ones described previously.
-
-        It creates a random subset of the so-far good channels
-        and predicts the values of the channels not in the subset.
-
-        Parameters
-        ----------
-        chn_pos: ndarray
-                 3-D coordinates of the electrode position
-        chn_pos_good: ndarray
-                      3-D coordinates of all the channels not detected noisy so far
-        good_chn_labs: array_like
-                        channel labels for the ch_pos_good channels-
-        n_pred_chns: int
-                     channel numbers used for interpolation for RANSAC
-        data: ndarry
-              2-D EEG data
-        n_samples: int
-                    number of interpolations from which a median will be computed
-
-        Returns
-        -------
-        ransac_eeg: ndarray
-                    The EEG data predicted by RANSAC
-        Title: noisy
-        Author: Stefan Appelhoff
-        Date: 2018
-        Availability: https://github.com/sappelhoff/pyprep/blob/master/pyprep/noisy.py
-        """
-        # Before running, make sure we have enough memory
-        try:
-            available_gb = virtual_memory().available * 1e-9
-            needed_gb = (data.nbytes * 1e-9) * n_samples
-            assert available_gb > needed_gb
-        except AssertionError:
-            raise MemoryError(
-                "For given data of shape {} and the requested"
-                " number of {} samples, {} GB or memory would be"
-                " needed but only {} GB are available. You"
-                " could downsample the data or reduce the number"
-                " of requested samples."
-                "".format(data.shape, n_samples, needed_gb, available_gb)
-            )
-
-        # Memory seems to be fine ...
-        # Make the predictions
-        n_chns, n_timepts = data.shape
-        eeg_predictions = np.zeros((n_chns, n_timepts, n_samples))
-        for sample in range(n_samples):
-            eeg_predictions[..., sample] = self.get_ransac_pred(
-                chn_pos, chn_pos_good, good_chn_labs, n_pred_chns, data
-            )
-
-        # Form median from all predictions
-        ransac_eeg = np.median(eeg_predictions, axis=-1, overwrite_input=True)
-        return ransac_eeg
-
-    def get_ransac_pred(self, chn_pos, chn_pos_good, good_chn_labs, n_pred_chns, data):
-        """Perform RANSAC prediction.
-
-        Parameters
-        ----------
-        chn_pos: ndarray
-                 3-D coordinates of the electrode position
-        chn_pos_good: ndarray
-                      3-D coordinates of all the channels not detected noisy so far
-        good_chn_labs: array_like
-                        channel labels for the ch_pos_good channels
-        n_pred_chns: int
-                     channel numbers used for interpolation for RANSAC
-        data: ndarry
-              2-D EEG data
-
-        Returns
-        -------
-        ransac_pred: ndarray
-                    Single RANSAC prediction
-        Title: noisy
-        Author: Stefan Appelhoff
-        Date: 2018
-        Availability: https://github.com/sappelhoff/pyprep/blob/master/pyprep/noisy.py
-        """
-        # Pick a subset of clean channels for reconstruction
-        reconstr_idx = np.random.choice(
-            np.arange(chn_pos_good.shape[0]), size=n_pred_chns, replace=False
-        )
-
-        # Get positions and according labels
-        reconstr_labels = good_chn_labs[reconstr_idx]
-        reconstr_pos = chn_pos_good[reconstr_idx, :]
-
-        # Map the labels to their indices within the complete data
-        # Do not use mne.pick_channels, because it will return a sorted list.
-        reconstr_picks = [
-            list(self.ch_names_new).index(chn_lab) for chn_lab in reconstr_labels
-        ]
-
-        # Interpolate
-        interpol_mat = _make_interpolation_matrix(reconstr_pos, chn_pos)
-        ransac_pred = np.matmul(interpol_mat, data[reconstr_picks, :])
-        return ransac_pred
