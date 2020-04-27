@@ -36,7 +36,7 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinx.ext.githubpages",
     "numpydoc",
-    'sphinx_gallery.gen_gallery',
+    "sphinx_gallery.gen_gallery",
 ]
 
 master_doc = "index"
@@ -86,8 +86,8 @@ intersphinx_mapping = {
 intersphinx_timeout = 5
 
 sphinx_gallery_conf = {
-    'examples_dirs': '../examples',
-    'gallery_dirs': 'auto_examples',
-    'filename_pattern': '^((?!sgskip).)*$',
-    'backreferences_dir': 'generated',
+    "examples_dirs": "../examples",
+    "gallery_dirs": "auto_examples",
+    "filename_pattern": "^((?!sgskip).)*$",
+    "backreferences_dir": "generated",
 }

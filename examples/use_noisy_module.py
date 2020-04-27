@@ -20,14 +20,13 @@ from pyprep.noisy import Noisydata
 ###############################################################################
 # Now let's make some arbitrary MNE raw object for demonstration purposes.
 
-sfreq = 1000.
+sfreq = 1000.0
 n_chans = 6
-ch_names = ['Fpz', 'Fz', 'FCz', 'Cz', 'Pz', 'Oz']
+ch_names = ["Fpz", "Fz", "FCz", "Cz", "Pz", "Oz"]
 
-info = mne.create_info(ch_names=ch_names, sfreq=sfreq,
-                       ch_types=['eeg']*n_chans)
+info = mne.create_info(ch_names=ch_names, sfreq=sfreq, ch_types=["eeg"] * n_chans)
 
-time = np.arange(0, 60, 1./sfreq)  # 60 seconds of recording
+time = np.arange(0, 60, 1.0 / sfreq)  # 60 seconds of recording
 X = np.random.random((n_chans, time.shape[0]))
 raw = mne.io.RawArray(X, info)
 print(raw)
@@ -63,13 +62,9 @@ print(nd._channel_hf_noise)
 from pyprep.noisy import find_bad_epochs  # noqa: E402
 
 # Turn our arbitrary data into epochs
-events = np.array([
-    [10000, 0, 1],
-    [20000, 0, 2],
-    [30000, 0, 1],
-    [40000, 0, 2],
-    [50000, 0, 1],
-])
+events = np.array(
+    [[10000, 0, 1], [20000, 0, 2], [30000, 0, 1], [40000, 0, 2], [50000, 0, 1],]
+)
 
 epochs = mne.Epochs(raw, events)
 
