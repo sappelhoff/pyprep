@@ -18,6 +18,7 @@ We also compare :method:`find_noisy_channels.NoisyChannels.find_bad_by_ransac`.
 import numpy as np
 import mne
 from scipy import signal as sx
+import time as clk
 
 from pyprep.find_noisy_channels import NoisyChannels
 
@@ -71,7 +72,9 @@ nd = NoisyChannels(raw)
 
 ###############################################################################
 # Find all bad channels and print a summary
+start_time = clk.time()
 nd.find_bad_by_ransac()
+print("--- %s seconds ---" % (clk.time() - start_time))
 
 ###############################################################################
 # Now the bad channels are saved in `bads` and we can continue processing our
