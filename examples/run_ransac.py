@@ -4,8 +4,7 @@ Run RANSAC
 =================
 
 
-In this example we show how to run the ransac of ``pyprep``.
-We also compare :method:`find_noisy_channels.NoisyChannels.find_bad_by_ransac`.
+In this example we show how to run the RANSAC of ``pyprep``.
 """
 
 # Authors: Yorguin Mantilla <yjmantilla@gmail.com>
