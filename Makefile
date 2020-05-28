@@ -69,4 +69,3 @@ black:
 check:
 	@$(MAKE) -k black pydocstyle
 #	check-manifest
-
