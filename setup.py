@@ -1,28 +1,19 @@
 """Setup pyprep."""
 from setuptools import setup, find_packages
-import os
 from os import path
 import io
 
-# get the version
-version = None
-with open(os.path.join("pyprep", "__init__.py"), "r") as fid:
-    for line in (line.strip() for line in fid):
-        if line.startswith("__version__"):
-            version = line.split("=")[1].strip().strip("'")
-            break
-if version is None:
-    raise RuntimeError("Could not determine version")
-
-here = path.abspath(path.dirname(__file__))
+import versioneer
 
 # Get long description from README file
+here = path.abspath(path.dirname(__file__))
 with io.open(path.join(here, "README.rst"), encoding="utf-8") as f:
     long_description = f.read()
 
 setup(
     name="pyprep",
-    version=version,
+    version=versioneer.get_version(),
+    cmdclass=versioneer.get_cmdclass(),
     description=(
         "A Python implementation of the preprocessing pipeline (PREP) for EEG data."
     ),
