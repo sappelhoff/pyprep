@@ -40,7 +40,7 @@ from pyprep.prep_pipeline import PrepPipeline
 ###############################################################################
 # Let's download some data for testing. Picking the 1st run of subject 4 here.
 
-data_paths = mne.datasets.eegbci.load_data(subject=4, runs=1)
+data_paths = mne.datasets.eegbci.load_data(subject=4, runs=1, update_path=True)
 
 ###############################################################################
 # General settings and file paths

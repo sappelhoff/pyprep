@@ -39,7 +39,7 @@ n_chans = len(ch_names)
 
 info = mne.create_info(ch_names=ch_names, sfreq=sfreq, ch_types=["eeg"] * n_chans)
 
-time = np.arange(0, 60, 1.0 / sfreq)  # 60 seconds of recording
+time = np.arange(0, 30, 1.0 / sfreq)  # 30 seconds of recording
 n_bad_chans = 3
 
 bad_channels = np.random.choice(np.arange(n_chans), n_bad_chans, replace=False)
