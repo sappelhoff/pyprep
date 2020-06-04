@@ -1,3 +1,4 @@
+"""Configure tests."""
 import mne
 import pytest
 from mne.datasets import eegbci

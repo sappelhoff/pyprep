@@ -9,13 +9,14 @@ from scipy.stats import iqr
 from statsmodels import robust
 
 from pyprep.removeTrend import removeTrend
-from pyprep.utilities import filter_design
+from pyprep.utils import filter_design
 
 
 class NoisyChannels:
     """Implements the functionality of the `findNoisyChannels` function.
 
-    It is a part of the PREP (preprocessing pipeline) for EEG data recorded using 10-20 montage style described in [1]_.
+    It is a part of the PREP (preprocessing pipeline) for EEG data recorded using
+    10-20 montage style described in [1]_.
 
     References
     ----------
@@ -77,7 +78,8 @@ class NoisyChannels:
     def get_bads(self, verbose=False):
         """Get a list of all bad channels.
 
-        This function makes a list of all the bad channels and prints them if verbose is True.
+        This function makes a list of all the bad channels and prints them if verbose
+        is True.
 
         Parameters
         ----------
@@ -185,6 +187,7 @@ class NoisyChannels:
         ----------
         deviation_threshold : float
             z-score threshold above which channels will be labelled bad.
+
         """
         deviation_channel_mask = [False] * (self.new_dimensions[0])
         channel_deviation = np.zeros(self.new_dimensions[0])
@@ -205,14 +208,19 @@ class NoisyChannels:
         return None
 
     def find_bad_by_hfnoise(self, HF_zscore_threshold=5.0):
-        """Noisiness of the channel is determined by finding the ratio of the median absolute deviation of high frequency to low frequency components.
+        """Determine noise of channel through high frequency ratio.
 
-        Low pass 50 Hz filter is used to separate the frequency components. A robust z-score is then calculated relative to all the channels.
+        Noisiness of the channel is determined by finding the ratio of the median
+        absolute deviation of high frequency to low frequency components.
+
+        Low pass 50 Hz filter is used to separate the frequency components.
+        A robust z-score is then calculated relative to all the channels.
 
         Parameters
         ----------
         HF_zscore_threshold : float
             z-score threshold above which channels would be labelled as bad.
+
         """
         data_tmp = np.transpose(self.EEGData)
         dimension = np.shape(data_tmp)
@@ -246,7 +254,7 @@ class NoisyChannels:
         else:
             EEG_filt = data_tmp
             noisiness_median = 0
-            noisinessSD = 1
+            # noisinessSD = 1
             zscore_HFNoise = np.zeros((self.new_dimensions[0], 1))
             HFNoise_channels = []
         self.EEGData_beforeFilt = data_tmp
@@ -260,10 +268,11 @@ class NoisyChannels:
     ):
         """Find correlation between the low frequency components of the EEG below 50 Hz.
 
-        Correlation is done using a sliding non-overlapping time window. The maximum absolute correlation is
-        as the 98th percentile of the absolute values of the correlations with the other channels
-        If the maximum correlation is less than 0.4 then the channel is designated as bad by corre-
-        lation.
+        Correlation is done using a sliding non-overlapping time window.
+        The maximum absolute correlation is as the 98th percentile of the absolute
+        values of the correlations with the other channels
+        If the maximum correlation is less than 0.4 then the channel is designated as
+        bad by correlation.
 
         Parameters
         ----------
@@ -275,6 +284,7 @@ class NoisyChannels:
             percentage of data windows in which the correlation threshold was
             not surpassed and if a channel gets a value of greater than 1%, it
             is designated bad.
+
         """
         self.find_bad_by_hfnoise()  # since filtering is performed there
         correlation_frames = correlation_secs * self.sample_rate
@@ -407,10 +417,6 @@ class NoisyChannels:
            (2017). Autoreject: Automated Artifact Rejection for MEG and EEG
            Data. NeuroImage, 159, 417-429
 
-        Title: noisy
-        Author: Stefan Appelhoff
-        Date: 2018
-        Availability: https://github.com/sappelhoff/pyprep/blob/master/pyprep/noisy.py
         """
         # First, identify all bad channels by other means:
         bads = self.get_bads()
@@ -528,10 +534,6 @@ class NoisyChannels:
         ransac_eeg : ndarray
             The EEG data predicted by RANSAC
 
-        Title: noisy
-        Author: Stefan Appelhoff
-        Date: 2018
-        Availability: https://github.com/sappelhoff/pyprep/blob/master/pyprep/noisy.py
         """
         # Before running, make sure we have enough memory
         try:
@@ -593,10 +595,6 @@ class NoisyChannels:
         ransac_pred : ndarray
             Single RANSAC prediction
 
-        Title: noisy
-        Author: Stefan Appelhoff
-        Date: 2018
-        Availability: https://github.com/sappelhoff/pyprep/blob/master/pyprep/noisy.py
         """
         rng = check_random_state(random_state)
 

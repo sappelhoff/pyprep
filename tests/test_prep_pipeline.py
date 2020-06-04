@@ -1,3 +1,4 @@
+"""Test the full PREP pipeline."""
 import matplotlib.pyplot as plt
 import mne
 import numpy as np
@@ -9,7 +10,7 @@ from pyprep.prep_pipeline import PrepPipeline
 
 @pytest.mark.usefixtures("raw", "montage")
 def test_prep_pipeline(raw, montage):
-    """Test prep pipeline"""
+    """Test prep pipeline."""
     eeg_index = mne.pick_types(raw.info, eeg=True, eog=False, meg=False)
     raw_copy = raw.copy()
     ch_names = raw_copy.info["ch_names"]
@@ -28,7 +29,7 @@ def test_prep_pipeline(raw, montage):
     EEG_raw_matlab = sio.loadmat("./examples/matlab_results/EEG_raw.mat")
     EEG_raw_matlab = EEG_raw_matlab["save_data"]
     EEG_raw_diff = EEG_raw - EEG_raw_matlab
-    EEG_raw_mse = (EEG_raw_diff / EEG_raw_max ** 2).mean(axis=None)
+    # EEG_raw_mse = (EEG_raw_diff / EEG_raw_max ** 2).mean(axis=None)
 
     fig, axs = plt.subplots(5, 3, "all")
     plt.setp(fig, facecolor=[1, 1, 1])
@@ -71,7 +72,7 @@ def test_prep_pipeline(raw, montage):
     EEG_new = prep.EEG_new
     EEG_new_max = np.max(abs(EEG_new), axis=None)
     EEG_new_diff = EEG_new - EEG_new_matlab
-    EEG_new_mse = ((EEG_new_diff / EEG_new_max) ** 2).mean(axis=None)
+    # EEG_new_mse = ((EEG_new_diff / EEG_new_max) ** 2).mean(axis=None)
     axs[1, 0].imshow(
         EEG_new / EEG_new_max,
         aspect="auto",
@@ -104,7 +105,7 @@ def test_prep_pipeline(raw, montage):
     EEG_clean = prep.EEG
     EEG_max = np.max(abs(EEG_clean), axis=None)
     EEG_diff = EEG_clean - EEG_clean_matlab
-    EEG_mse = ((EEG_diff / EEG_max) ** 2).mean(axis=None)
+    # EEG_mse = ((EEG_diff / EEG_max) ** 2).mean(axis=None)
     axs[2, 0].imshow(
         EEG_clean / EEG_max,
         aspect="auto",
@@ -136,13 +137,13 @@ def test_prep_pipeline(raw, montage):
     EEG_max = np.max(abs(EEG), axis=None)
     EEG_ref_mat = sio.loadmat("./examples/matlab_results/EEGref.mat")
     EEG_ref_matlab = EEG_ref_mat["save_EEG"]
-    reference_matlab = EEG_ref_mat["save_reference"]
+    # reference_matlab = EEG_ref_mat["save_reference"]
     EEG_ref_diff = EEG - EEG_ref_matlab
-    EEG_ref_mse = ((EEG_ref_diff / EEG_max) ** 2).mean(axis=None)
-    reference_signal = prep.reference_before_interpolation
-    reference_max = np.max(abs(reference_signal), axis=None)
-    reference_diff = reference_signal - reference_matlab
-    reference_mse = ((reference_diff / reference_max) ** 2).mean(axis=None)
+    # EEG_ref_mse = ((EEG_ref_diff / EEG_max) ** 2).mean(axis=None)
+    # reference_signal = prep.reference_before_interpolation
+    # reference_max = np.max(abs(reference_signal), axis=None)
+    # reference_diff = reference_signal - reference_matlab
+    # reference_mse = ((reference_diff / reference_max) ** 2).mean(axis=None)
     axs[3, 0].imshow(
         EEG / EEG_max,
         aspect="auto",
@@ -175,7 +176,7 @@ def test_prep_pipeline(raw, montage):
     EEG_final_matlab = sio.loadmat("./examples/matlab_results/EEGinterp.mat")
     EEG_final_matlab = EEG_final_matlab["save_data"]
     EEG_final_diff = EEG_final - EEG_final_matlab
-    EEG_final_mse = ((EEG_final_diff / EEG_final_max) ** 2).mean(axis=None)
+    # EEG_final_mse = ((EEG_final_diff / EEG_final_max) ** 2).mean(axis=None)
     axs[4, 0].imshow(
         EEG_final / EEG_final_max,
         aspect="auto",

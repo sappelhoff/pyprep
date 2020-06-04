@@ -3,7 +3,6 @@ import logging
 
 import mne
 import numpy as np
-import scipy
 
 
 def removeTrend(
@@ -20,7 +19,8 @@ def removeTrend(
     EEG : np.ndarray
         The input EEG data.
     detrendType : str
-        Type of detrending to be performed: high pass, high pass sinc, or local detrending.
+        Type of detrending to be performed: high pass, high pass sinc, or local
+        detrending.
     sample_rate : float
         Rate at which the EEG data was sampled.
     detrendCutoff : float
@@ -38,6 +38,7 @@ def removeTrend(
     -----
     Filtering is implemented using the MNE filter function mne.filter.filter_data.
     Local detrending is the python implementation of the chronux_2 runline command.
+
     """
     if len(EEG.shape) == 1:
         EEG = np.reshape(EEG, (1, EEG.shape[0]))
@@ -60,7 +61,7 @@ def removeTrend(
             fir_window="blackman",
         )
     elif detrendType == "Local detrend":
-        if detrendChannels == None:
+        if detrendChannels is None:
             detrendChannels = np.arange(0, EEG.shape[0])
         windowSize = 1.5 / detrendCutoff
         windowSize = np.minimum(windowSize, EEG.shape[1])
@@ -71,10 +72,12 @@ def removeTrend(
 
         if dn > n or dn < 1:
             logging.error(
-                "Step size should be less than the window size and contain at least 1 sample"
+                "Step size should be less than the window size and "
+                "contain at least 1 sample"
             )
         if n == EEG.shape[0]:
-            data = scipy.signal.detrend(EEG, axis=0)
+            # data = scipy.signal.detrend(EEG, axis=0)
+            pass
         else:
             for ch in detrendChannels:
                 EEG[:, ch] = runline(EEG[:, ch], np.int(n), np.int(dn))
@@ -87,7 +90,7 @@ def removeTrend(
 
 
 def runline(y, n, dn):
-    """Python implementation of chronux_2 runline command for performing local linear regression.
+    """Implement chronux_2 runline command for performing local linear regression.
 
     Parameters
     ----------

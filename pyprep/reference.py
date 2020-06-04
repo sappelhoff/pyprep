@@ -6,7 +6,7 @@ import numpy as np
 # from pyprep.noisy import Noisydata
 from pyprep.find_noisy_channels import NoisyChannels
 from pyprep.removeTrend import removeTrend
-from pyprep.utilities import _union, _set_diff
+from pyprep.utils import _union, _set_diff
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 class Reference:
-    """For a given mne raw object, estimate the 'true' reference with all the bad channels interpolated.
+    """Estimate the 'true' reference with all the bad channels interpolated.
 
     This class implements the functionality of the `performReference` function
     as part of the PREP (preprocessing pipeline) for EEG data described in [1].
@@ -35,6 +35,7 @@ class Reference:
     .. [1] Bigdely-Shamlo, N., Mullen, T., Kothe, C., Su, K. M., Robbins, K. A.
        (2015). The PREP pipeline: standardized preprocessing for large-scale
        raw analysis. Frontiers in Neuroinformatics, 9, 16.
+
     """
 
     def __init__(self, raw, params, ransac=True):
@@ -58,7 +59,8 @@ class Reference:
         Notes
         -----
             This function calls robust_reference first
-            Currently this function only implements the functionality of default settings, i.e., doRobustPost
+            Currently this function only implements the functionality of default
+            settings, i.e., doRobustPost
 
         """
         # Phase 1: Estimate the true signal mean with robust referencing
@@ -122,7 +124,8 @@ class Reference:
         Returns
         -------
             noisy_channels: dictionary
-                A dictionary of names of noisy channels detected from all methods after referencing
+                A dictionary of names of noisy channels detected from all methods
+                after referencing
             reference_signal: 1D Array
                 Estimation of the 'true' signal mean
 

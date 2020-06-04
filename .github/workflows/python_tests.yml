@@ -33,7 +33,7 @@ jobs:
     - name: Check formatting
       if: "matrix.platform == 'ubuntu-latest'"
       run: |
-        flake8 --docstring-convention numpy .
+        flake8 .
 
     - name: Test with pytest
       run: |

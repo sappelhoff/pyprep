@@ -19,7 +19,7 @@ def _intersect(list1, list2):
 
 
 def filter_design(N_order, amp, freq):
-    """Create a FIR low-pass filter that filters the EEG data using frequency sampling method.
+    """Create FIR low-pass filter for EEG data using frequency sampling method.
 
     Parameters
     ----------
@@ -34,6 +34,7 @@ def filter_design(N_order, amp, freq):
     -------
     kernel : ndarray
         Filter kernel.
+
     """
     nfft = np.maximum(512, 2 ** (np.ceil(math.log(100) / math.log(2))))
     hamming_window = np.subtract(

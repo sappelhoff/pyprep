@@ -4,13 +4,14 @@ import mne
 from pyprep.find_noisy_channels import NoisyChannels
 from pyprep.reference import Reference
 from pyprep.removeTrend import removeTrend
-from pyprep.utilities import _union, _set_diff
+from pyprep.utils import _union, _set_diff  # noqa: F401
 
 
 class PrepPipeline:
     """Early stage preprocessing (PREP) of EEG data.
 
-    This class implements the functionality  of the PREP (preprocessing pipeline) for EEG data described in [1]_.
+    This class implements the functionality  of the PREP (preprocessing
+    pipeline) for EEG data described in [1]_.
 
     Parameters
     ----------
@@ -20,10 +21,12 @@ class PrepPipeline:
         Parameters of PREP which include at least the following keys:
 
         - ref_chs : list
-            - A list of channel names to be used for rereferencing [default: all channels]
+            - A list of channel names to be used for rereferencing
+              [default: all channels]
 
         - reref_chs : list
-            - A list of channel names to be used for line-noise removed, and referenced [default: all channels]
+            - A list of channel names to be used for line-noise removed, and
+              referenced [default: all channels]
 
         - line_freqs : 1d array
             - A list of line frequencies to be removed
@@ -62,10 +65,10 @@ class PrepPipeline:
         """Run the whole PREP pipeline."""
         noisy_detector = NoisyChannels(self.raw, random_state=self.random_state)
         noisy_detector.find_bad_by_nan_flat()
-        unusable_channels = _union(
-            noisy_detector.bad_by_nan, noisy_detector.bad_by_flat
-        )
-        reference_channels = _set_diff(self.prep_params["ref_chs"], unusable_channels)
+        # unusable_channels = _union(
+        #     noisy_detector.bad_by_nan, noisy_detector.bad_by_flat
+        # )
+        # reference_channels = _set_diff(self.prep_params["ref_chs"], unusable_channels)
         # Step 1: 1Hz high pass filtering
         self.EEG_new = removeTrend(self.EEG_raw, sample_rate=self.sfreq)
 

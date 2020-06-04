@@ -7,6 +7,7 @@ from pyprep.find_noisy_channels import NoisyChannels
 
 @pytest.mark.usefixtures("raw", "montage")
 def test_findnoisychannels(raw, montage):
+    """Test find noisy channels."""
     # Set a random state for the test
     rng = np.random.RandomState(30)
 

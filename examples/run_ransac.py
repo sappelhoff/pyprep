@@ -17,7 +17,7 @@ In this example we show how to run the RANSAC of ``pyprep``.
 import numpy as np
 import mne
 from scipy import signal as signal
-import time
+from time import perf_counter
 
 from pyprep.find_noisy_channels import NoisyChannels
 
@@ -73,9 +73,9 @@ nd = NoisyChannels(raw)
 
 ###############################################################################
 # Find all bad channels and print a summary
-start_time = time.time()
+start_time = perf_counter()
 nd.find_bad_by_ransac()
-print("--- %s seconds ---" % (time.time() - start_time))
+print("--- %s seconds ---" % (perf_counter() - start_time))
 
 ###############################################################################
 # Now the bad channels are saved in `bads` and we can continue processing our

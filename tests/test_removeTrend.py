@@ -1,11 +1,11 @@
+"""Test remove trend."""
 import numpy as np
 
 import pyprep.removeTrend as removeTrend
 
 
 def test_highpass():
-    """Test for checking high pass filters"""
-
+    """Test for checking high pass filters."""
     srate = 100
     t = np.arange(0, 30, 1 / srate)
     lowfreq_signal = np.sin(2 * np.pi * 0.1 * t)
@@ -24,8 +24,7 @@ def test_highpass():
 
 
 def test_detrend():
-    """Test for local regression to remove linear trend from EEG data"""
-
+    """Test for local regression to remove linear trend from EEG data."""
     # creating a new signal for checking detrending using local regression
     srate = 100
     t = np.arange(0, 30, 1 / srate)
