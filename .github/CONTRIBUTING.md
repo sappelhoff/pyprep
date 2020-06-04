@@ -1,4 +1,16 @@
-# Workflow
+# Table of Contents
+
+- [Pull request workflow](#pull-request-workflow)
+  * [Syncing your fork's `master` with `upstream master`](#syncing-your-fork-s--master--with--upstream-master-)
+  * [Working on a feature (and rebasing)](#working-on-a-feature--and-rebasing-)
+    + [Working on a feature](#working-on-a-feature)
+    + [Rebasing without conflicts](#rebasing-without-conflicts)
+    + [Rebasing WITH conflicts](#rebasing-with-conflicts)
+    + [Rebasing ... panic mode (or "the easy way")](#rebasing--panic-mode--or--the-easy-way--)
+- [Info about docs](#info-about-docs)
+- [How to make a release](#how-to-make-a-release)
+
+# Pull request workflow
 
 - assuming you are working with `git` from a command line
 - assuming your GitHub username is `username`
@@ -104,3 +116,40 @@ conflicts that arise during rebasing, just make a new branch:
 
 This method is not really a `git` workflow, ... but in cases where there are
 only few changes, this is often a practical solution.
+
+# Info about docs
+
+The documentation is build and hosted by [https://readthedocs.org/](https://readthedocs.org/).
+
+Admin credentials are needed to access the setup.
+
+# How to make a release
+
+- needs admin rights
+- we are using [semver](https://semver.org/)
+- we are using [Versioneer](https://github.com/warner/python-versioneer)
+- we are using [GitHub Actions to deploy](./workflows/python_publish.yml)
+- PyPi credentials are stored as GitHub secrets
+
+Follow this workflow:
+
+1. go to your python environment for `pyprep`
+1. make sure all tests pass and the docs are built cleanly
+1. update `docs/whats_new.rst`, renaming the "current" headline to the new
+   version and adding all "Authors" for the release. "Authors" are all people
+   who committed code or in other ways contributed to `pyprep` for this release
+   (e.g., by reviewing PRs).
+1. commit the change and `git push` to master (or make a pull request).
+   Start your commit message with `[REL]`.
+1. make an annotated tag `git tag -a -m "1.2.3" 1.2.3 upstream/master` (This
+   assumes that you have a git remote configured with the name "upstream" and
+   pointing to https://github.com/sappelhoff/pyprep).
+1. `git push --follow-tags upstream`
+1. make a release on GitHub, using the git tag from the previous step (e.g.,
+   `1.2.3`). Fill the tag name into all fields of the release.
+
+Then the release is done and master has to be prepared for development of the
+next release:
+
+1. add a "current" headline to docs/whats_new.rst
+1. commit the changes and git push to master (or make a pull request)
