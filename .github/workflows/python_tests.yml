@@ -18,33 +18,42 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v1
       with:
         python-version: ${{ matrix.python-version }}
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.txt
         pip install -r requirements-dev.txt
         pip install -e .
+
     - name: Check formatting
+      if: "matrix.platform == 'ubuntu-latest'"
       run: |
-        make check
+        flake8 --docstring-convention numpy .
+
     - name: Test with pytest
       run: |
-        pytest test/ --cov=pyprep/ --cov-report=xml --verbose
+        pytest tests/ --cov=pyprep/ --cov-report=xml --verbose
+
     - name: Build docs
       run: |
         cd docs
         make clean
         make html
+
     - name: Upload artifacts
+      if: "matrix.platform == 'ubuntu-latest'"
       uses: actions/upload-artifact@v1
       with:
         name: docs-artifact
         path: docs/_build/html
+
     - name: Upload coverage report
+      if: "matrix.platform == 'ubuntu-latest'"
       uses: codecov/codecov-action@v1
       with:
         file: ./coverage.xml

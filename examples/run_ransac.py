@@ -16,7 +16,7 @@ In this example we show how to run the RANSAC of ``pyprep``.
 # First we import what we need for this example.
 import numpy as np
 import mne
-from scipy import signal as signal```
+from scipy import signal as signal
 import time
 
 from pyprep.find_noisy_channels import NoisyChannels
@@ -57,9 +57,7 @@ X = [
     for i in range(n_chans)
 ]
 # Scale the signal amplitude and add noise.
-X = 2e-5 * np.array(X) + 1e-5 * np.random.random(
-    (n_chans, time.shape[0])
-)  
+X = 2e-5 * np.array(X) + 1e-5 * np.random.random((n_chans, time.shape[0]))
 
 raw = mne.io.RawArray(X, info)
 
