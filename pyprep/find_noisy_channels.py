@@ -2,6 +2,7 @@
 import mne
 import numpy as np
 from mne.channels.interpolation import _make_interpolation_matrix
+from mne.utils import check_random_state
 from psutil import virtual_memory
 from scipy import signal
 from scipy.stats import iqr
@@ -14,18 +15,32 @@ from pyprep.utilities import filter_design
 class NoisyChannels:
     """Implements the functionality of the `findNoisyChannels` function.
 
-    It is a part of the PREP (preprocessing pipeline) for EEG data recorded using 10-20 montage style described in [1].
+    It is a part of the PREP (preprocessing pipeline) for EEG data recorded using 10-20 montage style described in [1]_.
 
     References
     ----------
-    [1] Bigdely-Shamlo, N., Mullen, T., Kothe, C., Su, K. M., Robbins, K. A.
-    (2015). The PREP pipeline: standardized preprocessing for large-scale
-    EEG analysis. Frontiers in Neuroinformatics, 9, 16.
+    .. [1] Bigdely-Shamlo, N., Mullen, T., Kothe, C., Su, K. M., Robbins, K. A.
+       (2015). The PREP pipeline: standardized preprocessing for large-scale
+       EEG analysis. Frontiers in Neuroinformatics, 9, 16.
 
     """
 
-    def __init__(self, raw, do_detrend=True):
-        """Initialize the class."""
+    def __init__(self, raw, do_detrend=True, random_state=None):
+        """Initialize the class.
+
+        Parameters
+        ----------
+        raw : mne.raw
+            The MNE raw object.
+        do_detrend : bool
+            Whether or not to remove a trend from the data upon initializing the
+            `NoisyChannels` object. Defaults to True.
+        random_state : int | None | np.random.mtrand.RandomState
+            If random_state is an int, it will be used as a seed for RandomState.
+            If None, the seed will be obtained from the operating system
+            (see RandomState for details). Default is None.
+
+        """
         # Make sure that we got an MNE object
         assert isinstance(raw, mne.io.BaseRaw)
 
@@ -119,8 +134,8 @@ class NoisyChannels:
 
         Parameters
         ----------
-        ransac: boolean
-                To detect channels by ransac or not.
+        ransac : boolean
+            To detect channels by ransac or not.
 
         """
         self.find_bad_by_nan_flat()
@@ -168,8 +183,8 @@ class NoisyChannels:
 
         Parameters
         ----------
-        deviation_threshold: float
-                             z-score threshold above which channels will be labelled bad.
+        deviation_threshold : float
+            z-score threshold above which channels will be labelled bad.
         """
         deviation_channel_mask = [False] * (self.new_dimensions[0])
         channel_deviation = np.zeros(self.new_dimensions[0])
@@ -196,8 +211,8 @@ class NoisyChannels:
 
         Parameters
         ----------
-        HF_zscore_threshold: float
-                             z-score threshold above which channels would be labelled as bad.
+        HF_zscore_threshold : float
+            z-score threshold above which channels would be labelled as bad.
         """
         data_tmp = np.transpose(self.EEGData)
         dimension = np.shape(data_tmp)
@@ -252,13 +267,14 @@ class NoisyChannels:
 
         Parameters
         ----------
-        correlation_secs: float
-                          length of the correlation time window (default: 1 secs).
-        correlation_threshold: float
-                               correlation threshold below which channel is marked bad.
-        frac_bad: float
-                  percentage of data windows in which the correlation threshold was not surpassed and
-                  if a channel gets a value of greater than 1%, it is designated bad.
+        correlation_secs : float
+            length of the correlation time window (default: 1 secs).
+        correlation_threshold : float
+            correlation threshold below which channel is marked bad.
+        frac_bad : float
+            percentage of data windows in which the correlation threshold was
+            not surpassed and if a channel gets a value of greater than 1%, it
+            is designated bad.
         """
         self.find_bad_by_hfnoise()  # since filtering is performed there
         correlation_frames = correlation_secs * self.sample_rate
@@ -346,10 +362,11 @@ class NoisyChannels:
         corr_thresh=0.75,
         fraction_bad=0.4,
         corr_window_secs=5.0,
+        random_state=None,
     ):
         """Detect channels that are not predicted well by other channels.
 
-        Here, a ransac approach (see [1], and a short discussion in [2]) is
+        Here, a ransac approach (see [1]_, and a short discussion in [2]_) is
         adopted to predict a "clean EEG" dataset. After identifying clean EEG
         channels through the other methods, the clean EEG dataset is
         constructed by repeatedly sampling a small subset of clean EEG channels
@@ -376,6 +393,10 @@ class NoisyChannels:
             channel as `bad_by_ransac`.
         corr_window_secs : float
             Size of the correlation window in seconds.
+        random_state : int | None | np.random.mtrand.RandomState
+            If random_state is an int, it will be used as a seed for RandomState.
+            If None, the seed will be obtained from the operating system
+            (see RandomState for details). Default is None.
 
         References
         ----------
@@ -420,6 +441,7 @@ class NoisyChannels:
             n_pred_chns=n_pred_chns,
             data=self.EEGData,
             n_samples=n_samples,
+            random_state=random_state,
         )
 
         # Correlate ransac prediction and eeg data
@@ -468,7 +490,14 @@ class NoisyChannels:
         return None
 
     def run_ransac(
-        self, chn_pos, chn_pos_good, good_chn_labs, n_pred_chns, data, n_samples
+        self,
+        chn_pos,
+        chn_pos_good,
+        good_chn_labs,
+        n_pred_chns,
+        data,
+        n_samples,
+        random_state=None,
     ):
         """Detect noisy channels apart from the ones described previously.
 
@@ -477,23 +506,28 @@ class NoisyChannels:
 
         Parameters
         ----------
-        chn_pos: ndarray
-                 3-D coordinates of the electrode position
-        chn_pos_good: ndarray
-                      3-D coordinates of all the channels not detected noisy so far
-        good_chn_labs: array_like
-                        channel labels for the ch_pos_good channels-
-        n_pred_chns: int
-                     channel numbers used for interpolation for RANSAC
-        data: ndarry
-              2-D EEG data
-        n_samples: int
-                    number of interpolations from which a median will be computed
+        chn_pos : ndarray
+            3-D coordinates of the electrode position
+        chn_pos_good : ndarray
+            3-D coordinates of all the channels not detected noisy so far
+        good_chn_labs : array_like
+            channel labels for the ch_pos_good channels-
+        n_pred_chns : int
+            channel numbers used for interpolation for RANSAC
+        data : ndarry
+            2-D EEG data
+        n_samples : int
+            number of interpolations from which a median will be computed
+        random_state : int | None | np.random.mtrand.RandomState
+            If random_state is an int, it will be used as a seed for RandomState.
+            If None, the seed will be obtained from the operating system
+            (see RandomState for details). Default is None.
 
         Returns
         -------
-        ransac_eeg: ndarray
-                    The EEG data predicted by RANSAC
+        ransac_eeg : ndarray
+            The EEG data predicted by RANSAC
+
         Title: noisy
         Author: Stefan Appelhoff
         Date: 2018
@@ -520,40 +554,54 @@ class NoisyChannels:
         eeg_predictions = np.zeros((n_chns, n_timepts, n_samples))
         for sample in range(n_samples):
             eeg_predictions[..., sample] = self.get_ransac_pred(
-                chn_pos, chn_pos_good, good_chn_labs, n_pred_chns, data
+                chn_pos,
+                chn_pos_good,
+                good_chn_labs,
+                n_pred_chns,
+                data,
+                random_state=random_state,
             )
 
         # Form median from all predictions
         ransac_eeg = np.median(eeg_predictions, axis=-1, overwrite_input=True)
         return ransac_eeg
 
-    def get_ransac_pred(self, chn_pos, chn_pos_good, good_chn_labs, n_pred_chns, data):
+    def get_ransac_pred(
+        self, chn_pos, chn_pos_good, good_chn_labs, n_pred_chns, data, random_state=None
+    ):
         """Perform RANSAC prediction.
 
         Parameters
         ----------
-        chn_pos: ndarray
-                 3-D coordinates of the electrode position
-        chn_pos_good: ndarray
-                      3-D coordinates of all the channels not detected noisy so far
-        good_chn_labs: array_like
-                        channel labels for the ch_pos_good channels
-        n_pred_chns: int
-                     channel numbers used for interpolation for RANSAC
-        data: ndarry
-              2-D EEG data
+        chn_pos : ndarray
+            3-D coordinates of the electrode position
+        chn_pos_good : ndarray
+            3-D coordinates of all the channels not detected noisy so far
+        good_chn_labs : array_like
+            channel labels for the ch_pos_good channels
+        n_pred_chns : int
+            channel numbers used for interpolation for RANSAC
+        data : ndarray
+            2-D EEG data
+        random_state : int | None | np.random.mtrand.RandomState
+            If random_state is an int, it will be used as a seed for RandomState.
+            If None, the seed will be obtained from the operating system
+            (see RandomState for details). Default is None.
 
         Returns
         -------
-        ransac_pred: ndarray
-                    Single RANSAC prediction
+        ransac_pred : ndarray
+            Single RANSAC prediction
+
         Title: noisy
         Author: Stefan Appelhoff
         Date: 2018
         Availability: https://github.com/sappelhoff/pyprep/blob/master/pyprep/noisy.py
         """
+        rng = check_random_state(random_state)
+
         # Pick a subset of clean channels for reconstruction
-        reconstr_idx = np.random.choice(
+        reconstr_idx = rng.choice(
             np.arange(chn_pos_good.shape[0]), size=n_pred_chns, replace=False
         )
 

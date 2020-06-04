@@ -23,3 +23,5 @@ exclude .gitignore
 exclude .mailmap
 exclude Makefile
 exclude .coveragerc
+include versioneer.py
+include pyprep/_version.py

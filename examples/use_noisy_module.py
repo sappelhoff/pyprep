@@ -63,7 +63,7 @@ from pyprep.noisy import find_bad_epochs  # noqa: E402
 
 # Turn our arbitrary data into epochs
 events = np.array(
-    [[10000, 0, 1], [20000, 0, 2], [30000, 0, 1], [40000, 0, 2], [50000, 0, 1],]
+    [[10000, 0, 1], [20000, 0, 2], [30000, 0, 1], [40000, 0, 2], [50000, 0, 1]]
 )
 
 epochs = mne.Epochs(raw, events)

@@ -32,6 +32,10 @@ class PrepPipeline:
         Digital montage of EEG data.
     ransac : boolean
         Whether or not to use ransac.
+    random_state : int | None | np.random.mtrand.RandomState
+        If random_state is an int, it will be used as a seed for RandomState.
+        If None, the seed will be obtained from the operating system
+        (see RandomState for details). Default is None.
 
     References
     ----------
@@ -41,7 +45,7 @@ class PrepPipeline:
 
     """
 
-    def __init__(self, raw, prep_params, montage, ransac=True):
+    def __init__(self, raw, prep_params, montage, ransac=True, random_state=None):
         """Initialize PREP class."""
         self.raw = raw.copy()
         self.ch_names = self.raw.ch_names
@@ -52,10 +56,11 @@ class PrepPipeline:
         self.prep_params = prep_params
         self.sfreq = self.raw.info["sfreq"]
         self.ransac = ransac
+        self.random_state = random_state
 
     def fit(self):
         """Run the whole PREP pipeline."""
-        noisy_detector = NoisyChannels(self.raw)
+        noisy_detector = NoisyChannels(self.raw, random_state=self.random_state)
         noisy_detector.find_bad_by_nan_flat()
         unusable_channels = _union(
             noisy_detector.bad_by_nan, noisy_detector.bad_by_flat

@@ -10,3 +10,4 @@ pillow
 sphinx_bootstrap_theme
 numpydoc
 check-manifest
+pre-commit
