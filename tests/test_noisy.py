@@ -6,6 +6,8 @@ import pytest
 
 from pyprep.noisy import Noisydata, find_bad_epochs
 
+RNG = np.random.RandomState(1337)
+
 
 def make_random_mne_object(
     sfreq=1000.0, t_secs=600, n_freq_comps=5, freq_range=[10, 60]
@@ -65,7 +67,7 @@ def make_random_mne_object(
     for chan in range(n_chans):
         # Each channel signal is a sum of random freq sine waves
         for freq_i in range(n_freq_comps):
-            freq = np.random.randint(low, high, signal_len)
+            freq = RNG.randint(low, high, signal_len)
             signal[chan, :] += np.sin(2 * np.pi * t * freq)
 
     signal *= 1e-6  # scale to Volts
@@ -89,7 +91,7 @@ while not found_good_test_object:
 # Make some arbitrary events sampled from the mid-section of raw.times
 n_events = 3
 ival_secs = [0.2, 0.8]
-marker_samples = np.random.choice(raw.times[5:-5], size=n_events, replace=False)
+marker_samples = RNG.choice(raw.times[5:-5], size=n_events, replace=False)
 events = np.asarray(
     [marker_samples, np.zeros(n_events), np.ones(n_events)], dtype="int64"
 )
@@ -106,9 +108,7 @@ def test_find_bad_epochs(epochs=epochs):
     assert bads == []
 
 
-@pytest.mark.parametrize(
-    "input", [raw, {"key": 1}, [1, 2, 3], np.random.random((3, 3))]
-)
+@pytest.mark.parametrize("input", [raw, {"key": 1}, [1, 2, 3], RNG.random((3, 3))])
 def test_init(input):
     """Test the class initialization."""
     # Initialize with an mne object should work
@@ -138,7 +138,7 @@ def test_find_bad_by_nan(raw=raw):
     m, n = raw_tmp._data.shape
 
     # Insert a nan value for a random channel
-    rand_chn_idx = int(np.random.randint(0, m, 1))
+    rand_chn_idx = int(RNG.randint(0, m, 1))
     rand_chn_lab = raw_tmp.ch_names[rand_chn_idx]
     raw_tmp._data[rand_chn_idx, n - 1] = np.nan
 
@@ -157,7 +157,7 @@ def test_find_bad_by_flat(raw=raw):
     raw_tmp._data *= 1e100
 
     # Now insert one random flat channel
-    rand_chn_idx = int(np.random.randint(0, m, 1))
+    rand_chn_idx = int(RNG.randint(0, m, 1))
     rand_chn_lab = raw_tmp.ch_names[rand_chn_idx]
     raw_tmp._data[rand_chn_idx, :] = np.ones_like(raw_tmp._data[1, :])
 
@@ -169,13 +169,13 @@ def test_find_bad_by_flat(raw=raw):
 
 def test_find_bad_by_deviation(raw=raw):
     """Test find_bad_by_deviation."""
-    np.random.seed(12345)
+    RNG.seed(12345)
 
     raw_tmp = raw.copy()
     m, n = raw_tmp._data.shape
 
     # Now insert one random channel with very low deviations
-    rand_chn_idx = int(np.random.randint(0, m, 1))
+    rand_chn_idx = int(RNG.randint(0, m, 1))
     rand_chn_lab = raw_tmp.ch_names[rand_chn_idx]
     raw_tmp._data[rand_chn_idx, :] = np.ones_like(raw_tmp._data[1, :])
 
@@ -186,7 +186,7 @@ def test_find_bad_by_deviation(raw=raw):
 
     # Insert a channel with very high deviation
     raw_tmp = raw.copy()
-    rand_chn_idx = int(np.random.randint(0, m, 1))
+    rand_chn_idx = int(RNG.randint(0, m, 1))
     rand_chn_lab = raw_tmp.ch_names[rand_chn_idx]
     arbitrary_scaling = 5
     raw_tmp._data[rand_chn_idx, :] *= arbitrary_scaling
@@ -206,7 +206,7 @@ def test_find_bad_by_correlation(
 
     # The test data is correlated well
     # We insert a badly correlated channel and see if it is detected.
-    rand_chn_idx = int(np.random.randint(0, m, 1))
+    rand_chn_idx = int(RNG.randint(0, m, 1))
     rand_chn_lab = raw_tmp.ch_names[rand_chn_idx]
 
     # Use cosine instead of sine to create a signal
@@ -214,7 +214,7 @@ def test_find_bad_by_correlation(
     high = freq_range[1]
     signal = np.zeros((1, n))
     for freq_i in range(n_freq_comps):
-        freq = np.random.randint(low, high, n)
+        freq = RNG.randint(low, high, n)
         signal[0, :] += np.cos(2 * np.pi * raw.times * freq)
 
     raw_tmp._data[rand_chn_idx, :] = signal * 1e-6
@@ -232,13 +232,13 @@ def test_find_bad_by_hf_noise(raw=raw, n_freq_comps=n_freq_comps):
 
     # The test data has low hf noise
     # We insert a a chan with a lot hf noise
-    rand_chn_idx = int(np.random.randint(0, m, 1))
+    rand_chn_idx = int(RNG.randint(0, m, 1))
     rand_chn_lab = raw_tmp.ch_names[rand_chn_idx]
 
     # Use freqs between 90 and 100 Hz to insert hf noise
     signal = np.zeros((1, n))
     for freq_i in range(n_freq_comps):
-        freq = np.random.randint(90, 100, n)
+        freq = RNG.randint(90, 100, n)
         signal[0, :] += np.sin(2 * np.pi * raw.times * freq)
 
     raw_tmp._data[rand_chn_idx, :] = signal * 1e-6
@@ -261,7 +261,7 @@ def test_find_bad_by_ransac(raw=raw):
 
 def test_ransac_too_few_preds(raw=raw):
     """Test that ransac throws an error for few predictors."""
-    chns = np.random.choice(raw.ch_names, size=3, replace=False)
+    chns = RNG.choice(raw.ch_names, size=3, replace=False)
     raw_tmp = raw.copy()
     raw_tmp.pick_channels(chns)
     nd = Noisydata(raw_tmp)

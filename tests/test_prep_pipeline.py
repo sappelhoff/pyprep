@@ -21,7 +21,7 @@ def test_prep_pipeline(raw, montage):
         "reref_chs": ch_names_eeg,
         "line_freqs": np.arange(60, sample_rate / 2, 60),
     }
-    prep = PrepPipeline(raw_copy, prep_params, montage)
+    prep = PrepPipeline(raw_copy, prep_params, montage, random_state=42)
     prep.fit()
 
     EEG_raw = raw_copy.get_data(picks="eeg") * 1e6

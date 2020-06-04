@@ -13,10 +13,20 @@ Here we list a changelog of pyprep.
 
 .. currentmodule:: pyprep
 
-.. _current:
-
-Current
+Authors
 -------
+People who contributed to this software across releases (in alphabetical order)
+
+* `Aamna Lawrence`_
+* `Adam Li`_
+* `Stefan Appelhoff`_
+* `Victor Xiang`_
+* `Yorguin Mantilla`_
+
+.. _changes_0_3_0:
+
+Version 0.3.0
+-------------
 
 Changelog
 ~~~~~~~~~
@@ -70,17 +80,6 @@ Changelog
 ~~~~~~~~~
 
 - Add :func:`find_bad_epochs` based on the FASTER algorithm, by `Stefan Appelhoff`_ (`0fa9c06 <https://github.com/sappelhoff/pyprep/commit/0fa9c065481c4cbaaf83b275f92b16b8807810b5>`_)
-
-
-Authors
--------
-People who contributed to this software (in alphabetical order)
-
-* Stefan Appelhoff
-* Aamna Lawrence
-* Adam Li
-* Yorguin Mantilla
-* Victor Xiang
 
 .. _Stefan Appelhoff: http://stefanappelhoff.com/
 .. _Aamna Lawrence: https://github.com/AamnaLawrence

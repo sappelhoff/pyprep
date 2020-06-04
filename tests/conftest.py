@@ -21,13 +21,8 @@ def raw():
 
     # using sample EEG data (https://physionet.org/content/eegmmidb/1.0.0/)
     raw = mne.io.read_raw_edf(edf_fpath, preload=True)
-    raw.rename_channels(lambda s: s.strip("."))
-    raw.rename_channels(
-        lambda s: s.replace("c", "C")
-        .replace("o", "O")
-        .replace("f", "F")
-        .replace("t", "T")
-        .replace("Tp", "TP")
-        .replace("Cp", "CP")
-    )
+
+    # The eegbci data has non-standard channel names. We need to rename them:
+    eegbci.standardize(raw)
+
     return raw

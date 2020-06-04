@@ -136,9 +136,9 @@ Follow this workflow:
 1. go to your python environment for `pyprep`
 1. make sure all tests pass and the docs are built cleanly
 1. update `docs/whats_new.rst`, renaming the "current" headline to the new
-   version and adding all "Authors" for the release. "Authors" are all people
-   who committed code or in other ways contributed to `pyprep` for this release
-   (e.g., by reviewing PRs).
+   version and updating the "Authors" section. "Authors" are all people
+   who committed code or in other ways contributed to `pyprep` (e.g., by
+   reviewing PRs, moderating discussions).
 1. commit the change and `git push` to master (or make a pull request).
    Start your commit message with `[REL]`.
 1. make an annotated tag `git tag -a -m "1.2.3" 1.2.3 upstream/master` (This
