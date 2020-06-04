@@ -23,6 +23,26 @@ People who contributed to this software across releases (in alphabetical order)
 * `Victor Xiang`_
 * `Yorguin Mantilla`_
 
+.. _current:
+
+Current
+-------
+
+Changelog
+~~~~~~~~~
+
+- nothing yet
+
+Bug
+~~~
+
+- nothing yet
+
+API
+~~~
+
+- nothing yet
+
 .. _changes_0_3_0:
 
 Version 0.3.0
