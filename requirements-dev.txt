@@ -6,8 +6,8 @@ pytest-sugar
 check-manifest
 flake8
 flake8-docstrings
-sphinx
-sphinx_gallery
+sphinx>=2.4
+sphinx_gallery>=0.6
 sphinx_bootstrap_theme
 numpydoc
 pillow
