@@ -52,9 +52,8 @@ We recommend to run ``pyprep`` in a dedicated virtual environment
 
 For installing the **stable** version of ``pyprep``, simply call
 ``pip install pyprep``.
-This should install dependencies automatically.
-You can also install the dependencies yourself by running
-``pip install -r requirements.txt`` from the project root.
+This should install dependencies automatically, which are defined in the
+``setup.cfg`` file in the ``options.install_requires`` section.
 
 For installation of the **development** version use:
 
@@ -62,7 +61,6 @@ For installation of the **development** version use:
 
    git clone https://github.com/sappelhoff/pyprep
    cd pyprep
-   pip install -r requirements.txt
    pip install -r requirements-dev.txt
    pre-commit install
    pip install -e .
