@@ -23,7 +23,10 @@
 pyprep
 ======
 
-See `the documentation <http://pyprep.readthedocs.io/en/latest/>`_!
+For documentation, see the:
+
+- `stable documentation <http://pyprep.readthedocs.io/en/stable/>`_
+- `latest (development) documentation <http://pyprep.readthedocs.io/en/latest/>`_
 
 .. docs_readme_include_label
 
@@ -33,16 +36,24 @@ EEG data, working with `MNE-Python <https://www.martinos.org/mne/stable/index.ht
 for EEG data processing and analysis. Also contains a function to detect
 outlier epochs inspired by the FASTER algorithm.
 
+**ALPHA SOFTWARE.**
+**This package is currently in its early stages of iteration.**
+**It may change both its internals or its user-facing API in the near future.**
+**Any feedback and ideas on how to improve either of these is more than welcome!**
+**Use this software at your own risk.**
+
+
 Installation
 ============
 
-``pyprep`` requires Python version ``3.6`` or higher to run properly. It is
-furthermore recommended to run ``pyprep`` in a dedicated virtual environment
+``pyprep`` requires Python version ``3.6`` or higher to run properly.
+We recommend to run ``pyprep`` in a dedicated virtual environment
 (using e.g., `conda <https://docs.conda.io/en/latest/miniconda.html>`_).
 
 For installing the **stable** version of ``pyprep``, simply call
-``pip install pyprep``. This should install dependencies automatically. You
-can also install the dependencies yourself by running
+``pip install pyprep``.
+This should install dependencies automatically.
+You can also install the dependencies yourself by running
 ``pip install -r requirements.txt`` from the project root.
 
 For installation of the **development** version use:
@@ -53,16 +64,19 @@ For installation of the **development** version use:
    cd pyprep
    pip install -r requirements.txt
    pip install -r requirements-dev.txt
+   pre-commit install
    pip install -e .
 
 Contributions
 =============
 
-Contributions are welcome! You should have read the references below. After
-that, feel free to submit pull requests. Be sure to always include tests for
-all new code that you introduce (whenever possible).
+**We are actively looking for contributors!**
 
-See also our `CONTRIBUTING.md <https://github.com/sappelhoff/pyprep/blob/master/.github/CONTRIBUTING.md>`_!
+Please chime in with your ideas on how to improve this software by opening
+a GitHub issue, or submitting a pull request.
+
+See also our `CONTRIBUTING.md <https://github.com/sappelhoff/pyprep/blob/master/.github/CONTRIBUTING.md>`_
+file for help with submitting a pull request.
 
 References
 ==========
