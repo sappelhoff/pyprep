@@ -16,8 +16,8 @@ In this example we show how to run the RANSAC of ``pyprep``.
 # First we import what we need for this example.
 import numpy as np
 import mne
-from scipy import signal as sx
-import time as clk
+from scipy import signal as signal```
+import time
 
 from pyprep.find_noisy_channels import NoisyChannels
 
@@ -30,6 +30,7 @@ from pyprep.find_noisy_channels import NoisyChannels
 
 sfreq = 1000.0
 
+# We need a montage, because RANSAC uses spherical splines for interpolation
 montage = mne.channels.make_standard_montage("standard_1020")
 
 ch_names = montage.ch_names
@@ -39,23 +40,26 @@ n_chans = len(ch_names)
 info = mne.create_info(ch_names=ch_names, sfreq=sfreq, ch_types=["eeg"] * n_chans)
 
 time = np.arange(0, 60, 1.0 / sfreq)  # 60 seconds of recording
-n_bad_chans = 3  # num_good_chans = n_chans - num_bad_chans
+n_bad_chans = 3
 
 bad_channels = np.random.choice(np.arange(n_chans), n_bad_chans, replace=False)
 bad_channels = [int(i) for i in bad_channels]
 bad_ch_names = [ch_names[i] for i in bad_channels]
+# The frequency components to use in the signal for good and bad channels
 freq_good = 20
 freq_bad = 20
 
+# Generate the data
 X = [
-    sx.sawtooth(2 * np.pi * freq_bad * time)
+    signal.sawtooth(2 * np.pi * freq_bad * time)
     if i in bad_channels
     else np.sin(2 * np.pi * freq_good * time)
     for i in range(n_chans)
 ]
+# Scale the signal amplitude and add noise.
 X = 2e-5 * np.array(X) + 1e-5 * np.random.random(
     (n_chans, time.shape[0])
-)  # Scale to EEG and add noise.
+)  
 
 raw = mne.io.RawArray(X, info)
 
@@ -71,9 +75,9 @@ nd = NoisyChannels(raw)
 
 ###############################################################################
 # Find all bad channels and print a summary
-start_time = clk.time()
+start_time = time.time()
 nd.find_bad_by_ransac()
-print("--- %s seconds ---" % (clk.time() - start_time))
+print("--- %s seconds ---" % (time.time() - start_time))
 
 ###############################################################################
 # Now the bad channels are saved in `bads` and we can continue processing our
