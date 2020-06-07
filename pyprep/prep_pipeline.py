@@ -70,22 +70,23 @@ class PrepPipeline:
         # )
         # reference_channels = _set_diff(self.prep_params["ref_chs"], unusable_channels)
         # Step 1: 1Hz high pass filtering
-        self.EEG_new = removeTrend(self.EEG_raw, sample_rate=self.sfreq)
+        if len(self.prep_params["line_freqs"]) != 0:
+            self.EEG_new = removeTrend(self.EEG_raw, sample_rate=self.sfreq)
 
-        # Step 2: Removing line noise
-        linenoise = self.prep_params["line_freqs"]
-        self.EEG_clean = mne.filter.notch_filter(
-            self.EEG_new,
-            Fs=self.sfreq,
-            freqs=linenoise,
-            method="spectrum_fit",
-            mt_bandwidth=2,
-            p_value=0.01,
-        )
+            # Step 2: Removing line noise
+            linenoise = self.prep_params["line_freqs"]
+            self.EEG_clean = mne.filter.notch_filter(
+                self.EEG_new,
+                Fs=self.sfreq,
+                freqs=linenoise,
+                method="spectrum_fit",
+                mt_bandwidth=2,
+                p_value=0.01,
+            )
 
-        # Add Trend back
-        self.EEG = self.EEG_raw - self.EEG_new + self.EEG_clean
-        self.raw._data = self.EEG * 1e-6
+            # Add Trend back
+            self.EEG = self.EEG_raw - self.EEG_new + self.EEG_clean
+            self.raw._data = self.EEG * 1e-6
 
         # Step 3: Referencing
         reference = Reference(self.raw, self.prep_params, ransac=self.ransac)
