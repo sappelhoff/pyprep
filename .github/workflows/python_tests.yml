@@ -34,6 +34,7 @@ jobs:
       if: "matrix.platform == 'ubuntu-latest'"
       run: |
         flake8 .
+        black .
 
     - name: Test with pytest
       run: |
