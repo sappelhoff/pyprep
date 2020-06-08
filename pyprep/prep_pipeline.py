@@ -28,8 +28,9 @@ class PrepPipeline:
             - A list of channel names to be used for line-noise removed, and
               referenced [default: all channels]
 
-        - line_freqs : 1d array
-            - A list of line frequencies to be removed
+        - line_freqs : array_like
+            - list of floats indicating frequencies to be removed.
+              Can be an empty list to skip this step.
 
     montage : DigMontage
         Digital montage of EEG data.

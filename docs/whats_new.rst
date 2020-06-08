@@ -31,7 +31,7 @@ Current
 Changelog
 ~~~~~~~~~
 
-- nothing yet
+- It's now possible to pass an empty list to skip the line noise removal by `Yorguin Mantilla`_ (`#29 <https://github.com/sappelhoff/pyprep/pull/29>`_)
 
 Bug
 ~~~
