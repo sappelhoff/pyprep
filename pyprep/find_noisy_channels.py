@@ -37,7 +37,8 @@ class NoisyChannels:
             Whether or not to remove a trend from the data upon initializing the
             `NoisyChannels` object. Defaults to True.
         random_state : int | None | np.random.mtrand.RandomState
-            If random_state is an int, it will be used as a seed for RandomState.
+            The random seed at which to initialize the class. If random_state
+            is an int, it will be used as a seed for RandomState.
             If None, the seed will be obtained from the operating system
             (see RandomState for details). Default is None.
 
@@ -64,6 +65,9 @@ class NoisyChannels:
         self.new_channels = self.original_channels
         self.ch_names_new = self.ch_names_original
         self.channels_interpolate = self.original_channels
+
+        # random_state
+        self.random_state = check_random_state(random_state)
 
         # The identified bad channels
         self.bad_by_nan = []
@@ -372,7 +376,6 @@ class NoisyChannels:
         corr_thresh=0.75,
         fraction_bad=0.4,
         corr_window_secs=5.0,
-        random_state=None,
     ):
         """Detect channels that are not predicted well by other channels.
 
@@ -403,10 +406,6 @@ class NoisyChannels:
             channel as `bad_by_ransac`.
         corr_window_secs : float
             Size of the correlation window in seconds.
-        random_state : int | None | np.random.mtrand.RandomState
-            If random_state is an int, it will be used as a seed for RandomState.
-            If None, the seed will be obtained from the operating system
-            (see RandomState for details). Default is None.
 
         References
         ----------
@@ -447,7 +446,6 @@ class NoisyChannels:
             n_pred_chns=n_pred_chns,
             data=self.EEGData,
             n_samples=n_samples,
-            random_state=random_state,
         )
 
         # Correlate ransac prediction and eeg data
@@ -496,14 +494,7 @@ class NoisyChannels:
         return None
 
     def run_ransac(
-        self,
-        chn_pos,
-        chn_pos_good,
-        good_chn_labs,
-        n_pred_chns,
-        data,
-        n_samples,
-        random_state=None,
+        self, chn_pos, chn_pos_good, good_chn_labs, n_pred_chns, data, n_samples
     ):
         """Detect noisy channels apart from the ones described previously.
 
@@ -524,10 +515,6 @@ class NoisyChannels:
             2-D EEG data
         n_samples : int
             number of interpolations from which a median will be computed
-        random_state : int | None | np.random.mtrand.RandomState
-            If random_state is an int, it will be used as a seed for RandomState.
-            If None, the seed will be obtained from the operating system
-            (see RandomState for details). Default is None.
 
         Returns
         -------
@@ -556,21 +543,14 @@ class NoisyChannels:
         eeg_predictions = np.zeros((n_chns, n_timepts, n_samples))
         for sample in range(n_samples):
             eeg_predictions[..., sample] = self.get_ransac_pred(
-                chn_pos,
-                chn_pos_good,
-                good_chn_labs,
-                n_pred_chns,
-                data,
-                random_state=random_state,
+                chn_pos, chn_pos_good, good_chn_labs, n_pred_chns, data
             )
 
         # Form median from all predictions
         ransac_eeg = np.median(eeg_predictions, axis=-1, overwrite_input=True)
         return ransac_eeg
 
-    def get_ransac_pred(
-        self, chn_pos, chn_pos_good, good_chn_labs, n_pred_chns, data, random_state=None
-    ):
+    def get_ransac_pred(self, chn_pos, chn_pos_good, good_chn_labs, n_pred_chns, data):
         """Perform RANSAC prediction.
 
         Parameters
@@ -585,10 +565,6 @@ class NoisyChannels:
             channel numbers used for interpolation for RANSAC
         data : ndarray
             2-D EEG data
-        random_state : int | None | np.random.mtrand.RandomState
-            If random_state is an int, it will be used as a seed for RandomState.
-            If None, the seed will be obtained from the operating system
-            (see RandomState for details). Default is None.
 
         Returns
         -------
@@ -596,7 +572,7 @@ class NoisyChannels:
             Single RANSAC prediction
 
         """
-        rng = check_random_state(random_state)
+        rng = check_random_state(self.random_state)
 
         # Pick a subset of clean channels for reconstruction
         reconstr_idx = rng.choice(
