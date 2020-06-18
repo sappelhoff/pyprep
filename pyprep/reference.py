@@ -2,6 +2,7 @@
 import logging
 
 import numpy as np
+from mne.utils import check_random_state
 
 # from pyprep.noisy import Noisydata
 from pyprep.find_noisy_channels import NoisyChannels
@@ -29,6 +30,12 @@ class Reference:
         reref_chs
     ransac : boolean
         Whether or not to use ransac
+    random_state : int | None | np.random.mtrand.RandomState
+        The random seed at which to initialize the class. If random_state is
+        an int, it will be used as a seed for RandomState.
+        If None, the seed will be obtained from the operating system
+        (see RandomState for details). Default is None.
+
 
     References
     ----------
@@ -38,7 +45,7 @@ class Reference:
 
     """
 
-    def __init__(self, raw, params, ransac=True):
+    def __init__(self, raw, params, ransac=True, random_state=None):
         """Initialize the class."""
         self.raw = raw.copy()
         self.ch_names = self.raw.ch_names
@@ -49,6 +56,7 @@ class Reference:
         self.rereferenced_channels = params["reref_chs"]
         self.sfreq = self.raw.info["sfreq"]
         self.ransac = ransac
+        self.random_state = check_random_state(random_state)
 
     def perform_reference(self):
         """Estimate the true signal mean and interpolate bad channels.
@@ -58,9 +66,9 @@ class Reference:
 
         Notes
         -----
-            This function calls robust_reference first
-            Currently this function only implements the functionality of default
-            settings, i.e., doRobustPost
+        This function calls ``robust_reference`` first.
+        Currently this function only implements the functionality of default
+        settings, i.e., ``doRobustPost``.
 
         """
         # Phase 1: Estimate the true signal mean with robust referencing
@@ -80,7 +88,7 @@ class Reference:
 
         # Phase 2: Find the bad channels and interpolate
         self.raw._data = self.EEG * 1e-6
-        noisy_detector = NoisyChannels(self.raw)
+        noisy_detector = NoisyChannels(self.raw, random_state=self.random_state)
         noisy_detector.find_all_bads(ransac=self.ransac)
 
         # Record Noisy channels and EEG before interpolation
@@ -104,7 +112,7 @@ class Reference:
 
         # Still noisy channels after interpolation
         self.interpolated_channels = bad_channels
-        noisy_detector = NoisyChannels(self.raw)
+        noisy_detector = NoisyChannels(self.raw, random_state=self.random_state)
         noisy_detector.find_all_bads(ransac=self.ransac)
         self.still_noisy_channels = noisy_detector.get_bads()
         self.raw.info["bads"] = self.still_noisy_channels
@@ -134,7 +142,9 @@ class Reference:
         raw._data = removeTrend(raw.get_data(), sample_rate=self.sfreq)
 
         # Determine unusable channels and remove them from the reference channels
-        noisy_detector = NoisyChannels(raw, do_detrend=False)
+        noisy_detector = NoisyChannels(
+            raw, do_detrend=False, random_state=self.random_state
+        )
         noisy_detector.find_all_bads(ransac=self.ransac)
         self.noisy_channels_original = {
             "bad_by_nan": noisy_detector.bad_by_nan,
@@ -177,7 +187,7 @@ class Reference:
 
         while True:
             raw_tmp._data = signal_tmp * 1e-6
-            noisy_detector = NoisyChannels(raw_tmp)
+            noisy_detector = NoisyChannels(raw_tmp, random_state=self.random_state)
             noisy_detector.find_all_bads(ransac=self.ransac)
             self.noisy_channels["bad_by_nan"] = _union(
                 self.noisy_channels["bad_by_nan"], noisy_detector.bad_by_nan

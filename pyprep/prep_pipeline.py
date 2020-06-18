@@ -1,5 +1,6 @@
 """Module for PREP pipeline."""
 import mne
+from mne.utils import check_random_state
 
 from pyprep.find_noisy_channels import NoisyChannels
 from pyprep.reference import Reference
@@ -37,7 +38,8 @@ class PrepPipeline:
     ransac : boolean
         Whether or not to use ransac.
     random_state : int | None | np.random.mtrand.RandomState
-        If random_state is an int, it will be used as a seed for RandomState.
+        The random seed at which to initialize the class. If random_state is
+        an int, it will be used as a seed for RandomState.
         If None, the seed will be obtained from the operating system
         (see RandomState for details). Default is None.
 
@@ -60,7 +62,7 @@ class PrepPipeline:
         self.prep_params = prep_params
         self.sfreq = self.raw.info["sfreq"]
         self.ransac = ransac
-        self.random_state = random_state
+        self.random_state = check_random_state(random_state)
 
     def fit(self):
         """Run the whole PREP pipeline."""
@@ -90,7 +92,12 @@ class PrepPipeline:
             self.raw._data = self.EEG * 1e-6
 
         # Step 3: Referencing
-        reference = Reference(self.raw, self.prep_params, ransac=self.ransac)
+        reference = Reference(
+            self.raw,
+            self.prep_params,
+            ransac=self.ransac,
+            random_state=self.random_state,
+        )
         reference.perform_reference()
         self.raw = reference.raw
         self.noisy_channels_original = reference.noisy_channels_original
