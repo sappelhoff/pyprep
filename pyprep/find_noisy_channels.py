@@ -534,9 +534,9 @@ class NoisyChannels:
 
                     # R in this case is a 2x2 matrix with main diagonal elements = 1
                     # The counter diagonal elements are the values we are interested in
-                    R = np.diag(
-                        R[0:1, 1:]
-                    )  # This transformation get us to the diagonal elements, although we could do it by slicing too
+                    R = np.diag(R[0:1, 1:])
+                    # This transformation get us to the diagonal elements
+                    # although we could do it by slicing too
                     channel_correlations[k, chanx] = R
                 # print(chanx, end=" ")
 
