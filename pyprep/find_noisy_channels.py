@@ -580,12 +580,15 @@ class NoisyChannels:
             The EEG data predicted by RANSAC
 
         """
+        # n_chns, n_timepts = data.shape
+        # 2 next lines should be equivalent but support single channel processing
+        n_timepts = data.shape[1]
+        n_chns = chn_pos.shape[0]
+
         # Before running, make sure we have enough memory
         try:
             available_gb = virtual_memory().available * 1e-9
-            needed_gb = (
-                data[: chn_pos.shape[0], :].nbytes * 1e-9
-            ) * n_samples  # chn_pos.shape[0] is just n_chans
+            needed_gb = (data[:n_chns, :].nbytes * 1e-9) * n_samples
             assert available_gb > needed_gb
         except AssertionError:
             raise MemoryError(
@@ -599,10 +602,6 @@ class NoisyChannels:
 
         # Memory seems to be fine ...
         # Make the predictions
-        # n_chns, n_timepts = data.shape
-        # 2 next lines should be equivalent but support single channel processing
-        n_timepts = data.shape[1]
-        n_chns = chn_pos.shape[0]
         eeg_predictions = np.zeros((n_chns, n_timepts, n_samples))
         for sample in range(n_samples):
             eeg_predictions[..., sample] = self.get_ransac_pred(
