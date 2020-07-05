@@ -482,7 +482,7 @@ class NoisyChannels:
                 R = np.diag(R[0 : self.n_chans_new, self.n_chans_new :])
                 channel_correlations[k, :] = R
 
-        except:
+        except MemoryError:
             print("Cannot allocate enough ram for optimized ransac")
             print("Attempting Slow Ransac")
             # Correlate ransac prediction and eeg data
