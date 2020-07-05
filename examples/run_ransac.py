@@ -91,5 +91,6 @@ print("--- %s seconds ---" % (perf_counter() - start_time))
 print(nd.bad_by_ransac)
 assert set(bad_ch_names) == set(nd.bad_by_ransac)
 
+# Check that the channel wise RANSAC yields identical results
 print(nd2.bad_by_ransac)
 assert set(bad_ch_names) == set(nd2.bad_by_ransac)
