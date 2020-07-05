@@ -77,6 +77,7 @@ start_time = perf_counter()
 nd.find_bad_by_ransac()
 print("--- %s seconds ---" % (perf_counter() - start_time))
 
+# Repeat RANSAC in a channel wise manner. This is slower but needs less memory.
 start_time = perf_counter()
 nd2.find_bad_by_ransac(channel_wise=True)
 print("--- %s seconds ---" % (perf_counter() - start_time))
