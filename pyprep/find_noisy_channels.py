@@ -450,7 +450,7 @@ class NoisyChannels:
 
         # Preallocate
         channel_correlations = np.ones((w_correlation, self.n_chans_new))
-        print("RANSAC PREDICTIONS:" + str(self.n_chans_new))
+        # print("RANSAC PREDICTIONS:" + str(self.n_chans_new))
 
         for chanx in range(self.EEGData.shape[0]):
             # Make the ransac predictions
@@ -485,12 +485,12 @@ class NoisyChannels:
                     R[0:1, 1:]
                 )  # This was a matrix but Im looking for a single value
                 channel_correlations[k, chanx] = R
-            print(chanx, end=" ")
+            # print(chanx, end=" ")
 
         # Thresholding
         thresholded_correlations = channel_correlations < corr_thresh
         frac_bad_corr_windows = np.mean(thresholded_correlations, axis=0)
-        print("\nRANSAC DONE\n")
+        # print("\nRANSAC DONE\n")
         # find the corresponding channel names and return
         bad_ransac_channels_idx = np.argwhere(frac_bad_corr_windows > fraction_bad)
         bad_ransac_channels_name = self.ch_names_new[
