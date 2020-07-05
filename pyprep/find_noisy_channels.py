@@ -376,6 +376,7 @@ class NoisyChannels:
         corr_thresh=0.75,
         fraction_bad=0.4,
         corr_window_secs=5.0,
+        channel_wise=False,
     ):
         """Detect channels that are not predicted well by other channels.
 
@@ -439,6 +440,9 @@ class NoisyChannels:
             )
 
         try:
+            if channel_wise:
+                print("Forcing channel-wise ransac.")
+                raise MemoryError("Forcing channel-wise ransac.")
             # Make the ransac predictions
             ransac_eeg = self.run_ransac(
                 chn_pos=chn_pos,
@@ -483,8 +487,8 @@ class NoisyChannels:
                 channel_correlations[k, :] = R
 
         except MemoryError:
-            print("Cannot allocate enough ram for optimized ransac")
-            print("Attempting Slow Ransac")
+            print("Cannot allocate enough ram for optimized ransac.")
+            print("Attempting slow ransac.")
             # Correlate ransac prediction and eeg data
             correlation_frames = corr_window_secs * self.sample_rate
             correlation_window = np.arange(correlation_frames)
@@ -524,13 +528,15 @@ class NoisyChannels:
                     pred_portion = pred_window[:, :, k]
 
                     R = np.corrcoef(data_portion, pred_portion)
-
                     # Take only correlations of data with pred
                     # and use diag to exctract correlation of
                     # data_i with pred_i
+
+                    # R in this case is a 2x2 matrix with main diagonal elements = 1
+                    # The counter diagonal elements are the values we are interested in
                     R = np.diag(
                         R[0:1, 1:]
-                    )  # This was a matrix but Im looking for a single value
+                    )  # This transformation get us to the diagonal elements, although we could do it by slicing too
                     channel_correlations[k, chanx] = R
                 # print(chanx, end=" ")
 
