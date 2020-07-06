@@ -647,7 +647,6 @@ class NoisyChannels:
         w_correlation: int
             Number of windows.
         """
-
         # Preallocate
         channel_correlations = np.ones((w_correlation, len(chans_to_predict)))
 
