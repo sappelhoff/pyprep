@@ -73,21 +73,15 @@ class Reference:
         """
         # Phase 1: Estimate the true signal mean with robust referencing
         self.robust_reference()
-        if self.noisy_channels["bad_all"]:
-            # If we interpolate the raw here we would be interpolating
-            # more than what we actually account for later.
-            dummy = self.raw.copy()
-            dummy.info["bads"] = self.noisy_channels["bad_all"]
-            dummy.interpolate_bads()
-            self.reference_signal = (
-                np.nanmean(dummy.get_data(picks=self.reference_channels), axis=0) * 1e6
-            )
-            del dummy
-        else:
-            self.reference_signal = (
-                np.nanmean(self.raw.get_data(picks=self.reference_channels), axis=0)
-                * 1e6
-            )
+        # If we interpolate the raw here we would be interpolating
+        # more than what we later actually account for (in interpolated channels).
+        dummy = self.raw.copy()
+        dummy.info["bads"] = self.noisy_channels["bad_all"]
+        dummy.interpolate_bads()
+        self.reference_signal = (
+            np.nanmean(dummy.get_data(picks=self.reference_channels), axis=0) * 1e6
+        )
+        del dummy
         rereferenced_index = [
             self.ch_names_eeg.index(ch) for ch in self.rereferenced_channels
         ]
@@ -194,7 +188,6 @@ class Reference:
 
         # Remove reference from signal, iteratively interpolating bad channels
         raw_tmp = raw.copy()
-
         iterations = 0
         noisy_channels_old = []
         max_iteration_num = 4

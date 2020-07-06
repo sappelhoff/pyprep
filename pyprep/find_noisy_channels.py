@@ -477,7 +477,7 @@ class NoisyChannels:
 
         except MemoryError:
             print("Cannot allocate enough ram for optimized ransac.")
-            print("Attempting channel-wise ransac... it is slower :( .")
+            print("Attempting channel-wise ransac... but it is slower :( .")
             print("\nRANSAC PREDICTIONS:" + str(self.n_chans_new))
             for chanx in range(self.n_chans_new):
                 chans_to_predict = [chanx]
