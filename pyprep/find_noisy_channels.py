@@ -368,10 +368,7 @@ class NoisyChannels:
         self.find_bad_by_correlation()
         set_hf = set(self.bad_by_hf_noise)
         set_correlation = set(self.bad_by_correlation)
-        not_hf = set_correlation - set_hf
-        self.bad_by_SNR = self.bad_by_hf_noise + list(not_hf)
-        # this could have been done by an intersection
-        # self.bad_by_SNR = set_correlation.intersection(set_hf)
+        self.bad_by_SNR = list(set_correlation.intersection(set_hf))
         return None
 
     def find_bad_by_ransac(
