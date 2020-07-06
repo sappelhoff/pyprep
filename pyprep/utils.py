@@ -64,3 +64,29 @@ def filter_design(N_order, amp, freq):
     )
     kernel = np.multiply(kernel[0 : N_order + 1], (np.transpose(hamming_window[:])))
     return kernel
+
+
+def SplitList(mylist, chunk_size):
+    """Split list in chunks.
+
+    Parameters
+    ----------
+    my_list: list
+        list to split.
+    chunk_size: int
+        size of the lists returned.
+
+    Returns
+    -------
+    chunked lists: list
+        list of the chunked lists.
+
+
+    Code taken from:
+    https://stackoverflow.com/questions/312443/how-do-you-split-a-list-into-evenly-sized-chunks
+
+    Authors: atzz,cardamom from stackoverflow.
+    """
+    return [
+        mylist[offs : offs + chunk_size] for offs in range(0, len(mylist), chunk_size)
+    ]

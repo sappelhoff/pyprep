@@ -10,6 +10,7 @@ from statsmodels import robust
 
 from pyprep.removeTrend import removeTrend
 from pyprep.utils import filter_design
+from pyprep.utils import SplitList
 
 
 class NoisyChannels:
@@ -457,42 +458,50 @@ class NoisyChannels:
 
         print("Executing RANSAC\nThis may take a while, so be patient...")
 
-        try:
-            if channel_wise:
-                print("Forcing channel-wise ransac.")
-                raise MemoryError("Forcing channel-wise ransac.")
+        chunk_size = self.n_chans_new
+        mem_error = True
+        job = list(range(self.n_chans_new))
 
-            chans_to_predict = list(range(self.n_chans_new))
-            channel_correlations = self.ransac_correlations(
-                chans_to_predict,
-                chn_pos,
-                chn_pos_good,
-                good_chn_labs,
-                n_pred_chns,
-                self.EEGData,
-                n_samples,
-                n,
-                w_correlation,
-            )
+        if channel_wise:
+            chunk_size = 1
 
-        except MemoryError:
-            print("Cannot allocate enough ram for optimized ransac.")
-            print("Attempting channel-wise ransac... but it is slower :( .")
-            print("\nRANSAC PREDICTIONS:" + str(self.n_chans_new))
-            for chanx in range(self.n_chans_new):
-                chans_to_predict = [chanx]
-                channel_correlations[:, chanx] = self.ransac_correlations(
-                    chans_to_predict,
-                    chn_pos,
-                    chn_pos_good,
-                    good_chn_labs,
-                    n_pred_chns,
-                    self.EEGData,
-                    n_samples,
-                    n,
-                    w_correlation,
+        while mem_error:
+            try:
+                channel_chunks = SplitList(job, chunk_size)
+                total_chunks = len(channel_chunks)
+                print("Total # of chunks:", total_chunks)
+                current = 1
+                print("Current chunk:", end=" ", flush=True)
+                for chunk in channel_chunks:
+                    channel_correlations[:, chunk] = self.ransac_correlations(
+                        chunk,
+                        chn_pos,
+                        chn_pos_good,
+                        good_chn_labs,
+                        n_pred_chns,
+                        self.EEGData,
+                        n_samples,
+                        n,
+                        w_correlation,
+                    )
+                    print(current, end=" ", flush=True)
+                    current = current + 1
+
+                mem_error = False  # All chunks processed, hurray!
+                del current
+            except MemoryError:
+                print("Cannot allocate enough ram for chunk size :", chunk_size)
+                chunk_size = chunk_size // 2
+                print(
+                    "Splitting chunk size by half =",
+                    chunk_size,
+                    "but it will be slower :(",
                 )
-                print(chanx, end=" ", flush=True)
+                if chunk_size == 0:
+                    raise MemoryError(
+                        "Not even doing 1 channel at a time the data fits in ram...\nMaybe try lowering the sample frequency."
+                    )
+
         # Thresholding
         thresholded_correlations = channel_correlations < corr_thresh
         frac_bad_corr_windows = np.mean(thresholded_correlations, axis=0)
@@ -646,6 +655,12 @@ class NoisyChannels:
             Number of frames/samples of each window.
         w_correlation: int
             Number of windows.
+
+        Returns
+        -------
+        channel_correlations : ndarray
+            correlations of the given channels to their ransac predicted values.
+
         """
         # Preallocate
         channel_correlations = np.ones((w_correlation, len(chans_to_predict)))
@@ -683,4 +698,4 @@ class NoisyChannels:
             R = np.diag(R[0 : len(chans_to_predict), len(chans_to_predict) :])
             channel_correlations[k, :] = R
 
-        return np.squeeze(channel_correlations)
+        return channel_correlations
