@@ -73,12 +73,15 @@ class Reference:
         """
         # Phase 1: Estimate the true signal mean with robust referencing
         self.robust_reference()
-        if self.noisy_channels["bad_all"]:
-            self.raw.info["bads"] = self.noisy_channels["bad_all"]
-            self.raw.interpolate_bads()
+        # If we interpolate the raw here we would be interpolating
+        # more than what we later actually account for (in interpolated channels).
+        dummy = self.raw.copy()
+        dummy.info["bads"] = self.noisy_channels["bad_all"]
+        dummy.interpolate_bads()
         self.reference_signal = (
-            np.nanmean(self.raw.get_data(picks=self.reference_channels), axis=0) * 1e6
+            np.nanmean(dummy.get_data(picks=self.reference_channels), axis=0) * 1e6
         )
+        del dummy
         rereferenced_index = [
             self.ch_names_eeg.index(ch) for ch in self.rereferenced_channels
         ]
@@ -161,7 +164,12 @@ class Reference:
         self.unusable_channels = _union(
             noisy_detector.bad_by_nan, noisy_detector.bad_by_flat
         )
-        # unusable_channels = _union(unusable_channels, noisy_detector.bad_by_SNR)
+
+        # According to the Matlab Implementation (see robustReference.m)
+        # self.unusable_channels = _union(self.unusable_channels,
+        # noisy_detector.bad_by_SNR)
+        # but maybe this makes no difference...
+
         self.reference_channels = _set_diff(
             self.reference_channels, self.unusable_channels
         )
@@ -180,14 +188,16 @@ class Reference:
 
         # Remove reference from signal, iteratively interpolating bad channels
         raw_tmp = raw.copy()
-
         iterations = 0
         noisy_channels_old = []
         max_iteration_num = 4
 
         while True:
             raw_tmp._data = signal_tmp * 1e-6
-            noisy_detector = NoisyChannels(raw_tmp, random_state=self.random_state)
+            noisy_detector = NoisyChannels(
+                raw_tmp, do_detrend=False, random_state=self.random_state
+            )
+            # Detrend applied at the beginning of the function.
             noisy_detector.find_all_bads(ransac=self.ransac)
             self.noisy_channels["bad_by_nan"] = _union(
                 self.noisy_channels["bad_by_nan"], noisy_detector.bad_by_nan

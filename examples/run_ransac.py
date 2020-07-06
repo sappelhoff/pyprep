@@ -24,9 +24,9 @@ from pyprep.find_noisy_channels import NoisyChannels
 ###############################################################################
 # Now let's make some arbitrary MNE raw object for demonstration purposes.
 # We will think of good channels as sine waves and bad channels correlated with
-# each other as sawtooths. The idea is that the RANSAC is able to identify
-# these channels. We will need to set a montage because the RANSAC needs to
-# interpolate.
+# each other as sawtooths. The RANSAC will be biased towards sines in its
+# prediction (they are the majority) so it will identify the sawtooths as bad.
+# We will need to set a montage because the RANSAC needs to interpolate.
 
 sfreq = 1000.0
 
@@ -69,12 +69,17 @@ raw.set_montage(montage, verbose=False)
 # will be the place where all following methods are performed.
 
 nd = NoisyChannels(raw)
-
+nd2 = NoisyChannels(raw)
 
 ###############################################################################
 # Find all bad channels and print a summary
 start_time = perf_counter()
 nd.find_bad_by_ransac()
+print("--- %s seconds ---" % (perf_counter() - start_time))
+
+# Repeat RANSAC in a channel wise manner. This is slower but needs less memory.
+start_time = perf_counter()
+nd2.find_bad_by_ransac(channel_wise=True)
 print("--- %s seconds ---" % (perf_counter() - start_time))
 
 ###############################################################################
@@ -85,3 +90,7 @@ print("--- %s seconds ---" % (perf_counter() - start_time))
 # Check channels that go bad together by correlation (RANSAC)
 print(nd.bad_by_ransac)
 assert set(bad_ch_names) == set(nd.bad_by_ransac)
+
+# Check that the channel wise RANSAC yields identical results
+print(nd2.bad_by_ransac)
+assert set(bad_ch_names) == set(nd2.bad_by_ransac)

@@ -30,7 +30,7 @@ Current
 
 Changelog
 ~~~~~~~~~
-
+- When a ransac call needs more memory than available, pyprep will now automatically switch to a slower but less memory-consuming version of ransac. See the ``channel_wise``parameter, by `Yorguin Mantilla`_ (`#32 <https://github.com/sappelhoff/pyprep/pull/32>`_)
 - It's now possible to pass an empty list for the ``line_freqs`` param in ``PrepPipeline`` to skip the line noise removal, by `Yorguin Mantilla`_ (`#29 <https://github.com/sappelhoff/pyprep/pull/29>`_)
 - The three main classes ``PrepPipeline``, ``NoisyChannels``, and ``Reference`` now have a ``random_state`` parameter to set a seed that gets passed on to all their internal methods and class calls, by `Stefan Appelhoff`_ (`#31 <https://github.com/sappelhoff/pyprep/pull/31>`_)
 
@@ -38,7 +38,9 @@ Changelog
 Bug
 ~~~
 
-- nothing yet
+- Corrected inconsistentcy of :mod:`reference` with the matlab version (`#19 <https://github.com/sappelhoff/pyprep/issues/19>`_), by `Yorguin Mantilla`_ (`#32 <https://github.com/sappelhoff/pyprep/pull/32>`_)
+- Prevented an over detrending in :mod:`reference`, by `Yorguin Mantilla`_ (`#32 <https://github.com/sappelhoff/pyprep/pull/32>`_)
+
 
 API
 ~~~
