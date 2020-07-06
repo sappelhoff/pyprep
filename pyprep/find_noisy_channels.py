@@ -465,14 +465,11 @@ class NoisyChannels:
 
         if channel_wise:
             chunk_size = 1
-
         while mem_error:
             try:
                 channel_chunks = split_list(job, chunk_size)
                 total_chunks = len(channel_chunks)
-                print("Total # of chunks:", total_chunks)
                 current = 1
-                print("Current chunk:", end=" ", flush=True)
                 for chunk in channel_chunks:
                     channel_correlations[:, chunk] = self.ransac_correlations(
                         chunk,
@@ -485,19 +482,20 @@ class NoisyChannels:
                         n,
                         w_correlation,
                     )
+                    if chunk == channel_chunks[0]:
+                        # If it gets here, it means it is the optimal
+                        print("Finding optimal chunk size :", chunk_size)
+                        print("Total # of chunks:", total_chunks)
+                        print("Current chunk:", end=" ", flush=True)
+
                     print(current, end=" ", flush=True)
                     current = current + 1
 
                 mem_error = False  # All chunks processed, hurray!
                 del current
             except MemoryError:
-                print("Cannot allocate enough ram for chunk size :", chunk_size)
-                chunk_size = chunk_size // 2
-                print(
-                    "Splitting chunk size by half =",
-                    chunk_size,
-                    "but it will be slower :(",
-                )
+                chunk_size = chunk_size - 1  # // 2
+                # dividing strategy may miss the most optimal chunk size
                 if chunk_size == 0:
                     raise MemoryError(
                         "Not even doing 1 channel at a time the data fits in ram..."
