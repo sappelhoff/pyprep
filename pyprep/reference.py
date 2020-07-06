@@ -171,10 +171,11 @@ class Reference:
             noisy_detector.bad_by_nan, noisy_detector.bad_by_flat
         )
 
-        # Original Matlab Implementation
-        # see unusableChannels = union(badChannelsFromNaNs, union(badChannelsFromNoData, badChannelsFromLowSNR));
-        # see badChannelsFromLowSNR = intersect(noisy.badChannelsFromHFNoise, noisy.badChannelsFromCorrelation);
-        # self.unusable_channels = _union(self.unusable_channels, noisy_detector.bad_by_SNR)
+        # According to the Matlab Implementation (see robustReference.m)
+        # self.unusable_channels = _union(self.unusable_channels,
+        # noisy_detector.bad_by_SNR)
+        # but maybe this makes no difference...
+
         self.reference_channels = _set_diff(
             self.reference_channels, self.unusable_channels
         )
