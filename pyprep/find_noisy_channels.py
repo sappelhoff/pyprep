@@ -288,9 +288,11 @@ class NoisyChannels:
         frac_bad : float
             percentage of data windows in which the correlation threshold was
             not surpassed and if a channel gets a value of greater than 1%, it
-            is designated bad. Notice that if the # of windows is low the default
-            frac_bad may be too extreme (ie 60 windows imply only 1 bad window
-            needed).
+            is designated bad. Notice that if `correlation_secs` is high, and
+            thus the number of windows is low, the default `frac_bad` may
+            be too extreme. For example if only 60 windows are available
+            for a dataset, only a single bad window would be needed to
+            classify as bad.
 
         """
         self.find_bad_by_hfnoise()  # since filtering is performed there
