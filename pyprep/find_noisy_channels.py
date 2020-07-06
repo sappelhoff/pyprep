@@ -10,7 +10,7 @@ from statsmodels import robust
 
 from pyprep.removeTrend import removeTrend
 from pyprep.utils import filter_design
-from pyprep.utils import SplitList
+from pyprep.utils import split_list
 
 
 class NoisyChannels:
@@ -469,7 +469,7 @@ class NoisyChannels:
 
         while mem_error:
             try:
-                channel_chunks = SplitList(job, chunk_size)
+                channel_chunks = split_list(job, chunk_size)
                 total_chunks = len(channel_chunks)
                 print("Total # of chunks:", total_chunks)
                 current = 1

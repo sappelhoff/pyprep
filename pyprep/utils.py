@@ -66,7 +66,7 @@ def filter_design(N_order, amp, freq):
     return kernel
 
 
-def SplitList(mylist, chunk_size):
+def split_list(mylist, chunk_size):
     """Split list in chunks.
 
     Parameters
@@ -81,11 +81,7 @@ def SplitList(mylist, chunk_size):
     chunked lists: list
         list of the chunked lists.
 
-
-    Code taken from:
-    https://stackoverflow.com/questions/312443/how-do-you-split-a-list-into-evenly-sized-chunks
-
-    Authors: atzz,cardamom from stackoverflow.
+    See: https://stackoverflow.com/a/312466/5201771
     """
     return [
         mylist[offs : offs + chunk_size] for offs in range(0, len(mylist), chunk_size)
