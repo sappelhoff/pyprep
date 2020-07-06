@@ -367,6 +367,8 @@ class NoisyChannels:
         set_correlation = set(self.bad_by_correlation)
         not_hf = set_correlation - set_hf
         self.bad_by_SNR = self.bad_by_hf_noise + list(not_hf)
+        # this could have been done by an intersection
+        # self.bad_by_SNR = set_correlation.intersection(set_hf)
         return None
 
     def find_bad_by_ransac(
@@ -439,105 +441,58 @@ class NoisyChannels:
                 " quality tests."
             )
 
+        # Correlation windows setup
+        correlation_frames = corr_window_secs * self.sample_rate
+        correlation_window = np.arange(correlation_frames)
+        n = correlation_window.shape[0]
+        correlation_offsets = np.arange(
+            0, (self.signal_len - correlation_frames), correlation_frames
+        )
+        w_correlation = correlation_offsets.shape[0]
+
+        # Preallocate
+        channel_correlations = np.ones((w_correlation, self.n_chans_new))
+        # Notice self.EEGData.shape[0] = self.n_chans_new
+        # They came from the same drop of channels
+
+        print("Executing RANSAC\nThis may take a while, so be patient...")
+
         try:
             if channel_wise:
                 print("Forcing channel-wise ransac.")
                 raise MemoryError("Forcing channel-wise ransac.")
-            # Make the ransac predictions
-            ransac_eeg = self.run_ransac(
-                chn_pos=chn_pos,
-                chn_pos_good=chn_pos_good,
-                good_chn_labs=good_chn_labs,
-                n_pred_chns=n_pred_chns,
-                data=self.EEGData,
-                n_samples=n_samples,
+
+            chans_to_predict = list(range(self.n_chans_new))
+            channel_correlations = self.ransac_correlations(
+                chans_to_predict,
+                chn_pos,
+                chn_pos_good,
+                good_chn_labs,
+                n_pred_chns,
+                self.EEGData,
+                n_samples,
+                n,
+                w_correlation,
             )
-
-            # Correlate ransac prediction and eeg data
-            correlation_frames = corr_window_secs * self.sample_rate
-            correlation_window = np.arange(correlation_frames)
-            n = correlation_window.shape[0]
-            correlation_offsets = np.arange(
-                0, (self.signal_len - correlation_frames), correlation_frames
-            )
-            w_correlation = correlation_offsets.shape[0]
-
-            # For the actual data
-            data_window = self.EEGData[: self.n_chans_new, : n * w_correlation]
-            data_window = data_window.reshape(self.n_chans_new, n, w_correlation)
-
-            # For the ransac predicted eeg
-            pred_window = ransac_eeg[: self.n_chans_new, : n * w_correlation]
-            pred_window = pred_window.reshape(self.n_chans_new, n, w_correlation)
-
-            # Preallocate
-            channel_correlations = np.ones((w_correlation, self.n_chans_new))
-
-            # Perform correlations
-            for k in range(w_correlation):
-                data_portion = data_window[:, :, k]
-                pred_portion = pred_window[:, :, k]
-
-                R = np.corrcoef(data_portion, pred_portion)
-
-                # Take only correlations of data with pred
-                # and use diag to exctract correlation of
-                # data_i with pred_i
-                R = np.diag(R[0 : self.n_chans_new, self.n_chans_new :])
-                channel_correlations[k, :] = R
 
         except MemoryError:
             print("Cannot allocate enough ram for optimized ransac.")
-            print("Attempting slow ransac.")
-            # Correlate ransac prediction and eeg data
-            correlation_frames = corr_window_secs * self.sample_rate
-            correlation_window = np.arange(correlation_frames)
-            n = correlation_window.shape[0]
-
-            correlation_offsets = np.arange(
-                0, (self.signal_len - correlation_frames), correlation_frames
-            )
-            w_correlation = correlation_offsets.shape[0]
-
-            # Preallocate
-            channel_correlations = np.ones((w_correlation, self.n_chans_new))
-
-            for chanx in range(self.EEGData.shape[0]):
-                # Make the ransac predictions
-                ransac_eeg = self.run_ransac(
-                    chn_pos=chn_pos[[chanx], :],
-                    chn_pos_good=chn_pos_good,
-                    good_chn_labs=good_chn_labs,
-                    n_pred_chns=n_pred_chns,
-                    data=self.EEGData,
-                    n_samples=n_samples,
+            print("Attempting channel-wise ransac... it is slower :( .")
+            print("\nRANSAC PREDICTIONS:" + str(self.n_chans_new))
+            for chanx in range(self.n_chans_new):
+                chans_to_predict = [chanx]
+                channel_correlations[:, chanx] = self.ransac_correlations(
+                    chans_to_predict,
+                    chn_pos,
+                    chn_pos_good,
+                    good_chn_labs,
+                    n_pred_chns,
+                    self.EEGData,
+                    n_samples,
+                    n,
+                    w_correlation,
                 )
-
-                # For the actual data
-                data_window = self.EEGData[chanx, : n * w_correlation]
-                data_window = data_window.reshape(1, n, w_correlation)
-
-                # For the ransac predicted eeg
-                pred_window = ransac_eeg[0, : n * w_correlation]
-                pred_window = pred_window.reshape(1, n, w_correlation)
-
-                # Perform correlations
-                for k in range(w_correlation):
-                    data_portion = data_window[:, :, k]
-                    pred_portion = pred_window[:, :, k]
-
-                    R = np.corrcoef(data_portion, pred_portion)
-                    # Take only correlations of data with pred
-                    # and use diag to exctract correlation of
-                    # data_i with pred_i
-
-                    # R in this case is a 2x2 matrix with main diagonal elements = 1
-                    # The counter diagonal elements are the values we are interested in
-                    R = np.diag(R[0:1, 1:])
-                    # This transformation get us to the diagonal elements
-                    # although we could do it by slicing too
-                    channel_correlations[k, chanx] = R
-
+                print(chanx, end=" ", flush=True)
         # Thresholding
         thresholded_correlations = channel_correlations < corr_thresh
         frac_bad_corr_windows = np.mean(thresholded_correlations, axis=0)
@@ -548,6 +503,7 @@ class NoisyChannels:
             bad_ransac_channels_idx.astype(int)
         ]
         self.bad_by_ransac = [i[0] for i in bad_ransac_channels_name]
+        print("\nRANSAC done!")
 
         return None
 
@@ -655,3 +611,77 @@ class NoisyChannels:
         interpol_mat = _make_interpolation_matrix(reconstr_pos, chn_pos)
         ransac_pred = np.matmul(interpol_mat, data[reconstr_picks, :])
         return ransac_pred
+
+    def ransac_correlations(
+        self,
+        chans_to_predict,
+        chn_pos,
+        chn_pos_good,
+        good_chn_labs,
+        n_pred_chns,
+        data,
+        n_samples,
+        n,
+        w_correlation,
+    ):
+        """Get correlations of channels to their ransac predicted values.
+
+        Parameters
+        ----------
+        chans_to_predict: list of int
+            Indexes of the channels to predict.
+        chn_pos : ndarray
+            3-D coordinates of the electrode positions to predict
+        chn_pos_good : ndarray
+            3-D coordinates of all the channels not detected noisy so far
+        good_chn_labs : array_like
+            channel labels for the ch_pos_good channels
+        n_pred_chns : int
+            channel numbers used for interpolation for RANSAC
+        data : ndarray
+            2-D EEG data
+        n_samples : int
+            Number of samples used for computation of ransac.
+        n : int
+            Number of frames/samples of each window.
+        w_correlation: int
+            Number of windows.
+        """
+
+        # Preallocate
+        channel_correlations = np.ones((w_correlation, len(chans_to_predict)))
+
+        # Make the ransac predictions
+        ransac_eeg = self.run_ransac(
+            chn_pos=chn_pos[chans_to_predict, :],
+            chn_pos_good=chn_pos_good,
+            good_chn_labs=good_chn_labs,
+            n_pred_chns=n_pred_chns,
+            data=data,
+            n_samples=n_samples,
+        )
+
+        # Correlate ransac prediction and eeg data
+
+        # For the actual data
+        data_window = data[chans_to_predict, : n * w_correlation]
+        data_window = data_window.reshape(len(chans_to_predict), n, w_correlation)
+
+        # For the ransac predicted eeg
+        pred_window = ransac_eeg[: len(chans_to_predict), : n * w_correlation]
+        pred_window = pred_window.reshape(len(chans_to_predict), n, w_correlation)
+
+        # Perform correlations
+        for k in range(w_correlation):
+            data_portion = data_window[:, :, k]
+            pred_portion = pred_window[:, :, k]
+
+            R = np.corrcoef(data_portion, pred_portion)
+
+            # Take only correlations of data with pred
+            # and use diag to extract correlation of
+            # data_i with pred_i
+            R = np.diag(R[0 : len(chans_to_predict), len(chans_to_predict) :])
+            channel_correlations[k, :] = R
+
+        return np.squeeze(channel_correlations)

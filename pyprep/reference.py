@@ -74,11 +74,20 @@ class Reference:
         # Phase 1: Estimate the true signal mean with robust referencing
         self.robust_reference()
         if self.noisy_channels["bad_all"]:
-            self.raw.info["bads"] = self.noisy_channels["bad_all"]
-            self.raw.interpolate_bads()
-        self.reference_signal = (
-            np.nanmean(self.raw.get_data(picks=self.reference_channels), axis=0) * 1e6
-        )
+            # If we interpolate the raw here we would be interpolating
+            # more than what we actually account for later.
+            dummy = self.raw.copy()
+            dummy.info["bads"] = self.noisy_channels["bad_all"]
+            dummy.interpolate_bads()
+            self.reference_signal = (
+                np.nanmean(dummy.get_data(picks=self.reference_channels), axis=0) * 1e6
+            )
+            del dummy
+        else:
+            self.reference_signal = (
+                np.nanmean(self.raw.get_data(picks=self.reference_channels), axis=0)
+                * 1e6
+            )
         rereferenced_index = [
             self.ch_names_eeg.index(ch) for ch in self.rereferenced_channels
         ]
@@ -161,7 +170,11 @@ class Reference:
         self.unusable_channels = _union(
             noisy_detector.bad_by_nan, noisy_detector.bad_by_flat
         )
-        # unusable_channels = _union(unusable_channels, noisy_detector.bad_by_SNR)
+
+        # Original Matlab Implementation
+        # see unusableChannels = union(badChannelsFromNaNs, union(badChannelsFromNoData, badChannelsFromLowSNR));
+        # see badChannelsFromLowSNR = intersect(noisy.badChannelsFromHFNoise, noisy.badChannelsFromCorrelation);
+        # self.unusable_channels = _union(self.unusable_channels, noisy_detector.bad_by_SNR)
         self.reference_channels = _set_diff(
             self.reference_channels, self.unusable_channels
         )
@@ -187,7 +200,10 @@ class Reference:
 
         while True:
             raw_tmp._data = signal_tmp * 1e-6
-            noisy_detector = NoisyChannels(raw_tmp, random_state=self.random_state)
+            noisy_detector = NoisyChannels(
+                raw_tmp, do_detrend=False, random_state=self.random_state
+            )
+            # Detrend applied at the beginning of the function.
             noisy_detector.find_all_bads(ransac=self.ransac)
             self.noisy_channels["bad_by_nan"] = _union(
                 self.noisy_channels["bad_by_nan"], noisy_detector.bad_by_nan

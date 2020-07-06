@@ -24,9 +24,9 @@ from pyprep.find_noisy_channels import NoisyChannels
 ###############################################################################
 # Now let's make some arbitrary MNE raw object for demonstration purposes.
 # We will think of good channels as sine waves and bad channels correlated with
-# each other as sawtooths. The idea is that the RANSAC is able to identify
-# these channels. We will need to set a montage because the RANSAC needs to
-# interpolate.
+# each other as sawtooths. The RANSAC will be biased towards sines in its
+# prediction (they are the majority) so it will identify the sawtooths as bad.
+# We will need to set a montage because the RANSAC needs to interpolate.
 
 sfreq = 1000.0
 
