@@ -38,7 +38,9 @@ Changelog
 Bug
 ~~~
 
-- nothing yet
+- Corrected inconsistentcy of :mod:`reference` with the matlab version (`#19 <https://github.com/sappelhoff/pyprep/issues/19>`_), by `Yorguin Mantilla`_ (`#32 <https://github.com/sappelhoff/pyprep/pull/32>`_)
+- Prevented an over detrending in :mod:`reference`, by `Yorguin Mantilla`_ (`#32 <https://github.com/sappelhoff/pyprep/pull/32>`_)
+
 
 API
 ~~~
