@@ -502,7 +502,8 @@ class NoisyChannels:
                 if chunk_size == 0:
                     raise MemoryError(
                         "Not even doing 1 channel at a time the data fits in ram..."
-                        "\nMaybe try lowering the sample frequency."
+                        "You could downsample the data or reduce the number of requested"
+                        " samples."
                     )
 
         # Thresholding
