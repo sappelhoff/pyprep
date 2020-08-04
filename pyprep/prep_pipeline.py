@@ -56,13 +56,31 @@ class PrepPipeline:
         self.raw = raw.copy()
         self.ch_names = self.raw.ch_names
         self.raw.set_montage(montage)
-        self.raw.pick_types(eeg=True, eog=False, meg=False)
+        self.raw_non_eeg = self.raw.copy()
+
+        ch_types = ["eeg", "meg", "stim", "eog", "ecg", "emg", "ref_meg",
+                    "misc", "resp", "syst", "seeg", "dipole", "gof",
+                    "bio", "ecog", "fnirs", "csd"]
+        pick_ch_types = {ch_type:False for ch_type in ch_types}
+        pick_ch_types["eeg"] = True
+        self.raw.pick_types(**pick_ch_types)
+
+        pick_ch_types = {ch_type:True for ch_type in ch_types}
+        pick_ch_types["eeg"] = False
+        self.raw_non_eeg.pick_types(**pick_ch_types)
+
         self.ch_names_eeg = self.raw.ch_names
         self.EEG_raw = self.raw.get_data() * 1e6
         self.prep_params = prep_params
         self.sfreq = self.raw.info["sfreq"]
         self.ransac = ransac
         self.random_state = check_random_state(random_state)
+
+    @property
+    def full_raw(self):
+        """ Return a version of the self.raw object that includes also the non-eeg channels. """
+        full_raw = self.raw.copy()
+        return full_raw.add_channels([self.raw_non_eeg])
 
     def fit(self):
         """Run the whole PREP pipeline."""
