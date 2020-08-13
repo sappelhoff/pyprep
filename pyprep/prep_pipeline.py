@@ -94,7 +94,7 @@ class PrepPipeline:
 
     @property
     def full_raw(self):
-        """ Return a version of self.raw that includes the non-eeg channels. """
+        """Return a version of self.raw that includes the non-eeg channels."""
         full_raw = self.raw.copy()
         return full_raw.add_channels([self.raw_non_eeg])
 
