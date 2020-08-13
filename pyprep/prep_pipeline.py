@@ -57,15 +57,31 @@ class PrepPipeline:
         self.ch_names = self.raw.ch_names
         self.raw.set_montage(montage)
         self.raw_non_eeg = self.raw.copy()
-
-        ch_types = ["eeg", "meg", "stim", "eog", "ecg", "emg", "ref_meg",
-                    "misc", "resp", "syst", "seeg", "dipole", "gof",
-                    "bio", "ecog", "fnirs", "csd"]
-        pick_ch_types = {ch_type:False for ch_type in ch_types}
+        # test push
+        ch_types = [
+            "eeg",
+            "meg",
+            "stim",
+            "eog",
+            "ecg",
+            "emg",
+            "ref_meg",
+            "misc",
+            "resp",
+            "syst",
+            "seeg",
+            "dipole",
+            "gof",
+            "bio",
+            "ecog",
+            "fnirs",
+            "csd",
+        ]
+        pick_ch_types = {ch_type: False for ch_type in ch_types}
         pick_ch_types["eeg"] = True
         self.raw.pick_types(**pick_ch_types)
 
-        pick_ch_types = {ch_type:True for ch_type in ch_types}
+        pick_ch_types = {ch_type: True for ch_type in ch_types}
         pick_ch_types["eeg"] = False
         self.raw_non_eeg.pick_types(**pick_ch_types)
 
