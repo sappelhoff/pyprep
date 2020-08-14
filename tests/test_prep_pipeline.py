@@ -206,7 +206,7 @@ def test_prep_pipeline(raw, montage):
     axs[4, 1].set_xlabel("Time(s)", fontsize=14)
 
 
-@pytest.mark.usefixtures("raw", "montage")
+#
 def test_prep_pipeline_non_eeg(raw, montage):
     """Test prep pipeline with non eeg channels."""
     import random

@@ -57,14 +57,13 @@ class PrepPipeline:
 
         # separe eeg and non eeg channels
         self.raw_non_eeg = self.raw.copy()
-        self.ch_names = self.raw.ch_names.copy()  # all channels
+        self.ch_names = self.raw.ch_names
+        self.ch_all = self.raw.ch_names.copy()  # all channels
         self.ch_types = self.raw.get_channel_types()
         self.ch_names_eeg = [
-            self.ch_names[i]
-            for i in range(len(self.ch_names))
-            if self.ch_types[i] == "eeg"
+            self.ch_all[i] for i in range(len(self.ch_all)) if self.ch_types[i] == "eeg"
         ]
-        self.ch_names_non_eeg = set(self.ch_names) - set(self.ch_names_eeg)
+        self.ch_names_non_eeg = set(self.ch_all) - set(self.ch_names_eeg)
         self.raw.pick_channels(self.ch_names_eeg)
         self.raw_non_eeg.pick_channels(self.ch_names_non_eeg)
 
