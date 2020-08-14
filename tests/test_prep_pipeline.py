@@ -238,10 +238,13 @@ def test_prep_pipeline_non_eeg(raw, montage):
 
     prep.fit()
 
-    assert set(prep.ch_names_non_eeg) == set(ch_names_non_eeg)
+    # correct non-eeg channels configured in init
+    assert set(prep.chs_non_eeg) == set(ch_names_non_eeg)
+    # original (all) channel names same as full_raw names
     assert set(prep.full_raw.ch_names) == set(raw_copy.ch_names)
+    # names of raw (only eeg)  same as full names - non eeg names
     assert set(prep.raw.ch_names) == set(raw_copy.ch_names) - set(ch_names_non_eeg)
-    assert prep.raw._data.shape[0] == len(raw_copy.ch_names) - len(
-        prep.ch_names_non_eeg
-    )
+    # quantity of raw (only eeg) same as quantity of all - non eeg lists
+    assert prep.raw._data.shape[0] == len(raw_copy.ch_names) - len(prep.chs_non_eeg)
+    # quantity of channels in is the same as qty of full raw
     assert raw_copy._data.shape[0] == prep.full_raw._data.shape[0]

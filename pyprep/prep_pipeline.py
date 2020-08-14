@@ -57,24 +57,25 @@ class PrepPipeline:
 
         # separe eeg and non eeg channels
         self.raw_non_eeg = self.raw.copy()
-        self.ch_names = self.raw.ch_names
-        self.ch_all = self.raw.ch_names.copy()  # all channels
-        self.ch_types = self.raw.get_channel_types()
-        self.ch_names_eeg = [
-            self.ch_all[i] for i in range(len(self.ch_all)) if self.ch_types[i] == "eeg"
+        self.chs_all = self.raw.ch_names.copy()
+        self.chs_types = self.raw.get_channel_types()
+        self.chs_eeg = [
+            self.chs_all[i]
+            for i in range(len(self.chs_all))
+            if self.chs_types[i] == "eeg"
         ]
-        self.ch_names_non_eeg = set(self.ch_all) - set(self.ch_names_eeg)
-        self.raw.pick_channels(self.ch_names_eeg)
-        self.raw_non_eeg.pick_channels(self.ch_names_non_eeg)
+        self.chs_non_eeg = set(self.chs_all) - set(self.chs_eeg)
+        self.raw.pick_channels(self.chs_eeg)
+        self.raw_non_eeg.pick_channels(self.chs_non_eeg)
 
         self.raw.set_montage(montage)
 
         self.EEG_raw = self.raw.get_data() * 1e6
         self.prep_params = prep_params
         if self.prep_params["ref_chs"] == "eeg":
-            self.prep_params["ref_chs"] = self.ch_names_eeg
+            self.prep_params["ref_chs"] = self.chs_eeg
         if self.prep_params["reref_chs"] == "eeg":
-            self.prep_params["reref_chs"] = self.ch_names_eeg
+            self.prep_params["reref_chs"] = self.chs_eeg
         self.sfreq = self.raw.info["sfreq"]
         self.ransac = ransac
         self.random_state = check_random_state(random_state)
