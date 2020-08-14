@@ -204,3 +204,32 @@ def test_prep_pipeline(raw, montage):
     # axs[4, 0].set_title('Interpolation', loc='left', fontsize=14)
     # axs[4, 0].set_ylabel('Channel Number', fontsize=14)
     axs[4, 1].set_xlabel("Time(s)", fontsize=14)
+
+
+@pytest.mark.usefixtures("raw", "montage")
+def test_prep_pipeline_non_eeg(raw, montage):
+    """Test prep pipeline with non eeg channels."""
+    import random
+
+    raw_copy = raw.copy()
+
+    # make arbitrary non eeg channels from the register
+    non_eeg = random.sample(raw_copy.ch_names.copy(), 4)
+    mappings = [{chan: "eog"} for chan in non_eeg]
+    [raw_copy.set_channel_types(mapping=item) for item in mappings]
+
+    sample_rate = raw_copy.info["sfreq"]
+    prep_params = {
+        "ref_chs": "eeg",
+        "reref_chs": "eeg",
+        "line_freqs": np.arange(60, sample_rate / 2, 60),
+    }
+    prep = PrepPipeline(raw_copy, prep_params, montage, random_state=42)
+
+    prep.fit()
+
+    assert set(prep.ch_names_non_eeg) == set(non_eeg)
+    assert set(prep.full_raw.ch_names) == set(raw.ch_names)
+    assert set(prep.raw.ch_names) == set(raw.ch_names) - set(non_eeg)
+    assert prep.raw._data.shape[0] == len(raw.ch_names) - len(prep.ch_names_non_eeg)
+    assert raw._data.shape[0] == prep.full_raw._data.shape[0]
