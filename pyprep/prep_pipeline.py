@@ -54,40 +54,28 @@ class PrepPipeline:
     def __init__(self, raw, prep_params, montage, ransac=True, random_state=None):
         """Initialize PREP class."""
         self.raw = raw.copy()
-        self.ch_names = self.raw.ch_names
-        self.raw.set_montage(montage)
+
+        # separe eeg and non eeg channels
         self.raw_non_eeg = self.raw.copy()
-        # test push
-        ch_types = [
-            "eeg",
-            "meg",
-            "stim",
-            "eog",
-            "ecg",
-            "emg",
-            "ref_meg",
-            "misc",
-            "resp",
-            "syst",
-            "seeg",
-            "dipole",
-            "gof",
-            "bio",
-            "ecog",
-            "fnirs",
-            "csd",
+        self.ch_names = self.raw.ch_names.copy()  # all channels
+        self.ch_types = self.raw.get_channel_types()
+        self.ch_names_eeg = [
+            self.ch_names[i]
+            for i in range(len(self.ch_names))
+            if self.ch_types[i] == "eeg"
         ]
-        pick_ch_types = {ch_type: False for ch_type in ch_types}
-        pick_ch_types["eeg"] = True
-        self.raw.pick_types(**pick_ch_types)
+        self.ch_names_non_eeg = set(self.ch_names) - set(self.ch_names_eeg)
+        self.raw.pick_channels(self.ch_names_eeg)
+        self.raw_non_eeg.pick_channels(self.ch_names_non_eeg)
 
-        pick_ch_types = {ch_type: True for ch_type in ch_types}
-        pick_ch_types["eeg"] = False
-        self.raw_non_eeg.pick_types(**pick_ch_types)
+        self.raw.set_montage(montage)
 
-        self.ch_names_eeg = self.raw.ch_names
         self.EEG_raw = self.raw.get_data() * 1e6
         self.prep_params = prep_params
+        if self.prep_params["ref_chs"] == "eeg":
+            self.prep_params["ref_chs"] = self.ch_names_eeg
+        if self.prep_params["reref_chs"] == "eeg":
+            self.prep_params["reref_chs"] = self.ch_names_eeg
         self.sfreq = self.raw.info["sfreq"]
         self.ransac = ransac
         self.random_state = check_random_state(random_state)

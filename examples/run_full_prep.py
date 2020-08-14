@@ -92,10 +92,11 @@ raw_copy = raw.copy()
 
 # Fit prep
 prep_params = {
-    "ref_chs": ch_names_eeg,
-    "reref_chs": ch_names_eeg,
+    "ref_chs": "eeg",
+    "reref_chs": "eeg",
     "line_freqs": np.arange(60, sample_rate / 2, 60),
 }
+
 prep = PrepPipeline(raw_copy, prep_params, montage)
 prep.fit()
 
