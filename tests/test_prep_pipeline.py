@@ -208,7 +208,6 @@ def test_prep_pipeline(raw, montage):
 
 def test_prep_pipeline_non_eeg(raw, montage):
     """Test prep pipeline with non eeg channels."""
-    import random
 
     raw_copy = raw.copy()
 
