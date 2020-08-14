@@ -208,7 +208,6 @@ def test_prep_pipeline(raw, montage):
 
 def test_prep_pipeline_non_eeg(raw, montage):
     """Test prep pipeline with non eeg channels."""
-
     raw_copy = raw.copy()
 
     # make arbitrary non eeg channels from the register
