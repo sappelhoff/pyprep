@@ -206,7 +206,6 @@ def test_prep_pipeline(raw, montage):
     axs[4, 1].set_xlabel("Time(s)", fontsize=14)
 
 
-#
 def test_prep_pipeline_non_eeg(raw, montage):
     """Test prep pipeline with non eeg channels."""
     import random
@@ -214,22 +213,37 @@ def test_prep_pipeline_non_eeg(raw, montage):
     raw_copy = raw.copy()
 
     # make arbitrary non eeg channels from the register
-    non_eeg = random.sample(raw_copy.ch_names.copy(), 4)
-    mappings = [{chan: "eog"} for chan in non_eeg]
-    [raw_copy.set_channel_types(mapping=item) for item in mappings]
+    sfreq = raw_copy.info["sfreq"]  # Sampling frequency
+    times = list(range(raw_copy._data.shape[1]))
+    sin = np.sin(times)  # Multiplied by 10 for shorter cycles
+    cos = np.cos(times)
+    sinX2 = sin * 2
+    cosX2 = cos * 2
 
-    sample_rate = raw_copy.info["sfreq"]
+    # Numpy array of size 4 X 10000.
+    data = np.array([sin, cos, sinX2, cosX2])
+
+    # Definition of channel types and names.
+    ch_types = ["eog", "eog", "misc", "misc"]
+    ch_names_non_eeg = ["sin", "cos", "sinX2", "cosX2"]
+    info = mne.create_info(ch_names=ch_names_non_eeg, sfreq=sfreq, ch_types=ch_types)
+    raw_non_eeg = mne.io.RawArray(data, info)
+
+    raw_copy.add_channels([raw_non_eeg])
+
     prep_params = {
         "ref_chs": "eeg",
         "reref_chs": "eeg",
-        "line_freqs": np.arange(60, sample_rate / 2, 60),
+        "line_freqs": np.arange(60, sfreq / 2, 60),
     }
     prep = PrepPipeline(raw_copy, prep_params, montage, random_state=42)
 
     prep.fit()
 
-    assert set(prep.ch_names_non_eeg) == set(non_eeg)
-    assert set(prep.full_raw.ch_names) == set(raw.ch_names)
-    assert set(prep.raw.ch_names) == set(raw.ch_names) - set(non_eeg)
-    assert prep.raw._data.shape[0] == len(raw.ch_names) - len(prep.ch_names_non_eeg)
-    assert raw._data.shape[0] == prep.full_raw._data.shape[0]
+    assert set(prep.ch_names_non_eeg) == set(ch_names_non_eeg)
+    assert set(prep.full_raw.ch_names) == set(raw_copy.ch_names)
+    assert set(prep.raw.ch_names) == set(raw_copy.ch_names) - set(ch_names_non_eeg)
+    assert prep.raw._data.shape[0] == len(raw_copy.ch_names) - len(
+        prep.ch_names_non_eeg
+    )
+    assert raw_copy._data.shape[0] == prep.full_raw._data.shape[0]
