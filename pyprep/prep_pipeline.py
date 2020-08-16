@@ -54,9 +54,10 @@ class PrepPipeline:
     raw_eeg: mne.raw
         The only-eeg part of the data. It is unprocessed if accessed before
         the fit method, processed if accessed after a succesful fit method.
-    raw_non_eeg: mne.raw
+    raw_non_eeg: mne.raw | None
         The non-eeg part of the data. It is not processed, just added
-        to the raw_eeg part to produce the raw attribute.
+        to the raw_eeg part to produce the raw attribute. If the input
+        was only EEG it will be None.
     noisy_channels_original: list
         bad channels before robust reference
     bad_before_interpolation: list
@@ -95,7 +96,10 @@ class PrepPipeline:
         ]
         self.ch_names_non_eeg = list(set(self.ch_names_all) - set(self.ch_names_eeg))
         self.raw_eeg.pick_channels(self.ch_names_eeg)
-        self.raw_non_eeg.pick_channels(self.ch_names_non_eeg)
+        if self.ch_names_non_eeg == []:
+            self.raw_non_eeg = None
+        else:
+            self.raw_non_eeg.pick_channels(self.ch_names_non_eeg)
 
         self.raw_eeg.set_montage(montage)
         # raw_non_eeg may not be compatible with the montage
@@ -115,7 +119,10 @@ class PrepPipeline:
     def raw(self):
         """Return a version of self.raw_eeg that includes the non-eeg channels."""
         full_raw = self.raw_eeg.copy()
-        return full_raw.add_channels([self.raw_non_eeg])
+        if self.raw_non_eeg is None:
+            return full_raw
+        else:
+            return full_raw.add_channels([self.raw_non_eeg])
 
     def fit(self):
         """Run the whole PREP pipeline."""

@@ -172,7 +172,7 @@ def test_prep_pipeline(raw, montage):
     # axs[3, 0].set_title('Referencing', loc='left', fontsize=14)
     # axs[3, 0].set_ylabel('Channel Number', fontsize=14)
 
-    EEG_final = prep.raw_eeg.get_data() * 1e6
+    EEG_final = prep.raw.get_data() * 1e6
     EEG_final_max = np.max(abs(EEG_final), axis=None)
     EEG_final_matlab = sio.loadmat("./examples/matlab_results/EEGinterp.mat")
     EEG_final_matlab = EEG_final_matlab["save_data"]
