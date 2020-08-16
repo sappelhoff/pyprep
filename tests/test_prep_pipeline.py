@@ -213,7 +213,7 @@ def test_prep_pipeline_non_eeg(raw, montage):
 
     # make arbitrary non eeg channels from the register
     sfreq = raw_copy.info["sfreq"]  # Sampling frequency
-    times = list(range(raw_copy._data.shape[1]))
+    times = np.array(list(range(raw_copy._data.shape[1])))
     ch_names_non_eeg = ["misc" + str(i) for i in range(4)]
     ch_types_non_eeg = ["misc" for i in range(4)]
     raw_non_eeg, _, _ = make_random_mne_object(
@@ -238,9 +238,9 @@ def test_prep_pipeline_non_eeg(raw, montage):
     # correct non-eeg channels configured in init
     assert set(prep.ch_names_non_eeg) == set(ch_names_non_eeg)
     # original (all) channel names same as full_raw names
-    assert set(prep.raw.ch_names_all) == set(raw_copy.ch_names)
+    assert set(prep.raw.ch_names) == set(raw_copy.ch_names)
     # names of raw (only eeg)  same as full names - non eeg names
-    assert set(prep.raw.ch_names_all) == set(raw_copy.ch_names) - set(ch_names_non_eeg)
+    assert set(prep.raw_eeg.ch_names) == set(raw_copy.ch_names) - set(ch_names_non_eeg)
     # quantity of raw (only eeg) same as quantity of all - non eeg lists
     assert prep.raw_eeg._data.shape[0] == len(raw_copy.ch_names) - len(
         prep.ch_names_non_eeg

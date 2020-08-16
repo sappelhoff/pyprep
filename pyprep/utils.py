@@ -107,7 +107,7 @@ def make_random_mne_object(
         names of channels
     ch_types : list
         types of channels
-    times : 1d numpy array
+    times : 1d ndarray
         Time vector to use.
     sfreq : float
         Sampling frequency associated with the time vector.
