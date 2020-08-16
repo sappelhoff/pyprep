@@ -86,7 +86,6 @@ class PrepPipeline:
         self.raw_eeg = raw.copy()
 
         # split eeg and non eeg channels
-        self.raw_non_eeg = raw.copy()
         self.ch_names_all = raw.ch_names.copy()
         self.ch_types_all = raw.get_channel_types()
         self.ch_names_eeg = [
@@ -99,6 +98,7 @@ class PrepPipeline:
         if self.ch_names_non_eeg == []:
             self.raw_non_eeg = None
         else:
+            self.raw_non_eeg = raw.copy()
             self.raw_non_eeg.pick_channels(self.ch_names_non_eeg)
 
         self.raw_eeg.set_montage(montage)
