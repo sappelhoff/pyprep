@@ -20,18 +20,15 @@ class PrepPipeline:
         The data.
     prep_params : dict
         Parameters of PREP which include at least the following keys:
-
-        - ref_chs : list
-            - A list of channel names to be used for rereferencing
-              [default: all channels]
-
-        - reref_chs : list
+        - ref_chs : list | 'eeg'
+            - A list of channel names to be used for rereferencing.
+               Can be a str 'eeg' to use all EEG channels.
+        - reref_chs : list | 'eeg'
             - A list of channel names to be used for line-noise removed, and
-              referenced [default: all channels]
-
+              referenced. Can be a str 'eeg' to use all EEG channels.
         - line_freqs : array_like
             - list of floats indicating frequencies to be removed.
-              Can be an empty list to skip this step.
+              Can be an empty list ([]) to skip this step.
 
     montage : DigMontage
         Digital montage of EEG data.
@@ -53,42 +50,44 @@ class PrepPipeline:
 
     def __init__(self, raw, prep_params, montage, ransac=True, random_state=None):
         """Initialize PREP class."""
-        self.raw = raw.copy()
+        self.raw_eeg = raw.copy()
 
-        # separe eeg and non eeg channels
-        self.raw_non_eeg = self.raw.copy()
-        self.chs_all = self.raw.ch_names.copy()
-        self.chs_types = self.raw.get_channel_types()
-        self.chs_eeg = [
-            self.chs_all[i]
-            for i in range(len(self.chs_all))
-            if self.chs_types[i] == "eeg"
+        # split eeg and non eeg channels
+        self.raw_non_eeg = raw.copy()
+        self.ch_names_all = raw.ch_names.copy()
+        self.ch_types_all = raw.get_channel_types()
+        self.ch_names_eeg = [
+            self.ch_names_all[i]
+            for i in range(len(self.ch_names_all))
+            if self.ch_types_all[i] == "eeg"
         ]
-        self.chs_non_eeg = set(self.chs_all) - set(self.chs_eeg)
-        self.raw.pick_channels(self.chs_eeg)
-        self.raw_non_eeg.pick_channels(self.chs_non_eeg)
+        self.ch_names_non_eeg = list(set(self.ch_names_all) - set(self.ch_names_eeg))
+        self.raw_eeg.pick_channels(self.ch_names_eeg)
+        self.raw_non_eeg.pick_channels(self.ch_names_non_eeg)
 
-        self.raw.set_montage(montage)
+        self.raw_eeg.set_montage(montage)
+        # raw_non_eeg may not be compatible with the montage
+        # so it is not set for that object
 
-        self.EEG_raw = self.raw.get_data() * 1e6
+        self.EEG_raw = self.raw_eeg.get_data() * 1e6
         self.prep_params = prep_params
         if self.prep_params["ref_chs"] == "eeg":
-            self.prep_params["ref_chs"] = self.chs_eeg
+            self.prep_params["ref_chs"] = self.ch_names_eeg
         if self.prep_params["reref_chs"] == "eeg":
-            self.prep_params["reref_chs"] = self.chs_eeg
-        self.sfreq = self.raw.info["sfreq"]
+            self.prep_params["reref_chs"] = self.ch_names_eeg
+        self.sfreq = self.raw_eeg.info["sfreq"]
         self.ransac = ransac
         self.random_state = check_random_state(random_state)
 
     @property
-    def full_raw(self):
-        """Return a version of self.raw that includes the non-eeg channels."""
-        full_raw = self.raw.copy()
+    def raw(self):
+        """Return a version of self.raw_eeg that includes the non-eeg channels."""
+        full_raw = self.raw_eeg.copy()
         return full_raw.add_channels([self.raw_non_eeg])
 
     def fit(self):
         """Run the whole PREP pipeline."""
-        noisy_detector = NoisyChannels(self.raw, random_state=self.random_state)
+        noisy_detector = NoisyChannels(self.raw_eeg, random_state=self.random_state)
         noisy_detector.find_bad_by_nan_flat()
         # unusable_channels = _union(
         #     noisy_detector.bad_by_nan, noisy_detector.bad_by_flat
@@ -111,17 +110,17 @@ class PrepPipeline:
 
             # Add Trend back
             self.EEG = self.EEG_raw - self.EEG_new + self.EEG_clean
-            self.raw._data = self.EEG * 1e-6
+            self.raw_eeg._data = self.EEG * 1e-6
 
         # Step 3: Referencing
         reference = Reference(
-            self.raw,
+            self.raw_eeg,
             self.prep_params,
             ransac=self.ransac,
             random_state=self.random_state,
         )
         reference.perform_reference()
-        self.raw = reference.raw
+        self.raw_eeg = reference.raw
         self.noisy_channels_original = reference.noisy_channels_original
         self.bad_before_interpolation = reference.bad_before_interpolation
         self.EEG_before_interpolation = reference.EEG_before_interpolation
