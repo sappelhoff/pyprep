@@ -35,7 +35,7 @@ Changelog
 - Adding ``chs_types`` and ``chs_non_eeg`` attributes to ``PrepPipeline``, by `Yorguin Mantilla`_ (`#34 <https://github.com/sappelhoff/pyprep/pull/34>`_)
 - Renaming of ``ch_names`` and ``ch_names_eeg`` attributes of ``PrepPipeline`` to ``chs_all`` and ``chs_eeg``, by `Yorguin Mantilla`_ (`#34 <https://github.com/sappelhoff/pyprep/pull/34>`_)
 - It's now possible to pass 'eeg' ``to ref_chs`` and ``reref_chs`` parameters to select only (all) eeg channels for referencing, by `Yorguin Mantilla`_ (`#34 <https://github.com/sappelhoff/pyprep/pull/34>`_)
-- Prep will retain the non eeg channels through the attribute full_raw. See the ``full_raw``attribute, by `Christian Oreilly`_ (`#34 <https://github.com/sappelhoff/pyprep/pull/34>`_)
+- Prep will retain the non eeg channels through the attribute full_raw. See the ``full_raw`` attribute, by `Christian Oreilly`_ (`#34 <https://github.com/sappelhoff/pyprep/pull/34>`_)
 - When a ransac call needs more memory than available, pyprep will now automatically switch to a slower but less memory-consuming version of ransac. See the ``channel_wise``parameter, by `Yorguin Mantilla`_ (`#32 <https://github.com/sappelhoff/pyprep/pull/32>`_)
 - It's now possible to pass an empty list for the ``line_freqs`` param in ``PrepPipeline`` to skip the line noise removal, by `Yorguin Mantilla`_ (`#29 <https://github.com/sappelhoff/pyprep/pull/29>`_)
 - The three main classes ``PrepPipeline``, ``NoisyChannels``, and ``Reference`` now have a ``random_state`` parameter to set a seed that gets passed on to all their internal methods and class calls, by `Stefan Appelhoff`_ (`#31 <https://github.com/sappelhoff/pyprep/pull/31>`_)
