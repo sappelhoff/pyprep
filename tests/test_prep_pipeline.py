@@ -6,60 +6,7 @@ import pytest
 import scipy.io as sio
 
 from pyprep.prep_pipeline import PrepPipeline
-
-RNG = np.random.RandomState(1337)
-
-
-def make_random_mne_object(
-    ch_names, ch_types, times, sfreq, n_freq_comps=5, freq_range=[10, 60], scale=1e-6
-):
-    """Make a random MNE object to use for testing.
-
-    Parameters
-    ----------
-    ch_names : list
-        names of channels
-    ch_types : list
-        types of channels
-    times : 1d numpy array
-        Time vector to use.
-    sfreq : float
-        Sampling frequency associated with the time vector.
-    n_freq_comps : int
-        Number of signal components summed to make a signal.
-    freq_range : list, len==2
-        Signals will contain freqs from this range.
-    scale: float
-        scale of the signal in volts. (ie 1e-6 for microvolts).
-
-    Returns
-    -------
-    raw : mne raw object
-        The mne object for performing the tests.
-
-    n_freq_comps : int
-
-    freq_range : list, len==2
-
-    """
-    n_chans = len(ch_names)
-    signal_len = times.shape[0]
-    # Make a random signal
-    signal = np.zeros((n_chans, signal_len))
-    low = freq_range[0]
-    high = freq_range[1]
-    for chan in range(n_chans):
-        # Each channel signal is a sum of random freq sine waves
-        for freq_i in range(n_freq_comps):
-            freq = RNG.randint(low, high, signal_len)
-            signal[chan, :] += np.sin(2 * np.pi * times * freq)
-
-    signal *= scale  # scale
-
-    # Make mne object
-    info = mne.create_info(ch_names=ch_names, sfreq=sfreq, ch_types=ch_types)
-    raw = mne.io.RawArray(signal, info)
-    return raw, n_freq_comps, freq_range
+from pyprep.utils import make_random_mne_object
 
 
 @pytest.mark.usefixtures("raw", "montage")
@@ -270,7 +217,11 @@ def test_prep_pipeline_non_eeg(raw, montage):
     ch_names_non_eeg = ["misc" + str(i) for i in range(4)]
     ch_types_non_eeg = ["misc" for i in range(4)]
     raw_non_eeg, _, _ = make_random_mne_object(
-        ch_names_non_eeg, ch_types_non_eeg, times, sfreq
+        ch_names_non_eeg,
+        ch_types_non_eeg,
+        times,
+        sfreq,
+        RNG=np.random.RandomState(1337),
     )
 
     raw_copy.add_channels([raw_non_eeg])
