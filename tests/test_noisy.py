@@ -14,6 +14,7 @@ RNG = np.random.RandomState(1337)
 # This is required so that we can then selectively insert noise in the tests.
 found_good_test_object = False
 t_secs = 600
+sfreq = 1000.0
 t = np.arange(0, t_secs, 1.0 / sfreq)
 ch_names = [
     "Fpz",
@@ -33,7 +34,7 @@ ch_names = [
     "C6",
 ]
 ch_types = ["eeg" for chn in ch_names]
-sfreq = 1000.0
+
 while not found_good_test_object:
     raw, n_freq_comps, freq_range = make_random_mne_object(
         ch_names, ch_types, t, sfreq, RNG=RNG
