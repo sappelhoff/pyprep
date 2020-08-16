@@ -7,6 +7,8 @@ import scipy.io as sio
 
 from pyprep.prep_pipeline import PrepPipeline
 
+RNG = np.random.RandomState(1337)
+
 
 def make_random_mne_object(
     ch_names, ch_types, times, sfreq, n_freq_comps=5, freq_range=[10, 60], scale=1e-6
