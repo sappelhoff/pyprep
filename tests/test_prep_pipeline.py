@@ -8,6 +8,58 @@ import scipy.io as sio
 from pyprep.prep_pipeline import PrepPipeline
 
 
+def make_random_mne_object(
+    ch_names, ch_types, times, sfreq, n_freq_comps=5, freq_range=[10, 60], scale=1e-6
+):
+    """Make a random MNE object to use for testing.
+
+    Parameters
+    ----------
+    ch_names : list
+        names of channels
+    ch_types : list
+        types of channels
+    times : 1d numpy array
+        Time vector to use.
+    sfreq : float
+        Sampling frequency associated with the time vector.
+    n_freq_comps : int
+        Number of signal components summed to make a signal.
+    freq_range : list, len==2
+        Signals will contain freqs from this range.
+    scale: float
+        scale of the signal in volts. (ie 1e-6 for microvolts).
+
+    Returns
+    -------
+    raw : mne raw object
+        The mne object for performing the tests.
+
+    n_freq_comps : int
+
+    freq_range : list, len==2
+
+    """
+    n_chans = len(ch_names)
+    signal_len = times.shape[0]
+    # Make a random signal
+    signal = np.zeros((n_chans, signal_len))
+    low = freq_range[0]
+    high = freq_range[1]
+    for chan in range(n_chans):
+        # Each channel signal is a sum of random freq sine waves
+        for freq_i in range(n_freq_comps):
+            freq = RNG.randint(low, high, signal_len)
+            signal[chan, :] += np.sin(2 * np.pi * times * freq)
+
+    signal *= scale  # scale
+
+    # Make mne object
+    info = mne.create_info(ch_names=ch_names, sfreq=sfreq, ch_types=ch_types)
+    raw = mne.io.RawArray(signal, info)
+    return raw, n_freq_comps, freq_range
+
+
 @pytest.mark.usefixtures("raw", "montage")
 def test_prep_pipeline(raw, montage):
     """Test prep pipeline."""
@@ -171,7 +223,7 @@ def test_prep_pipeline(raw, montage):
     # axs[3, 0].set_title('Referencing', loc='left', fontsize=14)
     # axs[3, 0].set_ylabel('Channel Number', fontsize=14)
 
-    EEG_final = prep.raw.get_data() * 1e6
+    EEG_final = prep.raw_eeg.get_data() * 1e6
     EEG_final_max = np.max(abs(EEG_final), axis=None)
     EEG_final_matlab = sio.loadmat("./examples/matlab_results/EEGinterp.mat")
     EEG_final_matlab = EEG_final_matlab["save_data"]
@@ -213,19 +265,11 @@ def test_prep_pipeline_non_eeg(raw, montage):
     # make arbitrary non eeg channels from the register
     sfreq = raw_copy.info["sfreq"]  # Sampling frequency
     times = list(range(raw_copy._data.shape[1]))
-    sin = np.sin(times)  # Multiplied by 10 for shorter cycles
-    cos = np.cos(times)
-    sinX2 = sin * 2
-    cosX2 = cos * 2
-
-    # Numpy array of size 4 X 10000.
-    data = np.array([sin, cos, sinX2, cosX2])
-
-    # Definition of channel types and names.
-    ch_types = ["eog", "eog", "misc", "misc"]
-    ch_names_non_eeg = ["sin", "cos", "sinX2", "cosX2"]
-    info = mne.create_info(ch_names=ch_names_non_eeg, sfreq=sfreq, ch_types=ch_types)
-    raw_non_eeg = mne.io.RawArray(data, info)
+    ch_names_non_eeg = ["misc" + str(i) for i in range(4)]
+    ch_types_non_eeg = ["misc" for i in range(4)]
+    raw_non_eeg, _, _ = make_random_mne_object(
+        ch_names_non_eeg, ch_types_non_eeg, times, sfreq
+    )
 
     raw_copy.add_channels([raw_non_eeg])
 

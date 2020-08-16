@@ -17,7 +17,8 @@ class PrepPipeline:
     Parameters
     ----------
     raw : mne.raw
-        The data.
+        The data. Make sure channel types are correctly assigned (ie
+        ocular channels are labeled 'eog'...)
     prep_params : dict
         Parameters of PREP which include at least the following keys:
         - ref_chs : list | 'eeg'
@@ -28,6 +29,10 @@ class PrepPipeline:
               referenced. Can be a str 'eeg' to use all EEG channels.
         - line_freqs : array_like
             - list of floats indicating frequencies to be removed.
+              In example for 60Hz may be np.arange(60, sample_rate / 2, 60).
+              You may include the difference between the sampling frequency
+              and the harmonics of the main line freq although those peaks
+              are less common. Ie 212 = 512-60*5 = 512-300 for a s_freq of 512.
               Can be an empty list ([]) to skip this step.
 
     montage : DigMontage
@@ -39,6 +44,33 @@ class PrepPipeline:
         an int, it will be used as a seed for RandomState.
         If None, the seed will be obtained from the operating system
         (see RandomState for details). Default is None.
+
+    Attributes
+    ----------
+    raw: mne.raw
+        The data including eeg and non eeg channels. It is unprocessed if
+        accessed before the fit method, processed if accessed after a
+        succesful fit method.
+    raw_eeg: mne.raw
+        The only-eeg part of the data. It is unprocessed if accessed before
+        the fit method, processed if accessed after a succesful fit method.
+    raw_non_eeg: mne.raw
+        The non-eeg part of the data. It is not processed, just added
+        to the raw_eeg part to produce the raw attribute.
+    noisy_channels_original: list
+        bad channels before robust reference
+    bad_before_interpolation: list
+        bad channels after robust reference but before interpolation
+    EEG_before_interpolation: ndarray
+        EEG data in uV before the interpolation
+    reference_before_interpolation: ndarray
+        Reference signal in uV before interpolation.
+    reference_after_interpolation: ndarray
+        Reference signal in uV after interpolation.
+    interpolated_channels: list
+        Names of the interpolated channels.
+    still_noisy_channels: list
+        Names of the noisy channels after interpolation.
 
     References
     ----------
