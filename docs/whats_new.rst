@@ -32,7 +32,7 @@ Current
 
 Changelog
 ~~~~~~~~~
-- Adding ``ch_types_all`` and ``ch_names_non_eeg`` attributes to ``PrepPipeline``, by `Yorguin Mantilla`_ (`#34 <https://github.com/sappelhoff/pyprep/pull/34>`_)
+- Channel types  are now available from a new ``ch_types_all`` attribute, and non-EEG channel names are now available from a new ``ch_names_non_eeg`` attribute from :class:`pyprep.PrepPipeline`, by `Yorguin Mantilla`_ (`#34 <https://github.com/sappelhoff/pyprep/pull/34>`_)
 - Renaming of ``ch_names`` attribute of ``PrepPipeline`` to ``ch_names_all``, by `Yorguin Mantilla`_ (`#34 <https://github.com/sappelhoff/pyprep/pull/34>`_)
 - It's now possible to pass ``'eeg'`` to ``ref_chs`` and ``reref_chs`` parameters to select only eeg channels for referencing, by `Yorguin Mantilla`_ (`#34 <https://github.com/sappelhoff/pyprep/pull/34>`_)
 - Prep will retain the non eeg channels through the ``raw`` attribute. The eeg-only and non-eeg parts will be in raw_eeg and raw_non_eeg respectively. See the ``raw`` attribute, by `Christian Oreilly`_ (`#34 <https://github.com/sappelhoff/pyprep/pull/34>`_)
