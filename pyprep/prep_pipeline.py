@@ -57,7 +57,7 @@ class PrepPipeline:
         bad channels before robust reference
     bad_before_interpolation : list
         bad channels after robust reference but before interpolation
-    EEG_before_interpolation: ndarray
+    EEG_before_interpolation : ndarray
         EEG data in uV before the interpolation
     reference_before_interpolation: ndarray
         Reference signal in uV before interpolation.
