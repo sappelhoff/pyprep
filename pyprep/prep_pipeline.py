@@ -43,7 +43,7 @@ class PrepPipeline:
 
     Attributes
     ----------
-    raw: mne.raw
+    raw : mne.raw
         The data including eeg and non eeg channels. It is unprocessed if
         accessed before the fit method, processed if accessed after a
         succesful fit method.
