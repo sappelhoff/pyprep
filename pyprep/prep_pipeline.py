@@ -50,7 +50,7 @@ class PrepPipeline:
     raw_eeg : mne.raw
         The only-eeg part of the data. It is unprocessed if accessed before
         the fit method, processed if accessed after a succesful fit method.
-    raw_non_eeg: mne.raw | None
+    raw_non_eeg : mne.raw | None
         The non-eeg part of the data. It is not processed, just added
         to the raw_eeg part to produce the raw attribute. If the input
         was only EEG it will be None.
