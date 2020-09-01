@@ -9,8 +9,7 @@ from scipy.stats import iqr
 from statsmodels import robust
 
 from pyprep.removeTrend import removeTrend
-from pyprep.utils import filter_design
-from pyprep.utils import split_list
+from pyprep.utils import filter_design, split_list
 
 
 class NoisyChannels:
