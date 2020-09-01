@@ -55,7 +55,7 @@ class PrepPipeline:
         the fit method. If the input was only EEG it will be None.
     noisy_channels_original : list
         bad channels before robust reference
-    bad_before_interpolation: list
+    bad_before_interpolation : list
         bad channels after robust reference but before interpolation
     EEG_before_interpolation: ndarray
         EEG data in uV before the interpolation
