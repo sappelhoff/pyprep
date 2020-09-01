@@ -120,6 +120,7 @@ def make_random_mne_object(
         get microvolts.
     RNG : np.random.RandomState
         Random state seed.
+        
     Returns
     -------
     raw : mne raw object
