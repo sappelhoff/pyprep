@@ -115,10 +115,11 @@ def make_random_mne_object(
         Number of signal components summed to make a signal.
     freq_range : list, len==2
         Signals will contain freqs from this range.
-    scale: float
-        scale of the signal in volts. (ie 1e-6 for microvolts).
-    RNG: np.random.RandomState
-        Random State Seed
+    scale : float
+        Scaling factor applied to the signal in volts. For example 1e-6 to
+        get microvolts.
+    RNG : np.random.RandomState
+        Random state seed.
     Returns
     -------
     raw : mne raw object
