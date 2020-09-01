@@ -35,14 +35,12 @@ ch_names = [
 ]
 ch_types = ["eeg" for chn in ch_names]
 
-while not found_good_test_object:
-    raw, n_freq_comps, freq_range = make_random_mne_object(
-        ch_names, ch_types, t, sfreq, RNG=RNG
-    )
-    nd = Noisydata(raw)
-    nd.find_all_bads(ransac=False)
-    if nd.get_bads() == []:
-        found_good_test_object = True
+raw, n_freq_comps, freq_range = make_random_mne_object(
+    ch_names, ch_types, t, sfreq, RNG=RNG
+)
+nd = Noisydata(raw)
+nd.find_all_bads(ransac=False)
+assert nd.get_bads() == []
 
 # Make some arbitrary events sampled from the mid-section of raw.times
 n_events = 3
