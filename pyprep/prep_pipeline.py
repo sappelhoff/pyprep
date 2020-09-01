@@ -30,7 +30,7 @@ class PrepPipeline:
         - line_freqs : array_like
             - list of floats indicating frequencies to be removed.
               For example for 60Hz you may specify ``np.arange(60, sfreq / 2, 60)``.
-              Can be an empty list ([]) to skip this step.
+              Specify an empty list to skip the line noise removal step.
     montage : DigMontage
         Digital montage of EEG data.
     ransac : boolean
