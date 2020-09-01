@@ -17,8 +17,8 @@ class PrepPipeline:
     Parameters
     ----------
     raw : mne.raw
-        The data. Make sure channel types are correctly assigned (ie
-        ocular channels are labeled 'eog'...)
+        The data. Channel types must be correctly assigned (e.g.,
+        ocular channels are assigned the type 'eog').
     prep_params : dict
         Parameters of PREP which include at least the following keys:
         - ref_chs : list | 'eeg'
