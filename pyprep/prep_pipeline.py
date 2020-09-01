@@ -47,7 +47,7 @@ class PrepPipeline:
         The data including eeg and non eeg channels. It is unprocessed if
         accessed before the fit method, processed if accessed after a
         succesful fit method.
-    raw_eeg: mne.raw
+    raw_eeg : mne.raw
         The only-eeg part of the data. It is unprocessed if accessed before
         the fit method, processed if accessed after a succesful fit method.
     raw_non_eeg: mne.raw | None
