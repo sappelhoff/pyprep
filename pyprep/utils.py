@@ -127,10 +127,9 @@ def make_random_mne_object(
     n_freq_comps : int
         Number of random frequency components to introduce.
     freq_range : tuple
-       The low (`freq_range[0]`) and high (`freq_range[1]`) endpoints of 
-       a frequency range from which random draws will be made to 
-       introduce frequency components in the test data.
-
+        The low (`freq_range[0]`) and high (`freq_range[1]`) endpoints of
+        a frequency range from which random draws will be made to
+        introduce frequency components in the test data.
     """
     n_chans = len(ch_names)
     signal_len = times.shape[0]
