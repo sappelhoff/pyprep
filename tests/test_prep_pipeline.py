@@ -6,6 +6,7 @@ import pytest
 import scipy.io as sio
 
 from pyprep.prep_pipeline import PrepPipeline
+from pyprep.utils import make_random_mne_object
 
 
 @pytest.mark.usefixtures("raw", "montage")
@@ -204,3 +205,45 @@ def test_prep_pipeline(raw, montage):
     # axs[4, 0].set_title('Interpolation', loc='left', fontsize=14)
     # axs[4, 0].set_ylabel('Channel Number', fontsize=14)
     axs[4, 1].set_xlabel("Time(s)", fontsize=14)
+
+
+def test_prep_pipeline_non_eeg(raw, montage):
+    """Test prep pipeline with non eeg channels."""
+    raw_copy = raw.copy()
+
+    # make arbitrary non eeg channels from the register
+    sfreq = raw_copy.info["sfreq"]  # Sampling frequency
+    times = np.array(list(range(raw_copy._data.shape[1])))
+    ch_names_non_eeg = ["misc" + str(i) for i in range(4)]
+    ch_types_non_eeg = ["misc" for i in range(4)]
+    raw_non_eeg, _, _ = make_random_mne_object(
+        ch_names_non_eeg,
+        ch_types_non_eeg,
+        times,
+        sfreq,
+        RNG=np.random.RandomState(1337),
+    )
+
+    raw_copy.add_channels([raw_non_eeg])
+
+    prep_params = {
+        "ref_chs": "eeg",
+        "reref_chs": "eeg",
+        "line_freqs": np.arange(60, sfreq / 2, 60),
+    }
+    prep = PrepPipeline(raw_copy, prep_params, montage, random_state=42)
+
+    prep.fit()
+
+    # correct non-eeg channels configured in init
+    assert set(prep.ch_names_non_eeg) == set(ch_names_non_eeg)
+    # original (all) channel names same as full_raw names
+    assert set(prep.raw.ch_names) == set(raw_copy.ch_names)
+    # names of raw (only eeg)  same as full names - non eeg names
+    assert set(prep.raw_eeg.ch_names) == set(raw_copy.ch_names) - set(ch_names_non_eeg)
+    # quantity of raw (only eeg) same as quantity of all - non eeg lists
+    assert prep.raw_eeg._data.shape[0] == len(raw_copy.ch_names) - len(
+        prep.ch_names_non_eeg
+    )
+    # quantity of channels in is the same as qty of full raw
+    assert raw_copy._data.shape[0] == prep.raw._data.shape[0]

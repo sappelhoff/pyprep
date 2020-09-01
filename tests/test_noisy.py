@@ -5,88 +5,42 @@ import numpy as np
 import pytest
 
 from pyprep.noisy import Noisydata, find_bad_epochs
+from pyprep.utils import make_random_mne_object
 
 RNG = np.random.RandomState(1337)
-
-
-def make_random_mne_object(
-    sfreq=1000.0, t_secs=600, n_freq_comps=5, freq_range=[10, 60]
-):
-    """Make a random MNE object to use for testing.
-
-    Parameters
-    ----------
-    sfreq : float
-        Sampling frequency in Hz.
-
-    t_secs : int
-        Recording length in seconds.
-
-    n_freq_comps : int
-        Number of signal components summed to make a signal.
-
-    freq_range : list, len==2
-        Signals will contain freqs from this range.
-
-    Returns
-    -------
-    raw : mne raw object
-        The mne object for performing the tests.
-
-    n_freq_comps : int
-
-    freq_range : list, len==2
-
-    """
-    t = np.arange(0, t_secs, 1.0 / sfreq)
-    signal_len = t.shape[0]
-    ch_names = [
-        "Fpz",
-        "AFz",
-        "Fz",
-        "FCz",
-        "Cz",
-        "CPz",
-        "Pz",
-        "POz",
-        "Oz",
-        "C1",
-        "C2",
-        "C3",
-        "C4",
-        "C5",
-        "C6",
-    ]
-    ch_types = ["eeg" for chn in ch_names]
-    n_chans = len(ch_names)
-
-    # Make a random signal
-    signal = np.zeros((n_chans, signal_len))
-    low = freq_range[0]
-    high = freq_range[1]
-    for chan in range(n_chans):
-        # Each channel signal is a sum of random freq sine waves
-        for freq_i in range(n_freq_comps):
-            freq = RNG.randint(low, high, signal_len)
-            signal[chan, :] += np.sin(2 * np.pi * t * freq)
-
-    signal *= 1e-6  # scale to Volts
-
-    # Make mne object
-    info = mne.create_info(ch_names=ch_names, sfreq=sfreq, ch_types=ch_types)
-    raw = mne.io.RawArray(signal, info)
-    return raw, n_freq_comps, freq_range
 
 
 # We make new random mne objects until we have one without inherent bad chans
 # This is required so that we can then selectively insert noise in the tests.
 found_good_test_object = False
-while not found_good_test_object:
-    raw, n_freq_comps, freq_range = make_random_mne_object()
-    nd = Noisydata(raw)
-    nd.find_all_bads(ransac=False)
-    if nd.get_bads() == []:
-        found_good_test_object = True
+t_secs = 600
+sfreq = 1000.0
+t = np.arange(0, t_secs, 1.0 / sfreq)
+ch_names = [
+    "Fpz",
+    "AFz",
+    "Fz",
+    "FCz",
+    "Cz",
+    "CPz",
+    "Pz",
+    "POz",
+    "Oz",
+    "C1",
+    "C2",
+    "C3",
+    "C4",
+    "C5",
+    "C6",
+]
+ch_types = ["eeg" for chn in ch_names]
+
+raw, n_freq_comps, freq_range = make_random_mne_object(
+    ch_names, ch_types, t, sfreq, RNG=RNG
+)
+nd = Noisydata(raw)
+nd.find_all_bads(ransac=False)
+assert nd.get_bads() == []
 
 # Make some arbitrary events sampled from the mid-section of raw.times
 n_events = 3

@@ -72,9 +72,6 @@ montage_kind = "standard_1005"
 montage = mne.channels.make_standard_montage(montage_kind)
 
 # Extract some info
-eeg_index = mne.pick_types(raw.info, eeg=True, eog=False, meg=False)
-ch_names = raw.info["ch_names"]
-ch_names_eeg = list(np.asarray(ch_names)[eeg_index])
 sample_rate = raw.info["sfreq"]
 
 # Make a copy of the data
@@ -84,18 +81,18 @@ raw_copy = raw.copy()
 # Set PREP parameters and run PREP
 # --------------------------------
 #
-# Notes: we keep all the default parameter settings as described in the PREP
-# paper except one, the fraction of bad time windows
-# (we change it from 0.01 to 0.1), because the EEG data is 60s long, which
-# means it gots only 60 time windows. We think the algorithm will be too
-# sensitive if using the default setting.
+# Notes: We keep all the default parameter settings as described in the PREP,
+# though for this case we think that the default fraction of bad time windows
+# being 0.01 is too sensitive since it gots only 60 time windows (the EEG data
+# is 60s long). As a result this example returns a lot of interpolated channels.
 
 # Fit prep
 prep_params = {
-    "ref_chs": ch_names_eeg,
-    "reref_chs": ch_names_eeg,
+    "ref_chs": "eeg",
+    "reref_chs": "eeg",
     "line_freqs": np.arange(60, sample_rate / 2, 60),
 }
+
 prep = PrepPipeline(raw_copy, prep_params, montage)
 prep.fit()
 

@@ -4,6 +4,7 @@ from cmath import sqrt
 
 import numpy as np
 import scipy.interpolate
+import mne
 
 
 def _union(list1, list2):
@@ -86,3 +87,66 @@ def split_list(mylist, chunk_size):
     return [
         mylist[offs : offs + chunk_size] for offs in range(0, len(mylist), chunk_size)
     ]
+
+
+def make_random_mne_object(
+    ch_names,
+    ch_types,
+    times,
+    sfreq,
+    n_freq_comps=5,
+    freq_range=[10, 60],
+    scale=1e-6,
+    RNG=np.random.RandomState(1337),
+):
+    """Make a random MNE object to use for testing.
+
+    Parameters
+    ----------
+    ch_names : list
+        names of channels
+    ch_types : list
+        types of channels
+    times : 1d ndarray
+        Time vector to use.
+    sfreq : float
+        Sampling frequency associated with the time vector.
+    n_freq_comps : int
+        Number of signal components summed to make a signal.
+    freq_range : list, len==2
+        Signals will contain freqs from this range.
+    scale : float
+        Scaling factor applied to the signal in volts. For example 1e-6 to
+        get microvolts.
+    RNG : np.random.RandomState
+        Random state seed.
+
+    Returns
+    -------
+    raw : mne raw object
+        The mne object for performing the tests.
+    n_freq_comps : int
+        Number of random frequency components to introduce.
+    freq_range : tuple
+        The low (`freq_range[0]`) and high (`freq_range[1]`) endpoints of
+        a frequency range from which random draws will be made to
+        introduce frequency components in the test data.
+    """
+    n_chans = len(ch_names)
+    signal_len = times.shape[0]
+    # Make a random signal
+    signal = np.zeros((n_chans, signal_len))
+    low = freq_range[0]
+    high = freq_range[1]
+    for chan in range(n_chans):
+        # Each channel signal is a sum of random freq sine waves
+        for freq_i in range(n_freq_comps):
+            freq = RNG.randint(low, high, signal_len)
+            signal[chan, :] += np.sin(2 * np.pi * times * freq)
+
+    signal *= scale  # scale
+
+    # Make mne object
+    info = mne.create_info(ch_names=ch_names, sfreq=sfreq, ch_types=ch_types)
+    raw = mne.io.RawArray(signal, info)
+    return raw, n_freq_comps, freq_range
