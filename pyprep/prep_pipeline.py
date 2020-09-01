@@ -30,10 +30,6 @@ class PrepPipeline:
         - line_freqs : array_like
             - list of floats indicating frequencies to be removed.
               For example for 60Hz you may specify ``np.arange(60, sfreq / 2, 60)``.
-              You may include aliasing artifacts like the difference between
-              the sampling frequency and the harmonics of the main line freq
-              although those peaks are less common. Ie 212 = 512-60*5 = 512-300
-              for a s_freq of 512.
               Can be an empty list ([]) to skip this step.
     montage : DigMontage
         Digital montage of EEG data.
