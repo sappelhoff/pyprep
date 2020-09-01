@@ -63,7 +63,7 @@ class PrepPipeline:
         Reference signal in uV before interpolation.
     reference_after_interpolation : ndarray
         Reference signal in uV after interpolation.
-    interpolated_channels: list
+    interpolated_channels : list
         Names of the interpolated channels.
     still_noisy_channels: list
         Names of the noisy channels after interpolation.
