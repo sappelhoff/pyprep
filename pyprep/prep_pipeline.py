@@ -61,7 +61,7 @@ class PrepPipeline:
         EEG data in uV before the interpolation
     reference_before_interpolation : ndarray
         Reference signal in uV before interpolation.
-    reference_after_interpolation: ndarray
+    reference_after_interpolation : ndarray
         Reference signal in uV after interpolation.
     interpolated_channels: list
         Names of the interpolated channels.
