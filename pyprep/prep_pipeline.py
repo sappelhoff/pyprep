@@ -29,7 +29,7 @@ class PrepPipeline:
               referenced. Can be a str 'eeg' to use all EEG channels.
         - line_freqs : array_like
             - list of floats indicating frequencies to be removed.
-              In example for 60Hz may be np.arange(60, sample_rate / 2, 60).
+              For example for 60Hz you may specify ``np.arange(60, sfreq / 2, 60)``.
               You may include aliasing artifacts like the difference between
               the sampling frequency and the harmonics of the main line freq
               although those peaks are less common. Ie 212 = 512-60*5 = 512-300
