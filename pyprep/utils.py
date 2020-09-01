@@ -123,10 +123,12 @@ def make_random_mne_object(
     -------
     raw : mne raw object
         The mne object for performing the tests.
-
     n_freq_comps : int
-
-    freq_range : list, len==2
+        Number of random frequency components to introduce.
+    freq_range : tuple
+       The low (`freq_range[0]`) and high (`freq_range[1]`) endpoints of 
+       a frequency range from which random draws will be made to 
+       introduce frequency components in the test data.
 
     """
     n_chans = len(ch_names)
