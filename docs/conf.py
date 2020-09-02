@@ -3,11 +3,10 @@ import os
 import sys
 from datetime import date
 
-import sphinx_gallery  # noqa: F401
 import sphinx_bootstrap_theme
+import sphinx_gallery  # noqa: F401
 
 import pyprep
-
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the

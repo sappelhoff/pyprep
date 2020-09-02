@@ -2,9 +2,9 @@
 import math
 from cmath import sqrt
 
+import mne
 import numpy as np
 import scipy.interpolate
-import mne
 
 
 def _union(list1, list2):

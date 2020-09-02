@@ -7,7 +7,7 @@ from mne.utils import check_random_state
 # from pyprep.noisy import Noisydata
 from pyprep.find_noisy_channels import NoisyChannels
 from pyprep.removeTrend import removeTrend
-from pyprep.utils import _union, _set_diff
+from pyprep.utils import _set_diff, _union
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
