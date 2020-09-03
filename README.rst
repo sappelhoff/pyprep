@@ -19,7 +19,6 @@
    :target: https://badge.fury.io/py/pyprep
    :alt: PyPI version
 
-
 pyprep
 ======
 
@@ -33,15 +32,13 @@ For documentation, see the:
 ``pyprep`` is a python implementation of the
 `Preprocessing Pipeline (PREP) <https://doi.org/10.3389/fninf.2015.00016>`_ for
 EEG data, working with `MNE-Python <https://www.martinos.org/mne/stable/index.html>`_
-for EEG data processing and analysis. Also contains a function to detect
-outlier epochs inspired by the FASTER algorithm.
+for EEG data processing and analysis.
 
 **ALPHA SOFTWARE.**
 **This package is currently in its early stages of iteration.**
 **It may change both its internals or its user-facing API in the near future.**
 **Any feedback and ideas on how to improve either of these is more than welcome!**
 **Use this software at your own risk.**
-
 
 Installation
 ============
@@ -83,8 +80,3 @@ References
    (2015). The PREP pipeline: standardized preprocessing for large-scale EEG
    analysis. Frontiers in Neuroinformatics, 9, 16. doi:
    `10.3389/fninf.2015.00016 <https://doi.org/10.3389/fninf.2015.00016>`_
-
-2. Nolan, H., Whelan, R., & Reilly, R. B. (2010). FASTER: fully automated
-   statistical thresholding for EEG artifact rejection. Journal of neuroscience
-   methods, 192(1), 152-162. doi:
-   `10.1016/j.jneumeth.2010.07.015 <https://doi.org/10.1016/j.jneumeth.2010.07.015>`_
