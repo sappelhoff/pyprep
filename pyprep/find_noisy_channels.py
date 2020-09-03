@@ -149,19 +149,19 @@ class NoisyChannels:
         self.find_bad_by_SNR()
         if ransac:
             self.find_bad_by_ransac()
-        return None
 
     def find_bad_by_nan_flat(self):
-        """Detect channels that have zero or NaN values."""
+        """Detect channels that appear flat or have NaN values."""
         nan_channel_mask = [False] * self.original_dimensions[0]
         no_signal_channel_mask = [False] * self.original_dimensions[0]
 
         for i in range(0, self.original_dimensions[0]):
             nan_channel_mask[i] = np.sum(np.isnan(self.EEGData[i, :])) > 0
         for i in range(0, self.original_dimensions[0]):
-            no_signal_channel_mask[i] = robust.mad(self.EEGData[i, :], c=1) < 10 ** (
-                -10
-            ) or np.std(self.EEGData[i, :]) < 10 ** (-10)
+            no_signal_channel_mask[i] = (
+                robust.mad(self.EEGData[i, :], c=1) < 1e-10
+                or np.std(self.EEGData[i, :]) < 1e-10
+            )
         nan_channels = self.channels_interpolate[nan_channel_mask]
         flat_channels = self.channels_interpolate[no_signal_channel_mask]
 
@@ -180,7 +180,6 @@ class NoisyChannels:
         self.ch_names_new = np.asarray(self.raw_mne.info["ch_names"])
         self.n_chans_new = len(self.ch_names_new)
         self.new_dimensions = np.shape(self.EEGData)
-        return None
 
     def find_bad_by_deviation(self, deviation_threshold=5.0):
         """Robust z-score of the robust standard deviation for each channel is calculated.
@@ -209,7 +208,6 @@ class NoisyChannels:
         deviation_channels = self.channels_interpolate[deviation_channel_mask]
         for i in range(0, len(deviation_channels)):
             self.bad_by_deviation.append(self.ch_names_original[deviation_channels[i]])
-        return None
 
     def find_bad_by_hfnoise(self, HF_zscore_threshold=5.0):
         """Determine noise of channel through high frequency ratio.
@@ -265,7 +263,6 @@ class NoisyChannels:
         self.EEGData = np.transpose(EEG_filt)
         for i in range(0, len(HFNoise_channels)):
             self.bad_by_hf_noise.append(self.ch_names_original[HFNoise_channels[i]])
-        return None
 
     def find_bad_by_correlation(
         self, correlation_secs=1.0, correlation_threshold=0.4, frac_bad=0.01
@@ -362,7 +359,6 @@ class NoisyChannels:
         dropout_channels_idx = np.argwhere(fraction_BadDropOutWindows > frac_bad)
         dropout_channels_name = self.ch_names_original[dropout_channels_idx.astype(int)]
         self.bad_by_dropout = [i[0] for i in dropout_channels_name]
-        return None
 
     def find_bad_by_SNR(self):
         """Determine the channels that fail both by correlation and HF noise."""
@@ -513,8 +509,6 @@ class NoisyChannels:
         ]
         self.bad_by_ransac = [i[0] for i in bad_ransac_channels_name]
         print("\nRANSAC done!")
-
-        return None
 
     def run_ransac(
         self, chn_pos, chn_pos_good, good_chn_labs, n_pred_chns, data, n_samples

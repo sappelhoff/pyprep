@@ -1,5 +1,4 @@
 """initialize pyprep."""
-from pyprep.noisy import Noisydata, find_bad_epochs  # noqa: F401
 from pyprep.prep_pipeline import PrepPipeline  # noqa: F401
 
 from ._version import get_versions
