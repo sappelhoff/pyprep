@@ -32,6 +32,7 @@ Current
 
 Changelog
 ~~~~~~~~~
+
 - Channel types  are now available from a new ``ch_types_all`` attribute, and non-EEG channel names are now available from a new ``ch_names_non_eeg`` attribute from :class:`pyprep.PrepPipeline`, by `Yorguin Mantilla`_ (`#34 <https://github.com/sappelhoff/pyprep/pull/34>`_)
 - Renaming of ``ch_names`` attribute of ``PrepPipeline`` to ``ch_names_all``, by `Yorguin Mantilla`_ (`#34 <https://github.com/sappelhoff/pyprep/pull/34>`_)
 - It's now possible to pass ``'eeg'`` to ``ref_chs`` and ``reref_chs`` parameters to select only eeg channels for referencing, by `Yorguin Mantilla`_ (`#34 <https://github.com/sappelhoff/pyprep/pull/34>`_)
@@ -51,7 +52,7 @@ Bug
 API
 ~~~
 
-- nothing yet
+- Remove ``noisy.py`` module from the ``pyprep`` package. Its main functionality has been migrated to the remaining modules, and the functions for FASTER have been dropped because they were out of scope, by `Stefan Appelhoff`_ (`#39 <https://github.com/sappelhoff/pyprep/pull/39>`_)
 
 .. _changes_0_3_0:
 
