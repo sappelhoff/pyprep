@@ -8,19 +8,6 @@ API Documentation
 
 Here we list the Application Programming Interface (API) for pyprep.
 
-The :mod:`noisy` module
-=======================
-
-.. currentmodule:: noisy
-
-
-Functions
----------
-.. autosummary::
-   :toctree: generated/
-
-   find_bad_epochs
-
 The :class:`Noisydata` class
 ----------------------------
 .. autosummary::
@@ -34,7 +21,6 @@ The :class:`Noisydata` class
    Noisydata.find_bad_by_nan
    Noisydata.find_bad_by_ransac
    Noisydata.get_bads
-
 
 The :mod:`prep_pipeline` module
 ===============================
