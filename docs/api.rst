@@ -19,13 +19,14 @@ The :class:`NoisyChannels` class
    :toctree: generated/
 
    NoisyChannels
-   NoisyChannels.find_bad_by_correlation
-   NoisyChannels.find_bad_by_deviation
-   NoisyChannels.find_bad_by_flat
-   NoisyChannels.find_bad_by_hf_noise
-   NoisyChannels.find_bad_by_nan
-   NoisyChannels.find_bad_by_ransac
    NoisyChannels.get_bads
+   NoisyChannels.find_all_bads
+   NoisyChannels.find_bad_by_nan_flat
+   NoisyChannels.find_bad_by_deviation
+   NoisyChannels.find_bad_by_hf_noise
+   NoisyChannels.find_bad_by_correlation
+   NoisyChannels.find_bad_by_SNR
+   NoisyChannels.find_bad_by_ransac
 
 The :mod:`prep_pipeline` module
 ===============================
