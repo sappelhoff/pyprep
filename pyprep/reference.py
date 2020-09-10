@@ -19,23 +19,23 @@ class Reference:
     """Estimate the 'true' reference with all the bad channels interpolated.
 
     This class implements the functionality of the `performReference` function
-    as part of the PREP (preprocessing pipeline) for EEG data described in [1].
+    as part of the PREP (preprocessing pipeline) for EEG data described in [1]_.
 
     Parameters
     ----------
     raw : raw mne object
+        The raw data.
     params : dict
         Parameters of PREP which include at least the following keys:
-        ref_chs
-        reref_chs
-    ransac : boolean
-        Whether or not to use ransac
+        - ``ref_chs``
+        - ``reref_chs``
+    ransac : bool
+        Whether or not to use ransac.
     random_state : int | None | np.random.mtrand.RandomState
         The random seed at which to initialize the class. If random_state is
         an int, it will be used as a seed for RandomState.
         If None, the seed will be obtained from the operating system
         (see RandomState for details). Default is None.
-
 
     References
     ----------
@@ -129,16 +129,16 @@ class Reference:
 
         Parameters
         ----------
-            ransac : boolean
-                Whether or not to use ransac
+        ransac : bool
+            Whether or not to use ransac
 
         Returns
         -------
-            noisy_channels: dictionary
-                A dictionary of names of noisy channels detected from all methods
-                after referencing
-            reference_signal: 1D Array
-                Estimation of the 'true' signal mean
+        noisy_channels: dict
+            A dictionary of names of noisy channels detected from all methods
+            after referencing.
+        reference_signal: ndarray, shape(n, )
+            Estimation of the 'true' signal mean
 
         """
         raw = self.raw.copy()
@@ -270,17 +270,17 @@ class Reference:
 
         Parameters
         ----------
-        signal : 2D array (channels * times)
-            Original EEG signal
-        reference : 1D array (length times)
-            Reference signal
+        signal : ndarray, shape(channels, times)
+            The original EEG signal.
+        reference : ndarray, shape(times,)
+            The reference signal.
         index : list | None
-            A list channel index from which the signal was removed
+            A list channel index from which the signal was removed.
 
         Returns
         -------
-        2D array (channels * times)
-            The referenced EEG signal
+        ndarray, shape(channels, times)
+            The referenced EEG signal.
 
         """
         if np.ndim(signal) != 2:

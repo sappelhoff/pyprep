@@ -23,7 +23,7 @@ class PrepPipeline:
         Parameters of PREP which include at least the following keys:
         - ref_chs : list | 'eeg'
             - A list of channel names to be used for rereferencing.
-               Can be a str 'eeg' to use all EEG channels.
+              Can be a str 'eeg' to use all EEG channels.
         - reref_chs : list | 'eeg'
             - A list of channel names to be used for line-noise removed, and
               referenced. Can be a str 'eeg' to use all EEG channels.
@@ -33,7 +33,7 @@ class PrepPipeline:
               Specify an empty list to skip the line noise removal step.
     montage : DigMontage
         Digital montage of EEG data.
-    ransac : boolean
+    ransac : bool
         Whether or not to use ransac.
     random_state : int | None | np.random.mtrand.RandomState
         The random seed at which to initialize the class. If random_state is

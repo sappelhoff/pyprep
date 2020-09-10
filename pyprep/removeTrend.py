@@ -16,7 +16,7 @@ def removeTrend(
 
     Parameters
     ----------
-    EEG : np.ndarray
+    EEG : ndarray
         The input EEG data.
     detrendType : str
         Type of detrending to be performed: high pass, high pass sinc, or local

@@ -8,6 +8,11 @@ API Documentation
 
 Here we list the Application Programming Interface (API) for pyprep.
 
+The :mod:`find_noisy_channels` module
+=====================================
+
+.. currentmodule:: find_noisy_channels
+
 The :class:`Noisydata` class
 ----------------------------
 .. autosummary::

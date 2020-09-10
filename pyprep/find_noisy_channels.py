@@ -87,7 +87,7 @@ class NoisyChannels:
 
         Parameters
         ----------
-        verbose : boolean
+        verbose : bool
             If verbose, print a summary of bad channels.
 
         """
@@ -140,7 +140,7 @@ class NoisyChannels:
 
         Parameters
         ----------
-        ransac : boolean
+        ransac : bool
             To detect channels by ransac or not.
 
         """
