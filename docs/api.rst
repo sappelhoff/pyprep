@@ -13,19 +13,19 @@ The :mod:`find_noisy_channels` module
 
 .. currentmodule:: find_noisy_channels
 
-The :class:`Noisydata` class
+The :class:`NoisyChannels` class
 ----------------------------
 .. autosummary::
    :toctree: generated/
 
-   Noisydata
-   Noisydata.find_bad_by_correlation
-   Noisydata.find_bad_by_deviation
-   Noisydata.find_bad_by_flat
-   Noisydata.find_bad_by_hf_noise
-   Noisydata.find_bad_by_nan
-   Noisydata.find_bad_by_ransac
-   Noisydata.get_bads
+   NoisyChannels
+   NoisyChannels.find_bad_by_correlation
+   NoisyChannels.find_bad_by_deviation
+   NoisyChannels.find_bad_by_flat
+   NoisyChannels.find_bad_by_hf_noise
+   NoisyChannels.find_bad_by_nan
+   NoisyChannels.find_bad_by_ransac
+   NoisyChannels.get_bads
 
 The :mod:`prep_pipeline` module
 ===============================
