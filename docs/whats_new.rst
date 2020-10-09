@@ -32,7 +32,8 @@ Current
 
 Changelog
 ~~~~~~~~~
-
+- It's now possible to pass kwargs arguments to the notch filter inside prep; see the ``filter_kwargs`` parameter by `Yorguin Mantilla`_ (`#40 <https://github.com/sappelhoff/pyprep/pull/40>`_)
+- The default filter length for the spectrum_fit method will be '10s' to fix memory issues, by `Yorguin Mantilla`_ (`#40 <https://github.com/sappelhoff/pyprep/pull/40>`_)
 - Channel types  are now available from a new ``ch_types_all`` attribute, and non-EEG channel names are now available from a new ``ch_names_non_eeg`` attribute from :class:`pyprep.PrepPipeline`, by `Yorguin Mantilla`_ (`#34 <https://github.com/sappelhoff/pyprep/pull/34>`_)
 - Renaming of ``ch_names`` attribute of ``PrepPipeline`` to ``ch_names_all``, by `Yorguin Mantilla`_ (`#34 <https://github.com/sappelhoff/pyprep/pull/34>`_)
 - It's now possible to pass ``'eeg'`` to ``ref_chs`` and ``reref_chs`` parameters to select only eeg channels for referencing, by `Yorguin Mantilla`_ (`#34 <https://github.com/sappelhoff/pyprep/pull/34>`_)

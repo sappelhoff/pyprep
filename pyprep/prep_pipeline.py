@@ -40,6 +40,9 @@ class PrepPipeline:
         an int, it will be used as a seed for RandomState.
         If None, the seed will be obtained from the operating system
         (see RandomState for details). Default is None.
+    filter_kwargs : dictionary
+        Keywords arguments for the mne.filter.notch_filter function.
+        Note Fs and freqs are already setted up by the prep_params dictionary.
 
     Attributes
     ----------
