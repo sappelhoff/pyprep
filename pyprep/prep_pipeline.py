@@ -76,7 +76,15 @@ class PrepPipeline:
 
     """
 
-    def __init__(self, raw, prep_params, montage, ransac=True, random_state=None):
+    def __init__(
+        self,
+        raw,
+        prep_params,
+        montage,
+        ransac=True,
+        random_state=None,
+        filter_kwargs=None,
+    ):
         """Initialize PREP class."""
         self.raw_eeg = raw.copy()
 
@@ -109,6 +117,7 @@ class PrepPipeline:
         self.sfreq = self.raw_eeg.info["sfreq"]
         self.ransac = ransac
         self.random_state = check_random_state(random_state)
+        self.filter_kwargs = filter_kwargs
 
     @property
     def raw(self):
@@ -133,14 +142,23 @@ class PrepPipeline:
 
             # Step 2: Removing line noise
             linenoise = self.prep_params["line_freqs"]
-            self.EEG_clean = mne.filter.notch_filter(
-                self.EEG_new,
-                Fs=self.sfreq,
-                freqs=linenoise,
-                method="spectrum_fit",
-                mt_bandwidth=2,
-                p_value=0.01,
-            )
+            if self.filter_kwargs is None:
+                self.EEG_clean = mne.filter.notch_filter(
+                    self.EEG_new,
+                    Fs=self.sfreq,
+                    freqs=linenoise,
+                    method="spectrum_fit",
+                    mt_bandwidth=2,
+                    p_value=0.01,
+                    filter_length="10s",
+                )
+            else:
+                self.EEG_clean = mne.filter.notch_filter(
+                    self.EEG_new,
+                    Fs=self.sfreq,
+                    freqs=linenoise,
+                    **self.filter_kwargs,
+                )
 
             # Add Trend back
             self.EEG = self.EEG_raw - self.EEG_new + self.EEG_clean

@@ -207,6 +207,7 @@ def test_prep_pipeline(raw, montage):
     axs[4, 1].set_xlabel("Time(s)", fontsize=14)
 
 
+@pytest.mark.usefixtures("raw", "montage")
 def test_prep_pipeline_non_eeg(raw, montage):
     """Test prep pipeline with non eeg channels."""
     raw_copy = raw.copy()
@@ -247,3 +248,27 @@ def test_prep_pipeline_non_eeg(raw, montage):
     )
     # quantity of channels in is the same as qty of full raw
     assert raw_copy._data.shape[0] == prep.raw._data.shape[0]
+
+
+@pytest.mark.usefixtures("raw", "montage")
+def test_prep_pipeline_filter_kwargs(raw, montage):
+    """Test prep pipeline with filter kwargs."""
+    eeg_index = mne.pick_types(raw.info, eeg=True, eog=False, meg=False)
+    raw_copy = raw.copy()
+    ch_names = raw_copy.info["ch_names"]
+    ch_names_eeg = list(np.asarray(ch_names)[eeg_index])
+    sample_rate = raw_copy.info["sfreq"]
+    prep_params = {
+        "ref_chs": ch_names_eeg,
+        "reref_chs": ch_names_eeg,
+        "line_freqs": np.arange(60, sample_rate / 2, 60),
+    }
+    filter_kwargs = {
+        "method": "fir",
+        "phase": "zero-double",
+    }
+
+    prep = PrepPipeline(
+        raw_copy, prep_params, montage, random_state=42, filter_kwargs=filter_kwargs
+    )
+    prep.fit()
