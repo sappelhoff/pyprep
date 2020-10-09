@@ -42,7 +42,7 @@ class PrepPipeline:
         (see RandomState for details). Default is None.
     filter_kwargs : dictionary
         Keywords arguments for the mne.filter.notch_filter function.
-        Note Fs and freqs are already setted up by the prep_params dictionary.
+        Note Fs and freqs are already set up by the prep_params dictionary.
 
     Attributes
     ----------
