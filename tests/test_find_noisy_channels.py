@@ -19,6 +19,8 @@ def test_findnoisychannels(raw, montage):
         10  # remove any noisy channels by interpolating the bads for 10 iterations
     )
     for iter in range(0, iterations):
+        if len(bads) == 0:
+            continue
         raw.info["bads"] = bads
         raw.interpolate_bads()
         nd = NoisyChannels(raw, random_state=rng)
