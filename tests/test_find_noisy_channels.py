@@ -18,7 +18,7 @@ def test_findnoisychannels(raw, montage):
     iterations = (
         10  # remove any noisy channels by interpolating the bads for 10 iterations
     )
-    for iter in range(0, iterations):
+    for _ in range(iterations):
         if len(bads) == 0:
             continue
         raw.info["bads"] = bads
@@ -77,7 +77,7 @@ def test_findnoisychannels(raw, montage):
     high = 30
     n_freq = 5
     signal = np.zeros((1, n))
-    for freq_i in range(n_freq):
+    for _ in range(n_freq):
         freq = rng.randint(low, high, n)
         signal[0, :] += np.cos(2 * np.pi * raw.times * freq)
     raw_tmp._data[rand_chn_idx, :] = signal * 1e-6
@@ -92,7 +92,7 @@ def test_findnoisychannels(raw, montage):
     rand_chn_lab = raw_tmp.ch_names[rand_chn_idx]
     # Use freqs between 90 and 100 Hz to insert hf noise
     signal = np.zeros((1, n))
-    for freq_i in range(n_freq):
+    for _ in range(n_freq):
         freq = rng.randint(90, 100, n)
         signal[0, :] += np.sin(2 * np.pi * raw.times * freq)
     raw_tmp._data[rand_chn_idx, :] = signal * 1e-6
@@ -136,7 +136,7 @@ def test_findnoisychannels(raw, montage):
     raw_tmp._data[0:6, :] = np.cos(2 * np.pi * raw.times * 30) * 1e-6
     nd = NoisyChannels(raw_tmp, random_state=rng)
 
-    # Set n_samples very very high to trigger a memory error
-    n_samples = 1e100
     with pytest.raises(MemoryError):
+        # Set n_samples very very high to trigger a memory error
+        n_samples = 1e100
         nd.find_bad_by_ransac(n_samples=n_samples)

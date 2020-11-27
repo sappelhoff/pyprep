@@ -255,7 +255,7 @@ class Reference:
             signal_tmp = self.remove_reference(
                 signal, self.reference_signal, reference_index
             )
-            iterations = iterations + 1
+            iterations += 1
             logger.info("Iterations: {}".format(iterations))
 
         logger.info("Robust reference done")

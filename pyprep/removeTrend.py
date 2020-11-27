@@ -114,7 +114,7 @@ def runline(y, n, dn):
     yfit = np.zeros((nwin, n))
     xwt = (np.arange(1, n + 1) - n / 2) / (n / 2)
     wt = np.power(1 - np.power(np.absolute(xwt), 3), 3)
-    for j in range(0, nwin):
+    for j in range(nwin):
         tseg = y[dn * j : dn * j + n]
         y1 = np.mean(tseg)
         y2 = np.mean(np.multiply(np.arange(1, n + 1), tseg)) * (2 / (n + 1))
@@ -126,7 +126,7 @@ def runline(y, n, dn):
         )
         norm[j * dn : j * dn + n] = norm[j * dn : j * dn + n] + np.reshape(wt, (n, 1))
 
-    for i in range(0, len(norm)):
+    for i in range(len(norm)):
         if norm[i] > 0:
             y_line[i] = y_line[i] / norm[i]
     indx = (nwin - 1) * dn + n - 1
@@ -134,6 +134,6 @@ def runline(y, n, dn):
     y_line[indx - 1 :] = np.reshape(
         (np.multiply(np.arange(n + 1, n + npts + 1), a) + b), (npts, 1)
     )
-    for i in range(0, len(y_line)):
+    for i in range(len(y_line)):
         y[i] = y[i] - y_line[i]
     return y

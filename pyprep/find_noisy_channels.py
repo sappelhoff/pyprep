@@ -155,9 +155,9 @@ class NoisyChannels:
         nan_channel_mask = [False] * self.original_dimensions[0]
         no_signal_channel_mask = [False] * self.original_dimensions[0]
 
-        for i in range(0, self.original_dimensions[0]):
+        for i in range(self.original_dimensions[0]):
             nan_channel_mask[i] = np.sum(np.isnan(self.EEGData[i, :])) > 0
-        for i in range(0, self.original_dimensions[0]):
+        for i in range(self.original_dimensions[0]):
             no_signal_channel_mask[i] = (
                 robust.mad(self.EEGData[i, :], c=1) < 1e-10
                 or np.std(self.EEGData[i, :]) < 1e-10
@@ -170,9 +170,9 @@ class NoisyChannels:
             self.channels_interpolate, nans_no_data_channels
         )
 
-        for i in range(0, len(nan_channels)):
+        for i in range(len(nan_channels)):
             self.bad_by_nan.append(self.ch_names_original[nan_channels[i]])
-        for i in range(0, len(flat_channels)):
+        for i in range(len(flat_channels)):
             self.bad_by_flat.append(self.ch_names_original[flat_channels[i]])
 
         self.raw_mne.drop_channels(list(set(self.bad_by_nan + self.bad_by_flat)))
@@ -194,19 +194,19 @@ class NoisyChannels:
         """
         deviation_channel_mask = [False] * (self.new_dimensions[0])
         channel_deviation = np.zeros(self.new_dimensions[0])
-        for i in range(0, self.new_dimensions[0]):
+        for i in range(self.new_dimensions[0]):
             channel_deviation[i] = 0.7413 * iqr(self.EEGData[i, :])
         channel_deviationSD = 0.7413 * iqr(channel_deviation)
         channel_deviationMedian = np.nanmedian(channel_deviation)
         robust_channel_deviation = np.divide(
             np.subtract(channel_deviation, channel_deviationMedian), channel_deviationSD
         )
-        for i in range(0, self.new_dimensions[0]):
+        for i in range(self.new_dimensions[0]):
             deviation_channel_mask[i] = abs(
                 robust_channel_deviation[i]
             ) > deviation_threshold or np.isnan(robust_channel_deviation[i])
         deviation_channels = self.channels_interpolate[deviation_channel_mask]
-        for i in range(0, len(deviation_channels)):
+        for i in range(len(deviation_channels)):
             self.bad_by_deviation.append(self.ch_names_original[deviation_channels[i]])
 
     def find_bad_by_hfnoise(self, HF_zscore_threshold=5.0):
@@ -233,7 +233,7 @@ class NoisyChannels:
                 amp=np.array([1, 1, 0, 0]),
                 freq=np.array([0, 90 / self.sample_rate, 100 / self.sample_rate, 1]),
             )
-            for i in range(0, dimension[1]):
+            for i in range(dimension[1]):
                 EEG_filt[:, i] = signal.filtfilt(bandpass_filter, 1, data_tmp[:, i])
             noisiness = np.divide(
                 robust.mad(np.subtract(data_tmp, EEG_filt), c=1),
@@ -248,7 +248,7 @@ class NoisyChannels:
                 np.subtract(noisiness, noisiness_median), noiseSD
             )
             HFnoise_channel_mask = [False] * self.new_dimensions[0]
-            for i in range(0, self.new_dimensions[0]):
+            for i in range(self.new_dimensions[0]):
                 HFnoise_channel_mask[i] = zscore_HFNoise[
                     i
                 ] > HF_zscore_threshold or np.isnan(zscore_HFNoise[i])
@@ -261,7 +261,7 @@ class NoisyChannels:
             HFNoise_channels = []
         self.EEGData_beforeFilt = data_tmp
         self.EEGData = np.transpose(EEG_filt)
-        for i in range(0, len(HFNoise_channels)):
+        for i in range(len(HFNoise_channels)):
             self.bad_by_hf_noise.append(self.ch_names_original[HFNoise_channels[i]])
 
     def find_bad_by_correlation(
@@ -318,7 +318,7 @@ class NoisyChannels:
             (self.new_dimensions[0], len_correlation_window, w_correlation),
             order="F",
         )
-        for k in range(0, w_correlation):
+        for k in range(w_correlation):
             eeg_portion = np.transpose(np.squeeze(EEG_new_win[:, :, k]))
             data_portion = np.transpose(np.squeeze(data_win[:, :, k]))
             window_correlation = np.corrcoef(np.transpose(eeg_portion))
@@ -331,8 +331,8 @@ class NoisyChannels:
                 robust.mad(eeg_portion, c=1),
             )
             channel_deviations[k, :] = 0.7413 * iqr(data_portion, axis=0)
-        for i in range(0, w_correlation):
-            for j in range(0, self.new_dimensions[0]):
+        for i in range(w_correlation):
+            for j in range(self.new_dimensions[0]):
                 drop[i, j] = np.int(
                     np.isnan(channel_correlation[i, j]) or np.isnan(noiselevels[i, j])
                 )
@@ -484,7 +484,7 @@ class NoisyChannels:
                         print("Current chunk:", end=" ", flush=True)
 
                     print(current, end=" ", flush=True)
-                    current = current + 1
+                    current += 1
 
                 mem_error = False  # All chunks processed, hurray!
                 del current
@@ -612,8 +612,7 @@ class NoisyChannels:
 
         # Interpolate
         interpol_mat = _make_interpolation_matrix(reconstr_pos, chn_pos)
-        ransac_pred = np.matmul(interpol_mat, data[reconstr_picks, :])
-        return ransac_pred
+        return np.matmul(interpol_mat, data[reconstr_picks, :])
 
     def ransac_correlations(
         self,

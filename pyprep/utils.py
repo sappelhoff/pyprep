@@ -140,7 +140,7 @@ def make_random_mne_object(
     high = freq_range[1]
     for chan in range(n_chans):
         # Each channel signal is a sum of random freq sine waves
-        for freq_i in range(n_freq_comps):
+        for _ in range(n_freq_comps):
             freq = RNG.randint(low, high, signal_len)
             signal[chan, :] += np.sin(2 * np.pi * times * freq)
 
