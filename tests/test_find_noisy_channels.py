@@ -137,6 +137,6 @@ def test_findnoisychannels(raw, montage):
     nd = NoisyChannels(raw_tmp, random_state=rng)
 
     # Set n_samples very very high to trigger a memory error
-    n_samples = 1e100
+    n_samples = int(1e100)
     with pytest.raises(MemoryError):
         nd.find_bad_by_ransac(n_samples=n_samples)

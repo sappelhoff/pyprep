@@ -68,7 +68,7 @@ class NoisyChannels:
 
         # random_state
         self.random_state = check_random_state(random_state)
-        self.random_ch_picks = []
+        self.random_ch_picks = []  # needed for ransac
 
         # The identified bad channels
         self.bad_by_nan = []
@@ -418,7 +418,12 @@ class NoisyChannels:
            Data. NeuroImage, 159, 417-429
 
         """
-        # First, identify all bad channels by other means:
+        # First, check that the argument types are valid
+        if type(n_samples) != int:
+            err = "Argument 'n_samples' must be an int (got {0})"
+            raise TypeError(err.format(type(n_samples).__name__))
+
+        # Then, identify all bad channels by other means:
         bads = self.get_bads()
 
         # Get all channel positions and the position subset of "clean channels"
@@ -440,7 +445,6 @@ class NoisyChannels:
             )
 
         # Generate random channel picks for each RANSAC sample
-        n_samples = int(n_samples)  # ensure number is int
         self.random_ch_picks = []
         rng = check_random_state(self.random_state)
         for i in range(n_samples):
@@ -611,7 +615,7 @@ class NoisyChannels:
             channel numbers used for interpolation for RANSAC
         data : ndarray
             2-D EEG data
-        sample: int
+        sample : int
             the current RANSAC sample number
 
         Returns
