@@ -68,6 +68,7 @@ class NoisyChannels:
 
         # random_state
         self.random_state = check_random_state(random_state)
+        self.random_ch_picks = []
 
         # The identified bad channels
         self.bad_by_nan = []
@@ -438,6 +439,15 @@ class NoisyChannels:
                 " quality tests."
             )
 
+        # Generate random channel picks for each RANSAC sample
+        self.random_ch_picks = []
+        rng = check_random_state(self.random_state)
+        for i in range(n_samples):
+            # Pick a random subset of clean channels to use for interpolation
+            good_chans = np.arange(chn_pos_good.shape[0])
+            picks = rng.choice(good_chans, size=n_pred_chns, replace=False)
+            self.random_ch_picks.append(picks)
+
         # Correlation windows setup
         correlation_frames = corr_window_secs * self.sample_rate
         correlation_window = np.arange(correlation_frames)
@@ -576,14 +586,16 @@ class NoisyChannels:
         eeg_predictions = np.zeros((n_chns, n_timepts, n_samples))
         for sample in range(n_samples):
             eeg_predictions[..., sample] = self.get_ransac_pred(
-                chn_pos, chn_pos_good, good_chn_labs, n_pred_chns, data
+                chn_pos, chn_pos_good, good_chn_labs, n_pred_chns, data, sample
             )
 
         # Form median from all predictions
         ransac_eeg = np.median(eeg_predictions, axis=-1, overwrite_input=True)
         return ransac_eeg
 
-    def get_ransac_pred(self, chn_pos, chn_pos_good, good_chn_labs, n_pred_chns, data):
+    def get_ransac_pred(
+        self, chn_pos, chn_pos_good, good_chn_labs, n_pred_chns, data, sample
+    ):
         """Perform RANSAC prediction.
 
         Parameters
@@ -598,6 +610,8 @@ class NoisyChannels:
             channel numbers used for interpolation for RANSAC
         data : ndarray
             2-D EEG data
+        sample: int
+            the current RANSAC sample number
 
         Returns
         -------
@@ -605,12 +619,8 @@ class NoisyChannels:
             Single RANSAC prediction
 
         """
-        rng = check_random_state(self.random_state)
-
-        # Pick a subset of clean channels for reconstruction
-        reconstr_idx = rng.choice(
-            np.arange(chn_pos_good.shape[0]), size=n_pred_chns, replace=False
-        )
+        # Get the random channel selection for the current sample
+        reconstr_idx = self.random_ch_picks[sample]
 
         # Get positions and according labels
         reconstr_labels = good_chn_labs[reconstr_idx]
