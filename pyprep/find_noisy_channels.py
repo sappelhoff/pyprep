@@ -454,7 +454,16 @@ class NoisyChannels:
 
         print("Executing RANSAC\nThis may take a while, so be patient...")
 
-        chunk_size = self.n_chans_new
+        # Calculate smallest chunk size for each possible chunk count
+        chunk_sizes = []
+        chunk_count = 0
+        for i in range(1, self.n_chans_new + 1):
+            n_chunks = int(np.ceil(self.n_chans_new / i))
+            if n_chunks != chunk_count:
+                chunk_count = n_chunks
+                chunk_sizes.append(i)
+
+        chunk_size = chunk_sizes.pop()
         mem_error = True
         job = list(range(self.n_chans_new))
 
@@ -489,9 +498,9 @@ class NoisyChannels:
                 mem_error = False  # All chunks processed, hurray!
                 del current
             except MemoryError:
-                chunk_size = chunk_size - 1  # // 2
-                # dividing strategy may miss the most optimal chunk size
-                if chunk_size == 0:
+                if len(chunk_sizes):
+                    chunk_size = chunk_sizes.pop()
+                else:
                     raise MemoryError(
                         "Not even doing 1 channel at a time the data fits in ram..."
                         "You could downsample the data or reduce the number of requ"
