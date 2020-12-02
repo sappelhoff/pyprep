@@ -440,7 +440,7 @@ class NoisyChannels:
             )
 
         # Generate random channel picks for each RANSAC sample
-        n_samples = int(n_samples) # ensure number is int
+        n_samples = int(n_samples)  # ensure number is int
         self.random_ch_picks = []
         rng = check_random_state(self.random_state)
         for i in range(n_samples):
