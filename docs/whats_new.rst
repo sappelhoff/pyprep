@@ -23,6 +23,7 @@ People who contributed to this software across releases (in alphabetical order)
 * `Stefan Appelhoff`_
 * `Victor Xiang`_
 * `Yorguin Mantilla`_
+* `Austin Hurst`_
 
 
 .. _current:
@@ -32,7 +33,7 @@ Current
 
 Changelog
 ~~~~~~~~~
-- Nothing yet
+- Changed RANSAC chunking logic to reduce max memory use and prefer equal chunk sizes where possible, by `Austin Hurst`_ (`#44 <https://github.com/sappelhoff/pyprep/pull/44>`_)
 
 .. _changes_0_3_1:
 
@@ -128,3 +129,5 @@ Changelog
 .. _Christian Oreilly: https://github.com/christian-oreilly
 .. _Victor Xiang: https://github.com/Nick3151
 .. _Yorguin Mantilla: https://github.com/yjmantilla
+.. _Austin Hurst: https://github.com/a-hurst
+

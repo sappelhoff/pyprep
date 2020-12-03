@@ -554,9 +554,11 @@ class NoisyChannels:
         n_chns = chn_pos.shape[0]
 
         # Before running, make sure we have enough memory
+        max_ram_usage = 0.95
         try:
             available_gb = virtual_memory().available * 1e-9
             needed_gb = (data[:n_chns, :].nbytes * 1e-9) * n_samples
+            needed_gb = needed_gb / max_ram_usage  # adjust for max use
             assert available_gb > needed_gb
         except AssertionError:
             raise MemoryError(
