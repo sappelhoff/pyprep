@@ -554,20 +554,21 @@ class NoisyChannels:
         n_chns = chn_pos.shape[0]
 
         # Before running, make sure we have enough memory
-        max_ram_usage = 0.95
+        max_proportion_of_available_ram_to_use = 0.95
         try:
             available_gb = virtual_memory().available * 1e-9
+            available_gb *= max_proportion_of_available_ram_to_use
             needed_gb = (data[:n_chns, :].nbytes * 1e-9) * n_samples
-            needed_gb = needed_gb / max_ram_usage  # adjust for max use
             assert available_gb > needed_gb
         except AssertionError:
+            ram_diff = needed_gb - available_gb
             raise MemoryError(
                 "For given data of shape {} and the requested"
-                " number of {} samples, {} GB or memory would be"
-                " needed but only {} GB are available. You"
-                " could downsample the data or reduce the number"
+                " number of {} samples, {} GB of additional memory"
+                " would be needed. You could close other programs,"
+                " downsample the data, or reduce the number"
                 " of requested samples."
-                "".format(data.shape, n_samples, needed_gb, available_gb)
+                "".format(data.shape, n_samples, ram_diff)
             )
 
         # Memory seems to be fine ...
