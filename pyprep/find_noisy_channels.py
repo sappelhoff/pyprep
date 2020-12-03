@@ -446,10 +446,10 @@ class NoisyChannels:
 
         # Generate random channel picks for each RANSAC sample
         self.random_ch_picks = []
+        good_chans = np.arange(chn_pos_good.shape[0])
         rng = check_random_state(self.random_state)
         for i in range(n_samples):
             # Pick a random subset of clean channels to use for interpolation
-            good_chans = np.arange(chn_pos_good.shape[0])
             picks = rng.choice(good_chans, size=n_pred_chns, replace=False)
             self.random_ch_picks.append(picks)
 
