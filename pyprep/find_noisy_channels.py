@@ -495,7 +495,6 @@ class NoisyChannels:
                         chn_pos,
                         chn_pos_good,
                         good_chn_labs,
-                        n_pred_chns,
                         self.EEGData,
                         n_samples,
                         n,
@@ -535,7 +534,7 @@ class NoisyChannels:
         print("\nRANSAC done!")
 
     def run_ransac(
-        self, chn_pos, chn_pos_good, good_chn_labs, n_pred_chns, data, n_samples
+        self, chn_pos, chn_pos_good, good_chn_labs, data, n_samples
     ):
         """Detect noisy channels apart from the ones described previously.
 
@@ -550,8 +549,6 @@ class NoisyChannels:
             3-D coordinates of all the channels not detected noisy so far
         good_chn_labs : array_like
             channel labels for the ch_pos_good channels-
-        n_pred_chns : int
-            channel numbers used for interpolation for RANSAC
         data : ndarry
             2-D EEG data
         n_samples : int
@@ -591,7 +588,7 @@ class NoisyChannels:
         eeg_predictions = np.zeros((n_chns, n_timepts, n_samples))
         for sample in range(n_samples):
             eeg_predictions[..., sample] = self.get_ransac_pred(
-                chn_pos, chn_pos_good, good_chn_labs, n_pred_chns, data, sample
+                chn_pos, chn_pos_good, good_chn_labs, data, sample
             )
 
         # Form median from all predictions
@@ -599,7 +596,7 @@ class NoisyChannels:
         return ransac_eeg
 
     def get_ransac_pred(
-        self, chn_pos, chn_pos_good, good_chn_labs, n_pred_chns, data, sample
+        self, chn_pos, chn_pos_good, good_chn_labs, data, sample
     ):
         """Perform RANSAC prediction.
 
@@ -611,8 +608,6 @@ class NoisyChannels:
             3-D coordinates of all the channels not detected noisy so far
         good_chn_labs : array_like
             channel labels for the ch_pos_good channels
-        n_pred_chns : int
-            channel numbers used for interpolation for RANSAC
         data : ndarray
             2-D EEG data
         sample : int
@@ -648,7 +643,6 @@ class NoisyChannels:
         chn_pos,
         chn_pos_good,
         good_chn_labs,
-        n_pred_chns,
         data,
         n_samples,
         n,
@@ -666,8 +660,6 @@ class NoisyChannels:
             3-D coordinates of all the channels not detected noisy so far
         good_chn_labs : array_like
             channel labels for the ch_pos_good channels
-        n_pred_chns : int
-            channel numbers used for interpolation for RANSAC
         data : ndarray
             2-D EEG data
         n_samples : int
@@ -691,7 +683,6 @@ class NoisyChannels:
             chn_pos=chn_pos[chans_to_predict, :],
             chn_pos_good=chn_pos_good,
             good_chn_labs=good_chn_labs,
-            n_pred_chns=n_pred_chns,
             data=data,
             n_samples=n_samples,
         )
