@@ -154,8 +154,7 @@ def make_random_mne_object(
 
 
 def verify_free_ram(data, n_samples, n_channels, max_prop=0.95):
-    """Check whether enough memory is available to perform ransac with a given
-    set of parameters.
+    """Check if enough memory is free to run ransac with the given parameters.
 
     Parameters
     ----------
@@ -170,7 +169,7 @@ def verify_free_ram(data, n_samples, n_channels, max_prop=0.95):
         use.
 
     Raises
-    -------
+    ------
     MemoryError
         If insufficient free memory to perform ransac with the given data and
         parameters.
