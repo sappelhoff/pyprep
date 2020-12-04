@@ -131,7 +131,7 @@ def test_findnoisychannels(raw, montage):
     bads = nd.bad_by_ransac
     assert bads == raw_tmp.ch_names[0:6]
 
-    # Test too little ram memory error
+    # Test not-enough-memory and n_samples type exceptions
     raw_tmp = raw.copy()
     raw_tmp._data[0:6, :] = np.cos(2 * np.pi * raw.times * 30) * 1e-6
     nd = NoisyChannels(raw_tmp, random_state=rng)
@@ -139,4 +139,9 @@ def test_findnoisychannels(raw, montage):
     # Set n_samples very very high to trigger a memory error
     n_samples = int(1e100)
     with pytest.raises(MemoryError):
+        nd.find_bad_by_ransac(n_samples=n_samples)
+
+    # Set n_samples to a float to trigger a type error
+    n_samples = 35.5
+    with pytest.raises(TypeError):
         nd.find_bad_by_ransac(n_samples=n_samples)
