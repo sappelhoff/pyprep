@@ -3,7 +3,6 @@ import mne
 import numpy as np
 from mne.channels.interpolation import _make_interpolation_matrix
 from mne.utils import check_random_state
-from psutil import virtual_memory
 from scipy import signal
 from scipy.stats import iqr
 from statsmodels import robust
