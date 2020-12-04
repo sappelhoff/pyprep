@@ -33,6 +33,7 @@ Current
 
 Changelog
 ~~~~~~~~~
+- Added ``noisy_channels_before_interpolation`` and ``noisy_channels_after_interpolation`` attributes to ``PrepPipeline`` which have the detailed output of each noisy criteria, by `Yorguin Mantilla`_ (`#45 <https://github.com/sappelhoff/pyprep/pull/45>`_)
 - Changed RANSAC chunking logic to reduce max memory use and prefer equal chunk sizes where possible, by `Austin Hurst`_ (`#44 <https://github.com/sappelhoff/pyprep/pull/44>`_)
 
 Bug
