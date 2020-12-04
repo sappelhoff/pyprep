@@ -9,7 +9,7 @@ from scipy.stats import iqr
 from statsmodels import robust
 
 from pyprep.removeTrend import removeTrend
-from pyprep.utils import filter_design, split_list
+from pyprep.utils import filter_design, split_list, verify_free_ram
 
 
 class NoisyChannels:
@@ -444,6 +444,10 @@ class NoisyChannels:
                 " quality tests."
             )
 
+        # Before running, make sure we have enough memory when using the
+        # smallest possible chunk size
+        verify_free_ram(self.EEGData, n_samples, 1)
+
         # Generate random channel picks for each RANSAC sample
         self.random_ch_picks = []
         good_chans = np.arange(chn_pos_good.shape[0])
@@ -533,9 +537,7 @@ class NoisyChannels:
         self.bad_by_ransac = [i[0] for i in bad_ransac_channels_name]
         print("\nRANSAC done!")
 
-    def run_ransac(
-        self, chn_pos, chn_pos_good, good_chn_labs, data, n_samples
-    ):
+    def run_ransac(self, chn_pos, chn_pos_good, good_chn_labs, data, n_samples):
         """Detect noisy channels apart from the ones described previously.
 
         It creates a random subset of the so-far good channels
@@ -566,22 +568,7 @@ class NoisyChannels:
         n_chns = chn_pos.shape[0]
 
         # Before running, make sure we have enough memory
-        max_proportion_of_available_ram_to_use = 0.95
-        try:
-            available_gb = virtual_memory().available * 1e-9
-            available_gb *= max_proportion_of_available_ram_to_use
-            needed_gb = (data[:n_chns, :].nbytes * 1e-9) * n_samples
-            assert available_gb > needed_gb
-        except AssertionError:
-            ram_diff = needed_gb - available_gb
-            raise MemoryError(
-                "For given data of shape {} and the requested"
-                " number of {} samples, {} GB of additional memory"
-                " would be needed. You could close other programs,"
-                " downsample the data, or reduce the number"
-                " of requested samples."
-                "".format(data.shape, n_samples, ram_diff)
-            )
+        verify_free_ram(data, n_samples, n_chns)
 
         # Memory seems to be fine ...
         # Make the predictions
@@ -595,9 +582,7 @@ class NoisyChannels:
         ransac_eeg = np.median(eeg_predictions, axis=-1, overwrite_input=True)
         return ransac_eeg
 
-    def get_ransac_pred(
-        self, chn_pos, chn_pos_good, good_chn_labs, data, sample
-    ):
+    def get_ransac_pred(self, chn_pos, chn_pos_good, good_chn_labs, data, sample):
         """Perform RANSAC prediction.
 
         Parameters

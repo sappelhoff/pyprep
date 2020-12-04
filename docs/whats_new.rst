@@ -35,6 +35,10 @@ Changelog
 ~~~~~~~~~
 - Changed RANSAC chunking logic to reduce max memory use and prefer equal chunk sizes where possible, by `Austin Hurst`_ (`#44 <https://github.com/sappelhoff/pyprep/pull/44>`_)
 
+Bug
+~~~
+- Fixed RANSAC to give consistent results with a fixed seed across different chunk sizes, by `Austin Hurst`_ and `Yorguin Mantilla`_ (`#43 <https://github.com/sappelhoff/pyprep/pull/43>`_)
+
 .. _changes_0_3_1:
 
 Version 0.3.1
@@ -130,4 +134,3 @@ Changelog
 .. _Victor Xiang: https://github.com/Nick3151
 .. _Yorguin Mantilla: https://github.com/yjmantilla
 .. _Austin Hurst: https://github.com/a-hurst
-
