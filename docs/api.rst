@@ -14,7 +14,7 @@ The :mod:`find_noisy_channels` module
 .. currentmodule:: find_noisy_channels
 
 The :class:`NoisyChannels` class
-----------------------------
+--------------------------------
 .. autosummary::
    :toctree: generated/
 
@@ -23,7 +23,7 @@ The :class:`NoisyChannels` class
    NoisyChannels.find_all_bads
    NoisyChannels.find_bad_by_nan_flat
    NoisyChannels.find_bad_by_deviation
-   NoisyChannels.find_bad_by_hf_noise
+   NoisyChannels.find_bad_by_hfnoise
    NoisyChannels.find_bad_by_correlation
    NoisyChannels.find_bad_by_SNR
    NoisyChannels.find_bad_by_ransac

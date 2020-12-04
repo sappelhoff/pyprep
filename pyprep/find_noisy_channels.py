@@ -3,13 +3,12 @@ import mne
 import numpy as np
 from mne.channels.interpolation import _make_interpolation_matrix
 from mne.utils import check_random_state
-from psutil import virtual_memory
 from scipy import signal
 from scipy.stats import iqr
 from statsmodels import robust
 
 from pyprep.removeTrend import removeTrend
-from pyprep.utils import filter_design, split_list
+from pyprep.utils import filter_design, split_list, verify_free_ram
 
 
 class NoisyChannels:
@@ -68,6 +67,7 @@ class NoisyChannels:
 
         # random_state
         self.random_state = check_random_state(random_state)
+        self.random_ch_picks = []  # needed for ransac
 
         # The identified bad channels
         self.bad_by_nan = []
@@ -417,7 +417,12 @@ class NoisyChannels:
            Data. NeuroImage, 159, 417-429
 
         """
-        # First, identify all bad channels by other means:
+        # First, check that the argument types are valid
+        if type(n_samples) != int:
+            err = "Argument 'n_samples' must be an int (got {0})"
+            raise TypeError(err.format(type(n_samples).__name__))
+
+        # Then, identify all bad channels by other means:
         bads = self.get_bads()
 
         # Get all channel positions and the position subset of "clean channels"
@@ -437,6 +442,19 @@ class NoisyChannels:
                 " ransac. Perhaps, too many channels have failed"
                 " quality tests."
             )
+
+        # Before running, make sure we have enough memory when using the
+        # smallest possible chunk size
+        verify_free_ram(self.EEGData, n_samples, 1)
+
+        # Generate random channel picks for each RANSAC sample
+        self.random_ch_picks = []
+        good_chans = np.arange(chn_pos_good.shape[0])
+        rng = check_random_state(self.random_state)
+        for i in range(n_samples):
+            # Pick a random subset of clean channels to use for interpolation
+            picks = rng.choice(good_chans, size=n_pred_chns, replace=False)
+            self.random_ch_picks.append(picks)
 
         # Correlation windows setup
         correlation_frames = corr_window_secs * self.sample_rate
@@ -480,7 +498,6 @@ class NoisyChannels:
                         chn_pos,
                         chn_pos_good,
                         good_chn_labs,
-                        n_pred_chns,
                         self.EEGData,
                         n_samples,
                         n,
@@ -519,9 +536,7 @@ class NoisyChannels:
         self.bad_by_ransac = [i[0] for i in bad_ransac_channels_name]
         print("\nRANSAC done!")
 
-    def run_ransac(
-        self, chn_pos, chn_pos_good, good_chn_labs, n_pred_chns, data, n_samples
-    ):
+    def run_ransac(self, chn_pos, chn_pos_good, good_chn_labs, data, n_samples):
         """Detect noisy channels apart from the ones described previously.
 
         It creates a random subset of the so-far good channels
@@ -535,8 +550,6 @@ class NoisyChannels:
             3-D coordinates of all the channels not detected noisy so far
         good_chn_labs : array_like
             channel labels for the ch_pos_good channels-
-        n_pred_chns : int
-            channel numbers used for interpolation for RANSAC
         data : ndarry
             2-D EEG data
         n_samples : int
@@ -554,36 +567,21 @@ class NoisyChannels:
         n_chns = chn_pos.shape[0]
 
         # Before running, make sure we have enough memory
-        max_proportion_of_available_ram_to_use = 0.95
-        try:
-            available_gb = virtual_memory().available * 1e-9
-            available_gb *= max_proportion_of_available_ram_to_use
-            needed_gb = (data[:n_chns, :].nbytes * 1e-9) * n_samples
-            assert available_gb > needed_gb
-        except AssertionError:
-            ram_diff = needed_gb - available_gb
-            raise MemoryError(
-                "For given data of shape {} and the requested"
-                " number of {} samples, {} GB of additional memory"
-                " would be needed. You could close other programs,"
-                " downsample the data, or reduce the number"
-                " of requested samples."
-                "".format(data.shape, n_samples, ram_diff)
-            )
+        verify_free_ram(data, n_samples, n_chns)
 
         # Memory seems to be fine ...
         # Make the predictions
         eeg_predictions = np.zeros((n_chns, n_timepts, n_samples))
         for sample in range(n_samples):
             eeg_predictions[..., sample] = self.get_ransac_pred(
-                chn_pos, chn_pos_good, good_chn_labs, n_pred_chns, data
+                chn_pos, chn_pos_good, good_chn_labs, data, sample
             )
 
         # Form median from all predictions
         ransac_eeg = np.median(eeg_predictions, axis=-1, overwrite_input=True)
         return ransac_eeg
 
-    def get_ransac_pred(self, chn_pos, chn_pos_good, good_chn_labs, n_pred_chns, data):
+    def get_ransac_pred(self, chn_pos, chn_pos_good, good_chn_labs, data, sample):
         """Perform RANSAC prediction.
 
         Parameters
@@ -594,10 +592,10 @@ class NoisyChannels:
             3-D coordinates of all the channels not detected noisy so far
         good_chn_labs : array_like
             channel labels for the ch_pos_good channels
-        n_pred_chns : int
-            channel numbers used for interpolation for RANSAC
         data : ndarray
             2-D EEG data
+        sample : int
+            the current RANSAC sample number
 
         Returns
         -------
@@ -605,12 +603,8 @@ class NoisyChannels:
             Single RANSAC prediction
 
         """
-        rng = check_random_state(self.random_state)
-
-        # Pick a subset of clean channels for reconstruction
-        reconstr_idx = rng.choice(
-            np.arange(chn_pos_good.shape[0]), size=n_pred_chns, replace=False
-        )
+        # Get the random channel selection for the current sample
+        reconstr_idx = self.random_ch_picks[sample]
 
         # Get positions and according labels
         reconstr_labels = good_chn_labs[reconstr_idx]
@@ -633,7 +627,6 @@ class NoisyChannels:
         chn_pos,
         chn_pos_good,
         good_chn_labs,
-        n_pred_chns,
         data,
         n_samples,
         n,
@@ -651,8 +644,6 @@ class NoisyChannels:
             3-D coordinates of all the channels not detected noisy so far
         good_chn_labs : array_like
             channel labels for the ch_pos_good channels
-        n_pred_chns : int
-            channel numbers used for interpolation for RANSAC
         data : ndarray
             2-D EEG data
         n_samples : int
@@ -676,7 +667,6 @@ class NoisyChannels:
             chn_pos=chn_pos[chans_to_predict, :],
             chn_pos_good=chn_pos_good,
             good_chn_labs=good_chn_labs,
-            n_pred_chns=n_pred_chns,
             data=data,
             n_samples=n_samples,
         )
