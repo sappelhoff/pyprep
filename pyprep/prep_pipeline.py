@@ -21,17 +21,18 @@ class PrepPipeline:
         ocular channels are assigned the type 'eog').
     prep_params : dict
         Parameters of PREP which include at least the following keys:
-            - ref_chs : list | 'eeg'
-                - A list of channel names to be used for rereferencing.
-                  Can be a str 'eeg' to use all EEG channels.
-            - reref_chs : list | 'eeg'
-                - A list of channel names to be used for line-noise removed,
-                  and referenced. Can be a str 'eeg' to use all EEG channels.
-            - line_freqs : array_like
-                - list of floats indicating frequencies to be removed.
-                  For example, for 60Hz you may specify
-                  ``np.arange(60, sfreq / 2, 60)``. Specify an empty list to
-                  skip the line noise removal step.
+
+        - ref_chs : list | 'eeg'
+            - A list of channel names to be used for rereferencing.
+              Can be a str 'eeg' to use all EEG channels.
+        - reref_chs : list | 'eeg'
+            - A list of channel names to be used for line-noise removed,
+              and referenced. Can be a str 'eeg' to use all EEG channels.
+        - line_freqs : array_like
+            - list of floats indicating frequencies to be removed.
+              For example, for 60Hz you may specify
+              ``np.arange(60, sfreq / 2, 60)``. Specify an empty list to
+              skip the line noise removal step.
     montage : DigMontage
         Digital montage of EEG data.
     ransac : bool

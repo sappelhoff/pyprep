@@ -164,7 +164,7 @@ def verify_free_ram(data, n_samples, n_channels, max_prop=0.95):
         Number of samples to use for computation of ransac.
     n_channels : int
         Number of channels to process per chunk.
-    max_prop: float
+    max_prop : float
         The maximum proportion of available memory that ransac is allowed to
         use.
 

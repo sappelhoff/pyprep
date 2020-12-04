@@ -41,7 +41,7 @@ Bug
 
 API
 ~~~
-- Added new function :func:`utils.verify_free_ram` and removed `n_samples` argument from the :meth:`NoisyChannels.ransac_correlations`, :meth:`NoisyChannels.run_ransac`, and :meth:`NoisyChannels.get_ransac_pred` methods, by `Austin Hurst`_ and `Yorguin Mantilla`_ (`#43 <https://github.com/sappelhoff/pyprep/pull/43>`_)
+- The permissible parameters for the following methods were removed and/or reordered: :meth:`NoisyChannels.ransac_correlations`, :meth:`NoisyChannels.run_ransac`, and :meth:`NoisyChannels.get_ransac_pred` methods, by `Austin Hurst`_ and `Yorguin Mantilla`_ (`#43 <https://github.com/sappelhoff/pyprep/pull/43>`_)
 
 .. _changes_0_3_1:
 
