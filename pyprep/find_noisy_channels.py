@@ -518,6 +518,8 @@ class NoisyChannels:
                 if len(chunk_sizes):
                     chunk_size = chunk_sizes.pop()
                 else:
+                    # Can't test this branch since the '1 channel at a time' case
+                    # was already verified before
                     raise MemoryError(
                         "Not even doing 1 channel at a time the data fits in ram..."
                         "You could downsample the data or reduce the number of requ"
