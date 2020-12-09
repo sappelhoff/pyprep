@@ -517,7 +517,7 @@ class NoisyChannels:
             except MemoryError:
                 if len(chunk_sizes):
                     chunk_size = chunk_sizes.pop()
-                else:
+                else:  # pragma: no cover
                     raise MemoryError(
                         "Not even doing 1 channel at a time the data fits in ram..."
                         "You could downsample the data or reduce the number of requ"

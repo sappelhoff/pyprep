@@ -33,6 +33,8 @@ Current
 
 Changelog
 ~~~~~~~~~
+- Added two attributes :attribute:`PrepPipeline.noisy_channels_before_interpolation` and :attribute:`PrepPipeline.noisy_channels_after_interpolation` which have the detailed output of each noisy criteria, by `Yorguin Mantilla`_ (`#45 <https://github.com/sappelhoff/pyprep/pull/45>`_)
+- Added two keys to the :attribute:`PrepPipeline.noisy_channels_original` dictionary: ``bad_by_dropout`` and ``bad_by_SNR``, by `Yorguin Mantilla`_ (`#45 <https://github.com/sappelhoff/pyprep/pull/45>`_)
 - Changed RANSAC chunking logic to reduce max memory use and prefer equal chunk sizes where possible, by `Austin Hurst`_ (`#44 <https://github.com/sappelhoff/pyprep/pull/44>`_)
 
 Bug
@@ -41,8 +43,6 @@ Bug
 
 API
 ~~~
-- Added two attributes to ``PrepPipeline``: ``noisy_channels_before_interpolation`` and ``noisy_channels_after_interpolation`` which have the detailed output of each noisy criteria, by `Yorguin Mantilla`_ (`#45 <https://github.com/sappelhoff/pyprep/pull/45>`_)
-- Added two keys to the ``PrepPipeline.noisy_channels_original`` dictionary: ``bad_by_dropout`` and ``bad_by_SNR``, by `Yorguin Mantilla`_ (`#45 <https://github.com/sappelhoff/pyprep/pull/45>`_)
 - The permissible parameters for the following methods were removed and/or reordered: :meth:`NoisyChannels.ransac_correlations`, :meth:`NoisyChannels.run_ransac`, and :meth:`NoisyChannels.get_ransac_pred` methods, by `Austin Hurst`_ and `Yorguin Mantilla`_ (`#43 <https://github.com/sappelhoff/pyprep/pull/43>`_)
 
 .. _changes_0_3_1:
