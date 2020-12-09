@@ -61,12 +61,12 @@ class PrepPipeline:
     raw_non_eeg : mne.raw | None
         The non-eeg part of the data. It is not processed when calling
         the fit method. If the input was only EEG it will be None.
-    noisy_channels_original : dictionary
-        detailed bad channels in each criteria before robust reference
-    noisy_channels_before_interpolation : dictionary
-        detailed bad channels in each criteria just before interpolation
-    noisy_channels_after_interpolation : dictionary
-        detailed bad channels in each criteria just after interpolation
+    noisy_channels_original : dict
+       Detailed bad channels in each criteria before robust reference.
+    noisy_channels_before_interpolation : dict
+        Detailed bad channels in each criteria just before interpolation.
+    noisy_channels_after_interpolation : dict
+        Detailed bad channels in each criteria just after interpolation.
     bad_before_interpolation : list
         bad channels after robust reference but before interpolation
     EEG_before_interpolation : ndarray
