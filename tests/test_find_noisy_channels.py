@@ -145,3 +145,15 @@ def test_findnoisychannels(raw, montage):
     n_samples = 35.5
     with pytest.raises(TypeError):
         nd.find_bad_by_ransac(n_samples=n_samples)
+
+    # Test IOError when not enough channels for ransac predictions
+    raw_tmp = raw.copy()
+    # Make flat all channels except 2
+    num_bad_channels = raw._data.shape[0] - 2
+    raw_tmp._data[0:num_bad_channels, :] = np.zeros_like(
+        raw_tmp._data[0:num_bad_channels, :]
+    )
+    nd = NoisyChannels(raw_tmp, random_state=rng)
+    nd.find_all_bads(ransac=False)
+    with pytest.raises(IOError):
+        nd.find_bad_by_ransac()

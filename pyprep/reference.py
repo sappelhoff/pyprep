@@ -97,6 +97,17 @@ class Reference:
         # Record Noisy channels and EEG before interpolation
         self.bad_before_interpolation = noisy_detector.get_bads(verbose=True)
         self.EEG_before_interpolation = self.EEG.copy()
+        self.noisy_channels_before_interpolation = {
+            "bad_by_nan": noisy_detector.bad_by_nan,
+            "bad_by_flat": noisy_detector.bad_by_flat,
+            "bad_by_deviation": noisy_detector.bad_by_deviation,
+            "bad_by_hf_noise": noisy_detector.bad_by_hf_noise,
+            "bad_by_correlation": noisy_detector.bad_by_correlation,
+            "bad_by_SNR": noisy_detector.bad_by_SNR,
+            "bad_by_dropout": noisy_detector.bad_by_dropout,
+            "bad_by_ransac": noisy_detector.bad_by_ransac,
+            "bad_all": noisy_detector.get_bads(),
+        }
 
         bad_channels = _union(self.bad_before_interpolation, self.unusable_channels)
         self.raw.info["bads"] = bad_channels
@@ -119,6 +130,18 @@ class Reference:
         noisy_detector.find_all_bads(ransac=self.ransac)
         self.still_noisy_channels = noisy_detector.get_bads()
         self.raw.info["bads"] = self.still_noisy_channels
+        self.noisy_channels_after_interpolation = {
+            "bad_by_nan": noisy_detector.bad_by_nan,
+            "bad_by_flat": noisy_detector.bad_by_flat,
+            "bad_by_deviation": noisy_detector.bad_by_deviation,
+            "bad_by_hf_noise": noisy_detector.bad_by_hf_noise,
+            "bad_by_correlation": noisy_detector.bad_by_correlation,
+            "bad_by_SNR": noisy_detector.bad_by_SNR,
+            "bad_by_dropout": noisy_detector.bad_by_dropout,
+            "bad_by_ransac": noisy_detector.bad_by_ransac,
+            "bad_all": noisy_detector.get_bads(),
+        }
+
         return self
 
     def robust_reference(self):
@@ -155,9 +178,12 @@ class Reference:
             "bad_by_deviation": noisy_detector.bad_by_deviation,
             "bad_by_hf_noise": noisy_detector.bad_by_hf_noise,
             "bad_by_correlation": noisy_detector.bad_by_correlation,
+            "bad_by_SNR": noisy_detector.bad_by_SNR,
+            "bad_by_dropout": noisy_detector.bad_by_dropout,
             "bad_by_ransac": noisy_detector.bad_by_ransac,
             "bad_all": noisy_detector.get_bads(),
         }
+
         self.noisy_channels = self.noisy_channels_original.copy()
         logger.info("Bad channels: {}".format(self.noisy_channels))
 

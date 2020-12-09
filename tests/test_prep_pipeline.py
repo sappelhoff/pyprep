@@ -32,7 +32,7 @@ def test_prep_pipeline(raw, montage):
     EEG_raw_diff = EEG_raw - EEG_raw_matlab
     # EEG_raw_mse = (EEG_raw_diff / EEG_raw_max ** 2).mean(axis=None)
 
-    fig, axs = plt.subplots(5, 3, "all")
+    fig, axs = plt.subplots(5, 3, sharex="all")
     plt.setp(fig, facecolor=[1, 1, 1])
     fig.suptitle("Python versus Matlab PREP results", fontsize=16)
 
