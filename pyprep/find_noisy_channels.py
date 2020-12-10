@@ -376,7 +376,10 @@ class NoisyChannels:
         corr_window_secs=5.0,
         channel_wise=False,
     ):
-        """Wrap find_bad_by_ransac function for the NoisyChannels Class."""
+        """Find bad channels by the ransac method.
+
+        In essence a wrapper of find_bad_by_ransac function for the NoisyChannels Class.
+        """
         self.bad_by_ransac, _ = find_bad_by_ransac(
             self.EEGData,
             self.sample_rate,

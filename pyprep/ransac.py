@@ -1,3 +1,4 @@
+"""RANSAC bad channel identification."""
 import mne
 import numpy as np
 from mne.channels.interpolation import _make_interpolation_matrix
@@ -84,7 +85,6 @@ def find_bad_by_ransac(
         (2017). Autoreject: Automated Artifact Rejection for MEG and EEG
         Data. NeuroImage, 159, 417-429
     """
-
     # First, check that the argument types are valid
     if type(n_samples) != int:
         err = "Argument 'n_samples' must be an int (got {0})"
@@ -378,7 +378,6 @@ def get_ransac_pred(
         Single RANSAC prediction
 
     """
-
     # Get positions and according labels
     reconstr_labels = good_chn_labs[reconstr_idx]
     reconstr_pos = chn_pos_good[reconstr_idx, :]
