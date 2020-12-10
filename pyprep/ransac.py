@@ -71,6 +71,9 @@ def find_bad_by_ransac(
     -------
     bad_by_ransac : list
         List of channels labels marked bad by ransac.
+    channel_correlations : ndarray
+        Array of shape (windows,channels) holding the correlations of
+        the channels to their predicted ransac value in each of the windows.
 
     References
     ----------
@@ -80,7 +83,6 @@ def find_bad_by_ransac(
     .. [2] Jas, M., Engemann, D.A., Bekhti, Y., Raimondo, F., Gramfort, A.
         (2017). Autoreject: Automated Artifact Rejection for MEG and EEG
         Data. NeuroImage, 159, 417-429
-
     """
 
     # First, check that the argument types are valid
