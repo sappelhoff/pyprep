@@ -378,7 +378,8 @@ class NoisyChannels:
     ):
         """Find bad channels by the ransac method.
 
-        In essence a wrapper of find_bad_by_ransac function for the NoisyChannels Class.
+        This method is a wrapper of the ``find_bad_by_ransac`` function
+        from the ``ransac`` module.
         """
         self.bad_by_ransac, _ = find_bad_by_ransac(
             self.EEGData,
