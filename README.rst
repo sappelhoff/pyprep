@@ -31,7 +31,7 @@ For documentation, see the:
 
 ``pyprep`` is a python implementation of the
 `Preprocessing Pipeline (PREP) <https://doi.org/10.3389/fninf.2015.00016>`_ for
-EEG data, working with `MNE-Python <https://www.martinos.org/mne/stable/index.html>`_
+EEG data, working with `MNE-Python <https://mne.tools>`_
 for EEG data processing and analysis.
 
 **ALPHA SOFTWARE.**

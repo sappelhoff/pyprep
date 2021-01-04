@@ -13,6 +13,7 @@ import pyprep
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 curdir = os.path.dirname(__file__)
 sys.path.append(os.path.abspath(os.path.join(curdir, "..", "pyprep")))
+sys.path.append(os.path.abspath(os.path.join(curdir, "sphinxext")))
 
 # -- Project information -----------------------------------------------------
 project = "pyprep"
@@ -36,7 +37,12 @@ extensions = [
     "sphinx.ext.githubpages",
     "numpydoc",
     "sphinx_gallery.gen_gallery",
+    "gh_substitutions",  # custom extension, see ./sphinxext/gh_substitutions.py
+    "sphinx_copybutton",
 ]
+
+copybutton_prompt_text = r">>> |\.\.\. "
+copybutton_prompt_is_regexp = True
 
 master_doc = "index"
 autosummary_generate = True
