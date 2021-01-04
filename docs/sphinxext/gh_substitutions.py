@@ -21,7 +21,7 @@ def gh_role(name, rawtext, text, lineno, inliner, options={}, content=[]):
     else:
         slug = "issues/" + text
     text = "#" + text
-    ref = "https://github.com/bids-standard/pyprep/" + slug
+    ref = "https://github.com/sappelhoff/pyprep/" + slug
     set_classes(options)
     node = reference(rawtext, text, refuri=ref, **options)
     return [node], []

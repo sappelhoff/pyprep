@@ -88,7 +88,7 @@ intersphinx_mapping = {
     "scipy": ("https://scipy.github.io/devdocs", None),
     "matplotlib": ("https://matplotlib.org", None),
 }
-intersphinx_timeout = 5
+intersphinx_timeout = 10
 
 sphinx_gallery_conf = {
     "examples_dirs": "../examples",

@@ -30,7 +30,7 @@ class NoisyChannels:
 
         Parameters
         ----------
-        raw : mne.raw
+        raw : mne.io.raw
             The MNE raw object.
         do_detrend : bool
             Whether or not to remove a trend from the data upon initializing the
@@ -550,7 +550,7 @@ class NoisyChannels:
             3-D coordinates of all the channels not detected noisy so far
         good_chn_labs : array_like
             channel labels for the ch_pos_good channels-
-        data : ndarry
+        data : ndarray
             2-D EEG data
         n_samples : int
             number of interpolations from which a median will be computed

@@ -16,7 +16,7 @@ class PrepPipeline:
 
     Parameters
     ----------
-    raw : mne.raw
+    raw : mne.io.raw
         The data. Channel types must be correctly assigned (e.g.,
         ocular channels are assigned the type 'eog').
     prep_params : dict
@@ -51,14 +51,14 @@ class PrepPipeline:
 
     Attributes
     ----------
-    raw : mne.raw
+    raw : mne.io.raw
         The data including eeg and non eeg channels. It is unprocessed if
         accessed before the fit method, processed if accessed after a
         succesful fit method.
-    raw_eeg : mne.raw
+    raw_eeg : mne.io.raw
         The only-eeg part of the data. It is unprocessed if accessed before
         the fit method, processed if accessed after a succesful fit method.
-    raw_non_eeg : mne.raw | None
+    raw_non_eeg : mne.io.raw | None
         The non-eeg part of the data. It is not processed when calling
         the fit method. If the input was only EEG it will be None.
     noisy_channels_original : dict
