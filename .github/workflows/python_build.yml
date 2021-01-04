@@ -1,0 +1,51 @@
+name: Python build
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  create:
+    branches: [master]
+    tags: ['**']
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        python-version: [3.8]
+    steps:
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Update pip and wheel
+      run: python -m pip install --upgrade pip wheel
+
+    - uses: actions/checkout@v2
+    - name: Build sdist
+      run: python setup.py sdist
+    - name: Install sdist
+      run: pip install ./dist/pyprep-*
+    - name: Clean up working directory
+      run: rm -rf ./*
+    - name: Try importing pyprep
+      run: python -c 'import pyprep; print(pyprep.__version__)'
+    - name: Remove sdist install
+      run: pip uninstall -y pyprep
+
+    - uses: actions/checkout@v2
+    - name: Build wheel
+      run: python setup.py bdist_wheel
+    - name: Install wheel
+      run: pip install ./dist/pyprep-*.whl
+    - name: Clean up working directory
+      run: rm -rf ./*
+    - name: Try importing pyprep
+      run: python -c 'import pyprep; print(pyprep.__version__)'
+    - name: Remove wheel install
+      run: pip uninstall -y pyprep
