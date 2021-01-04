@@ -36,7 +36,7 @@ def find_bad_by_ransac(
 
     Parameters
     ----------
-    data : ndarray
+    data : np.ndarray
         2-D EEG data, should be detrended.
     sample_rate : float
         sample rate of the EEG data
@@ -44,7 +44,7 @@ def find_bad_by_ransac(
         number of total samples in the signal (the length of the signal).
     complete_chn_labs : array_like
         labels of the channels in data in the same order
-    chn_pos : ndarray
+    chn_pos : np.ndarray
         3-D coordinates of all the channels in the order of data
     exclude : list
         labels of the channels to ignore in the ransac. In example bad channels
@@ -72,7 +72,7 @@ def find_bad_by_ransac(
     -------
     bad_by_ransac : list
         List of channels labels marked bad by ransac.
-    channel_correlations : ndarray
+    channel_correlations : np.ndarray
         Array of shape (windows,channels) holding the correlations of
         the channels to their predicted ransac value in each of the windows.
 
@@ -228,15 +228,15 @@ def ransac_correlations(
     random_ch_picks : list
         each element is a list of indexes of the channels (as they appear
         in good_chn_labs) to use for reconstruction in each of the samples.
-    chn_pos : ndarray
+    chn_pos : np.ndarray
         3-D coordinates of the electrode positions to predict
-    chn_pos_good : ndarray
+    chn_pos_good : np.ndarray
         3-D coordinates of all the channels not detected noisy so far
     good_chn_labs : array_like
         channel labels for the ch_pos_good channels
     complete_chn_labs : array_like
         labels of the channels in data in the same order
-    data : ndarray
+    data : np.ndarray
         2-D EEG data
     n_samples : int
         Number of samples used for computation of ransac.
@@ -247,7 +247,7 @@ def ransac_correlations(
 
     Returns
     -------
-    channel_correlations : ndarray
+    channel_correlations : np.ndarray
         correlations of the given channels to their ransac predicted values.
 
     """
@@ -312,20 +312,20 @@ def run_ransac(
     random_ch_picks : list
         each element is a list of indexes of the channels (as they appear
         in good_chn_labs) to use for reconstruction in each of the samples.
-    chn_pos : ndarray
+    chn_pos : np.ndarray
         3-D coordinates of the electrode position
-    chn_pos_good : ndarray
+    chn_pos_good : np.ndarray
         3-D coordinates of all the channels not detected noisy so far
     good_chn_labs : array_like
         channel labels for the ch_pos_good channels
     complete_chn_labs : array_like
         labels of the channels in data in the same order
-    data : ndarray
+    data : np.ndarray
         2-D EEG data
 
     Returns
     -------
-    ransac_eeg : ndarray
+    ransac_eeg : np.ndarray
         The EEG data predicted by RANSAC
 
     """
@@ -359,9 +359,9 @@ def get_ransac_pred(
 
     Parameters
     ----------
-    chn_pos : ndarray
+    chn_pos : np.ndarray
         3-D coordinates of the electrode position
-    chn_pos_good : ndarray
+    chn_pos_good : np.ndarray
         3-D coordinates of all the channels not detected noisy so far
     good_chn_labs : array_like
         channel labels for the ch_pos_good channels
@@ -369,12 +369,12 @@ def get_ransac_pred(
         labels of the channels in data in the same order
     reconstr_idx : array_like
         indexes of the channels in good_chn_labs to use for reconstruction
-    data : ndarray
+    data : np.ndarray
         2-D EEG data
 
     Returns
     -------
-    ransac_pred : ndarray
+    ransac_pred : np.ndarray
         Single RANSAC prediction
 
     """

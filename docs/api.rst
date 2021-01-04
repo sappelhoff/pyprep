@@ -29,3 +29,13 @@ The :class:`PrepPipeline` class
    :toctree: generated/
 
    PrepPipeline
+
+.. currentmodule:: ransac
+
+The :mod:`ransac` module
+===============================
+
+.. autosummary::
+   :toctree: generated/
+
+   find_bad_by_ransac

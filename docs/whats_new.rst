@@ -33,6 +33,7 @@ Current
 
 Changelog
 ~~~~~~~~~
+- Created a new module named :mod:`ransac` which contains :func:`find_bad_by_ransac <ransac.find_bad_by_ransac>`,  a standalone function mirroring the previous ransac method from the :class:`NoisyChannels` class, by `Yorguin Mantilla`_ (:gh:`51`)
 - Added two attributes :attr:`PrepPipeline.noisy_channels_before_interpolation <prep_pipeline.PrepPipeline>` and :attr:`PrepPipeline.noisy_channels_after_interpolation <prep_pipeline.PrepPipeline>` which have the detailed output of each noisy criteria, by `Yorguin Mantilla`_ (:gh:`45`)
 - Added two keys to the :attr:`PrepPipeline.noisy_channels_original <prep_pipeline.PrepPipeline>` dictionary: ``bad_by_dropout`` and ``bad_by_SNR``, by `Yorguin Mantilla`_ (:gh:`45`)
 - Changed RANSAC chunking logic to reduce max memory use and prefer equal chunk sizes where possible, by `Austin Hurst`_ (:gh:`44`)
@@ -43,6 +44,8 @@ Bug
 
 API
 ~~~
+- The permissible parameters for the following methods were removed and/or reordered: :func:`ransac.ransac_correlations`, :func:`ransac.run_ransac`, and :func:`ransac.get_ransac_pred` methods, by `Yorguin Mantilla`_ (:gh:`51`)
+- The following methods have been moved to a new module named :mod:`ransac` and are now private: :meth:`NoisyChannels.ransac_correlations`, :meth:`NoisyChannels.run_ransac <find_noisy_channels.NoisyChannels.run_ransac>`, and :meth:`NoisyChannels.get_ransac_pred <find_noisy_channels.NoisyChannels.get_ransac_pred>` methods, by `Yorguin Mantilla`_ (:gh:`51`)
 - The permissible parameters for the following methods were removed and/or reordered: :meth:`NoisyChannels.ransac_correlations <find_noisy_channels.NoisyChannels.ransac_correlations>`, :meth:`NoisyChannels.run_ransac`, and :meth:`NoisyChannels.get_ransac_pred <find_noisy_channels.NoisyChannels.get_ransac_pred>` methods, by `Austin Hurst`_ and `Yorguin Mantilla`_ (:gh:`43`)
 
 .. _changes_0_3_1:
