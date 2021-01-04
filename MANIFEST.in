@@ -2,11 +2,13 @@ include MANIFEST.in
 include README.rst
 include LICENSE
 include requirements-dev.txt
+include versioneer.py
+include pyprep/_version.py
 
 graft docs
 graft examples
 graft pyprep
-graft test
+graft tests
 
 
 ### Exclude
@@ -15,11 +17,13 @@ global-exclude *.py[co]
 global-exclude __pycache__
 
 recursive-exclude .github *
+recursive-exclude docs/generated *
+recursive-exclude docs/auto_examples *
+recursive-exclude docs/_build *
 
 exclude .codecov.yml
 exclude .gitignore
 exclude .mailmap
-exclude Makefile
 exclude .coveragerc
-include versioneer.py
-include pyprep/_version.py
+exclude .readthedocs.yml
+exclude .pre-commit-config.yaml
