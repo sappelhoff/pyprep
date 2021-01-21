@@ -32,9 +32,9 @@ release = version
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
     "sphinx.ext.viewcode",
-    "sphinx.ext.githubpages",
     "sphinx.ext.intersphinx",
     "numpydoc",
     "sphinx_gallery.gen_gallery",
@@ -106,6 +106,10 @@ intersphinx_mapping = {
 intersphinx_timeout = 10
 
 sphinx_gallery_conf = {
+    "doc_module": "pyprep",
+    "reference_url": {
+        "pyprep": None,
+    },
     "examples_dirs": "../examples",
     "gallery_dirs": "auto_examples",
     "filename_pattern": "^((?!sgskip).)*$",
