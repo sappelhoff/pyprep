@@ -544,20 +544,20 @@ class NoisyChannels:
 
         Parameters
         ----------
-        chn_pos : ndarray
+        chn_pos : np.ndarray
             3-D coordinates of the electrode position
-        chn_pos_good : ndarray
+        chn_pos_good : np.ndarray
             3-D coordinates of all the channels not detected noisy so far
         good_chn_labs : array_like
             channel labels for the ch_pos_good channels-
-        data : ndarray
+        data : np.ndarray
             2-D EEG data
         n_samples : int
             number of interpolations from which a median will be computed
 
         Returns
         -------
-        ransac_eeg : ndarray
+        ransac_eeg : np.ndarray
             The EEG data predicted by RANSAC
 
         """
@@ -586,20 +586,20 @@ class NoisyChannels:
 
         Parameters
         ----------
-        chn_pos : ndarray
+        chn_pos : np.ndarray
             3-D coordinates of the electrode position
-        chn_pos_good : ndarray
+        chn_pos_good : np.ndarray
             3-D coordinates of all the channels not detected noisy so far
         good_chn_labs : array_like
             channel labels for the ch_pos_good channels
-        data : ndarray
+        data : np.ndarray
             2-D EEG data
         sample : int
             the current RANSAC sample number
 
         Returns
         -------
-        ransac_pred : ndarray
+        ransac_pred : np.ndarray
             Single RANSAC prediction
 
         """
@@ -638,13 +638,13 @@ class NoisyChannels:
         ----------
         chans_to_predict: list of int
             Indexes of the channels to predict.
-        chn_pos : ndarray
+        chn_pos : np.ndarray
             3-D coordinates of the electrode positions to predict
-        chn_pos_good : ndarray
+        chn_pos_good : np.ndarray
             3-D coordinates of all the channels not detected noisy so far
         good_chn_labs : array_like
             channel labels for the ch_pos_good channels
-        data : ndarray
+        data : np.ndarray
             2-D EEG data
         n_samples : int
             Number of samples used for computation of ransac.
@@ -655,7 +655,7 @@ class NoisyChannels:
 
         Returns
         -------
-        channel_correlations : ndarray
+        channel_correlations : np.ndarray
             correlations of the given channels to their ransac predicted values.
 
         """

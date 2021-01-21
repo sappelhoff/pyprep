@@ -23,7 +23,7 @@ class Reference:
 
     Parameters
     ----------
-    raw : raw mne object
+    raw : mne.io.raw
         The raw data.
     params : dict
         Parameters of PREP which include at least the following keys:
@@ -160,7 +160,7 @@ class Reference:
         noisy_channels: dict
             A dictionary of names of noisy channels detected from all methods
             after referencing.
-        reference_signal: ndarray, shape(n, )
+        reference_signal: np.ndarray, shape(n, )
             Estimation of the 'true' signal mean
 
         """
@@ -296,16 +296,16 @@ class Reference:
 
         Parameters
         ----------
-        signal : ndarray, shape(channels, times)
+        signal : np.ndarray, shape(channels, times)
             The original EEG signal.
-        reference : ndarray, shape(times,)
+        reference : np.ndarray, shape(times,)
             The reference signal.
         index : list | None
             A list channel index from which the signal was removed.
 
         Returns
         -------
-        ndarray, shape(channels, times)
+        np.ndarray, shape(channels, times)
             The referenced EEG signal.
 
         """

@@ -34,7 +34,7 @@ def filter_design(N_order, amp, freq):
 
     Returns
     -------
-    kernel : ndarray
+    kernel : np.ndarray
         Filter kernel.
 
     """
@@ -80,7 +80,7 @@ def split_list(mylist, chunk_size):
 
     Returns
     -------
-    chunked lists: list
+    list
         list of the chunked lists.
 
     See: https://stackoverflow.com/a/312466/5201771
@@ -108,7 +108,7 @@ def make_random_mne_object(
         names of channels
     ch_types : list
         types of channels
-    times : 1d ndarray
+    times : np.ndarray, shape (1,)
         Time vector to use.
     sfreq : float
         Sampling frequency associated with the time vector.
@@ -124,7 +124,7 @@ def make_random_mne_object(
 
     Returns
     -------
-    raw : mne raw object
+    raw : mne.io.raw
         The mne object for performing the tests.
     n_freq_comps : int
         Number of random frequency components to introduce.
@@ -158,7 +158,7 @@ def verify_free_ram(data, n_samples, n_channels, max_prop=0.95):
 
     Parameters
     ----------
-    data : ndarray
+    data : np.ndarray
         2-D EEG data
     n_samples : int
         Number of samples to use for computation of ransac.

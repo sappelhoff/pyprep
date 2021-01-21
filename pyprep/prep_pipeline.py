@@ -33,7 +33,7 @@ class PrepPipeline:
               For example, for 60Hz you may specify
               ``np.arange(60, sfreq / 2, 60)``. Specify an empty list to
               skip the line noise removal step.
-    montage : DigMontage
+    montage : mne.channels.DigMontage
         Digital montage of EEG data.
     ransac : bool
         Whether or not to use ransac.
@@ -69,11 +69,11 @@ class PrepPipeline:
         Detailed bad channels in each criteria just after interpolation.
     bad_before_interpolation : list
         bad channels after robust reference but before interpolation
-    EEG_before_interpolation : ndarray
+    EEG_before_interpolation : np.ndarray
         EEG data in uV before the interpolation
-    reference_before_interpolation : ndarray
+    reference_before_interpolation : np.ndarray
         Reference signal in uV before interpolation.
-    reference_after_interpolation : ndarray
+    reference_after_interpolation : np.ndarray
         Reference signal in uV after interpolation.
     interpolated_channels : list
         Names of the interpolated channels.
