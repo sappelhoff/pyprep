@@ -37,7 +37,7 @@ class PrepPipeline:
         Digital montage of EEG data.
     ransac : bool
         Whether or not to use ransac.
-    random_state : int | None | np.random.mtrand.RandomState
+    random_state : int | None | np.random.RandomState
         The random seed at which to initialize the class. If random_state is
         an int, it will be used as a seed for RandomState.
         If None, the seed will be obtained from the operating system
