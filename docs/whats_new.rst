@@ -121,7 +121,7 @@ Version 0.2.2
 Bug
 ~~~
 
-- :class:`mne.epochs.Epochs` index start at 0, not 1, by `Stefan Appelhoff`_ (:gh:`commit/3780abb`)
+- :class:`mne.Epochs` index start at 0, not 1, by `Stefan Appelhoff`_ (:gh:`commit/3780abb`)
 
 .. _changes_0_2_1:
 
