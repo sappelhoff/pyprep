@@ -49,6 +49,7 @@ autosummary_generate = True
 numpydoc_show_class_members = False  # https://stackoverflow.com/a/34604043/5201771
 numpydoc_class_members_toctree = False
 numpydoc_xref_param_type = True
+numpydoc_attributes_as_param_list = False
 
 autodoc_default_options = {
     "members": True,
