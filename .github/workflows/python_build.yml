@@ -17,6 +17,9 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         python-version: [3.8]
+    env:
+      TZ: Europe/Berlin
+      FORCE_COLOR: true
     steps:
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v1
