@@ -23,7 +23,7 @@ class Reference:
 
     Parameters
     ----------
-    raw : mne.io.raw
+    raw : mne.io.Raw
         The raw data.
     params : dict
         Parameters of PREP which include at least the following keys:

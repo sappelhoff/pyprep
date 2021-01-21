@@ -16,7 +16,7 @@ class PrepPipeline:
 
     Parameters
     ----------
-    raw : mne.io.raw
+    raw : mne.io.Raw
         The data. Channel types must be correctly assigned (e.g.,
         ocular channels are assigned the type 'eog').
     prep_params : dict
@@ -28,7 +28,7 @@ class PrepPipeline:
         - reref_chs : list | 'eeg'
             - A list of channel names to be used for line-noise removed,
               and referenced. Can be a str 'eeg' to use all EEG channels.
-        - line_freqs : array_like
+        - line_freqs : np.ndarray | list
             - list of floats indicating frequencies to be removed.
               For example, for 60Hz you may specify
               ``np.arange(60, sfreq / 2, 60)``. Specify an empty list to
@@ -51,14 +51,14 @@ class PrepPipeline:
 
     Attributes
     ----------
-    raw : mne.io.raw
+    raw : mne.io.Raw
         The data including eeg and non eeg channels. It is unprocessed if
         accessed before the fit method, processed if accessed after a
         succesful fit method.
-    raw_eeg : mne.io.raw
+    raw_eeg : mne.io.Raw
         The only-eeg part of the data. It is unprocessed if accessed before
         the fit method, processed if accessed after a succesful fit method.
-    raw_non_eeg : mne.io.raw | None
+    raw_non_eeg : mne.io.Raw | None
         The non-eeg part of the data. It is not processed when calling
         the fit method. If the input was only EEG it will be None.
     noisy_channels_original : dict

@@ -35,6 +35,7 @@ extensions = [
     "sphinx.ext.autosummary",
     "sphinx.ext.viewcode",
     "sphinx.ext.githubpages",
+    "sphinx.ext.intersphinx",
     "numpydoc",
     "sphinx_gallery.gen_gallery",
     "gh_substitutions",  # custom extension, see ./sphinxext/gh_substitutions.py
@@ -50,6 +51,11 @@ numpydoc_show_class_members = False  # https://stackoverflow.com/a/34604043/5201
 numpydoc_class_members_toctree = False
 numpydoc_xref_param_type = True
 numpydoc_attributes_as_param_list = False
+numpydoc_xref_ignore = {
+    # words
+    "of",
+    "shape",
+}
 
 autodoc_default_options = {
     "members": True,

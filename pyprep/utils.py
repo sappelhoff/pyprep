@@ -124,7 +124,7 @@ def make_random_mne_object(
 
     Returns
     -------
-    raw : mne.io.raw
+    raw : mne.io.Raw
         The mne object for performing the tests.
     n_freq_comps : int
         Number of random frequency components to introduce.

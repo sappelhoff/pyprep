@@ -30,7 +30,7 @@ class NoisyChannels:
 
         Parameters
         ----------
-        raw : mne.io.raw
+        raw : mne.io.Raw
             The MNE raw object.
         do_detrend : bool
             Whether or not to remove a trend from the data upon initializing the
@@ -548,7 +548,7 @@ class NoisyChannels:
             3-D coordinates of the electrode position
         chn_pos_good : np.ndarray
             3-D coordinates of all the channels not detected noisy so far
-        good_chn_labs : array_like
+        good_chn_labs : np.ndarray | list
             channel labels for the ch_pos_good channels-
         data : np.ndarray
             2-D EEG data
@@ -590,7 +590,7 @@ class NoisyChannels:
             3-D coordinates of the electrode position
         chn_pos_good : np.ndarray
             3-D coordinates of all the channels not detected noisy so far
-        good_chn_labs : array_like
+        good_chn_labs : np.ndarray | list
             channel labels for the ch_pos_good channels
         data : np.ndarray
             2-D EEG data
@@ -642,7 +642,7 @@ class NoisyChannels:
             3-D coordinates of the electrode positions to predict
         chn_pos_good : np.ndarray
             3-D coordinates of all the channels not detected noisy so far
-        good_chn_labs : array_like
+        good_chn_labs : np.ndarray | list
             channel labels for the ch_pos_good channels
         data : np.ndarray
             2-D EEG data
