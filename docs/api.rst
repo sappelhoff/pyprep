@@ -8,19 +8,23 @@ API Documentation
 
 Here we list the Application Programming Interface (API) for pyprep.
 
-.. currentmodule:: find_noisy_channels
-
 The :class:`NoisyChannels` class
 --------------------------------
+
+.. automodule:: pyprep
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: pyprep
+
 .. autosummary::
    :toctree: generated/
 
    NoisyChannels
 
-.. currentmodule:: prep_pipeline
-
 The :class:`PrepPipeline` class
 -------------------------------
+
 .. autosummary::
    :toctree: generated/
 

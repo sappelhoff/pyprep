@@ -5,7 +5,9 @@ Run RANSAC
 
 
 In this example we show how to run the RANSAC of ``pyprep``.
-"""
+
+.. currentmodule:: pyprep
+"""  # noqa: D205 D400
 
 # Authors: Yorguin Mantilla <yjmantilla@gmail.com>
 #
