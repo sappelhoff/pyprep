@@ -30,10 +30,14 @@ The :class:`PrepPipeline` class
 
    PrepPipeline
 
-.. currentmodule:: ransac
-
 The :mod:`ransac` module
 ===============================
+
+.. automodule:: pyprep.ransac
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: ransac
 
 .. autosummary::
    :toctree: generated/
