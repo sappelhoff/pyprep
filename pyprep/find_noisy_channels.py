@@ -393,19 +393,6 @@ class NoisyChannels:
 
         Parameters
         ----------
-        data : np.ndarray
-            2-D EEG data, should be detrended.
-        sample_rate : float
-            sample rate of the EEG data
-        signal_len : float
-            number of total samples in the signal (the length of the signal).
-        complete_chn_labs : array_like
-            labels of the channels in data in the same order
-        chn_pos : np.ndarray
-            3-D coordinates of all the channels in the order of data
-        exclude : list
-            labels of the channels to ignore in the ransac. In example bad channels
-            from other methods.
         n_samples : int
             Number of samples used for computation of ransac.
         fraction_good : float
@@ -424,14 +411,6 @@ class NoisyChannels:
         channel_wise : bool
             If True the ransac will be done 1 channel at a time, if false
             it will be done as fast as possible (more channels at a time).
-
-        Returns
-        -------
-        bad_by_ransac : list
-            List of channels labels marked bad by ransac.
-        channel_correlations : np.ndarray
-            Array of shape (windows,channels) holding the correlations of
-            the channels to their predicted ransac value in each of the windows.
 
         References
         ----------
