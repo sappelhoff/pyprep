@@ -29,3 +29,17 @@ The :class:`PrepPipeline` class
    :toctree: generated/
 
    PrepPipeline
+
+The :mod:`ransac` module
+===============================
+
+.. automodule:: pyprep.ransac
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: ransac
+
+.. autosummary::
+   :toctree: generated/
+
+   find_bad_by_ransac
