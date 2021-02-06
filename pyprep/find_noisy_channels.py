@@ -376,10 +376,71 @@ class NoisyChannels:
         corr_window_secs=5.0,
         channel_wise=False,
     ):
-        """Find bad channels by the ransac method.
+        """Detect channels that are not predicted well by other channels.
 
         This method is a wrapper of the ``find_bad_by_ransac`` function
         from the ``ransac`` module.
+
+        Here, a ransac approach (see [1]_, and a short discussion in [2]_) is
+        adopted to predict a "clean EEG" dataset. After identifying clean EEG
+        channels through the other methods, the clean EEG dataset is
+        constructed by repeatedly sampling a small subset of clean EEG channels
+        and interpolation the complete data. The median of all those
+        repetitions forms the clean EEG dataset. In a second step, the original
+        and the ransac predicted data are correlated and channels, which do not
+        correlate well with themselves across the two datasets are considered
+        `bad_by_ransac`.
+
+        Parameters
+        ----------
+        data : np.ndarray
+            2-D EEG data, should be detrended.
+        sample_rate : float
+            sample rate of the EEG data
+        signal_len : float
+            number of total samples in the signal (the length of the signal).
+        complete_chn_labs : array_like
+            labels of the channels in data in the same order
+        chn_pos : np.ndarray
+            3-D coordinates of all the channels in the order of data
+        exclude : list
+            labels of the channels to ignore in the ransac. In example bad channels
+            from other methods.
+        n_samples : int
+            Number of samples used for computation of ransac.
+        fraction_good : float
+            Fraction of channels used for robust reconstruction of the signal.
+            This needs to be in the range [0, 1], where obviously neither 0
+            nor 1 would make sense.
+        corr_thresh : float
+            The minimum correlation threshold that should be attained within a
+            data window.
+        fraction_bad : float
+            If this percentage of all data windows in which the correlation
+            threshold was not surpassed is exceeded, classify a
+            channel as `bad_by_ransac`.
+        corr_window_secs : float
+            Size of the correlation window in seconds.
+        channel_wise : bool
+            If True the ransac will be done 1 channel at a time, if false
+            it will be done as fast as possible (more channels at a time).
+
+        Returns
+        -------
+        bad_by_ransac : list
+            List of channels labels marked bad by ransac.
+        channel_correlations : np.ndarray
+            Array of shape (windows,channels) holding the correlations of
+            the channels to their predicted ransac value in each of the windows.
+
+        References
+        ----------
+        .. [1] Fischler, M.A., Bolles, R.C. (1981). Random rample consensus: A
+            Paradigm for Model Fitting with Applications to Image Analysis and
+            Automated Cartography. Communications of the ACM, 24, 381-395
+        .. [2] Jas, M., Engemann, D.A., Bekhti, Y., Raimondo, F., Gramfort, A.
+            (2017). Autoreject: Automated Artifact Rejection for MEG and EEG
+            Data. NeuroImage, 159, 417-429
         """
         self.bad_by_ransac, _ = find_bad_by_ransac(
             self.EEGData,

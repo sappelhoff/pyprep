@@ -161,7 +161,7 @@ def find_bad_by_ransac(
             total_chunks = len(channel_chunks)
             current = 1
             for chunk in channel_chunks:
-                channel_correlations[:, chunk] = ransac_correlations(
+                channel_correlations[:, chunk] = _ransac_correlations(
                     chunk,
                     random_ch_picks,
                     chn_pos,
@@ -207,7 +207,7 @@ def find_bad_by_ransac(
     return bad_by_ransac, channel_correlations
 
 
-def ransac_correlations(
+def _ransac_correlations(
     chans_to_predict,
     random_ch_picks,
     chn_pos,
@@ -255,7 +255,7 @@ def ransac_correlations(
     channel_correlations = np.ones((w_correlation, len(chans_to_predict)))
 
     # Make the ransac predictions
-    ransac_eeg = run_ransac(
+    ransac_eeg = _run_ransac(
         n_samples=n_samples,
         random_ch_picks=random_ch_picks,
         chn_pos=chn_pos[chans_to_predict, :],
@@ -291,7 +291,7 @@ def ransac_correlations(
     return channel_correlations
 
 
-def run_ransac(
+def _run_ransac(
     n_samples,
     random_ch_picks,
     chn_pos,
@@ -343,7 +343,7 @@ def run_ransac(
     for sample in range(n_samples):
         # Get the random channel selection for the current sample
         reconstr_idx = random_ch_picks[sample]
-        eeg_predictions[..., sample] = get_ransac_pred(
+        eeg_predictions[..., sample] = _get_ransac_pred(
             chn_pos, chn_pos_good, good_chn_labs, complete_chn_labs, reconstr_idx, data
         )
 
@@ -352,7 +352,7 @@ def run_ransac(
     return ransac_eeg
 
 
-def get_ransac_pred(
+def _get_ransac_pred(
     chn_pos, chn_pos_good, good_chn_labs, complete_chn_labs, reconstr_idx, data
 ):
     """Perform RANSAC prediction.
