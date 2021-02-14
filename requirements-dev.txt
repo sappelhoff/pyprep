@@ -1,3 +1,5 @@
+autoreject
+scikit-learn
 black
 check-manifest
 flake8
