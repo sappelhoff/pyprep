@@ -107,7 +107,7 @@ print("--- %s seconds ---" % (perf_counter() - start_time))
 corr_ar = ransac_ar.corr_
 bad_by_ransac_ar = ransac_ar.bad_chs_
 
-# Check channels that go bad together by correlation (RANSAC)
+# Check channels that go bad together by RANSAC
 print("autoreject bad chs:", bad_by_ransac_ar)
 assert set(bad_ch_names) == set(bad_by_ransac_ar)
 
@@ -132,7 +132,7 @@ bad_by_ransac_pyprep, corr_pyprep = ransac_pyprep.find_bad_by_ransac(
 )
 print("--- %s seconds ---" % (perf_counter() - start_time))
 
-# Check channels that go bad together by correlation (RANSAC)
+# Check channels that go bad together by RANSAC
 print("pyprep bad chs:", bad_by_ransac_pyprep)
 assert set(bad_ch_names) == set(bad_by_ransac_pyprep)
 
@@ -184,7 +184,7 @@ print("--- %s seconds ---" % (perf_counter() - start_time))
 corr_ar = ransac_ar.corr_
 bad_by_ransac_ar = ransac_ar.bad_chs_
 
-# Check channels that go bad together by correlation (RANSAC)
+# Check channels that go bad together by RANSAC
 print("autoreject bad chs:", bad_by_ransac_ar)
 
 
@@ -209,5 +209,5 @@ bad_by_ransac_pyprep, corr_pyprep = ransac_pyprep.find_bad_by_ransac(
 )
 print("--- %s seconds ---" % (perf_counter() - start_time))
 
-# Check channels that go bad together by correlation (RANSAC)
+# Check channels that go bad together by RANSAC
 print("pyprep bad chs:", bad_by_ransac_pyprep)

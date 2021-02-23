@@ -89,7 +89,7 @@ print("--- %s seconds ---" % (perf_counter() - start_time))
 # `raw` object. For more information, we can access attributes of the ``nd``
 # instance:
 
-# Check channels that go bad together by correlation (RANSAC)
+# Check channels that go bad together by RANSAC
 print(nd.bad_by_ransac)
 assert set(bad_ch_names) == set(nd.bad_by_ransac)
 
