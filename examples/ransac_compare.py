@@ -14,7 +14,7 @@ In this example we compare the RANSAC implementations of pyprep and autoreject.
 # License: MIT
 # Based On: run_ransac.py and run_full_prep.py
 
-###############################################################################
+# %%
 # First we import what we need for this example.
 import numpy as np
 import mne
@@ -26,7 +26,7 @@ from mne.utils import check_random_state
 import pyprep.ransac as ransac_pyprep
 
 
-###############################################################################
+# %%
 # Now let's make some arbitrary MNE raw object for demonstration purposes.
 # We will think of good channels as sine waves and bad channels correlated with
 # each other as sawtooths. The RANSAC will be biased towards sines in its
@@ -72,7 +72,7 @@ raw = mne.io.RawArray(X, info)
 raw.set_montage(montage, verbose=False)
 
 
-###############################################################################
+# %%
 # Configure RANSAC parameters
 n_samples = 50
 fraction_good = 0.25
@@ -80,7 +80,7 @@ corr_thresh = 0.75
 fraction_bad = 0.4
 corr_window_secs = 5.0
 
-###############################################################################
+# %%
 # autoreject's RANSAC
 ransac_ar = Ransac(
     picks=None,
@@ -111,7 +111,7 @@ bad_by_ransac_ar = ransac_ar.bad_chs_
 print("autoreject bad chs:", bad_by_ransac_ar)
 assert set(bad_ch_names) == set(bad_by_ransac_ar)
 
-###############################################################################
+# %%
 # pyprep's RANSAC
 
 start_time = perf_counter()
@@ -136,13 +136,13 @@ print("--- %s seconds ---" % (perf_counter() - start_time))
 print("pyprep bad chs:", bad_by_ransac_pyprep)
 assert set(bad_ch_names) == set(bad_by_ransac_pyprep)
 
-###############################################################################
+# %%
 # Now we test the algorithms in a real EEG
 # Let's download some data for testing. Picking the 1st run of subject 4 here.
 data_paths = mne.datasets.eegbci.load_data(subject=4, runs=1, update_path=True)
 fname_test_file = data_paths[0]
 
-###############################################################################
+# %%
 # Load data and prepare it
 # ------------------------
 
@@ -157,7 +157,7 @@ montage = mne.channels.make_standard_montage(montage_kind)
 raw.set_montage(montage)
 
 
-###############################################################################
+# %%
 # autoreject's RANSAC
 ransac_ar = Ransac(
     picks=None,
@@ -188,7 +188,7 @@ bad_by_ransac_ar = ransac_ar.bad_chs_
 print("autoreject bad chs:", bad_by_ransac_ar)
 
 
-###############################################################################
+# %%
 # pyprep's RANSAC
 
 start_time = perf_counter()
