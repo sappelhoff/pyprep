@@ -127,8 +127,8 @@ def find_bad_by_ransac(
     correlation_window = np.arange(correlation_frames)
     n = correlation_window.shape[0]
     correlation_offsets = np.arange(
-        0, (signal_len - correlation_frames), correlation_frames
-    )
+        0, (signal_len - correlation_frames + 1), correlation_frames
+    )  # signal_len - correlation_frames + 1 so that it takes into account the last window
     w_correlation = correlation_offsets.shape[0]
 
     # Preallocate
