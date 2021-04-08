@@ -5,6 +5,7 @@ from cmath import sqrt
 import mne
 import numpy as np
 import scipy.interpolate
+from scipy.stats import iqr
 from psutil import virtual_memory
 
 
@@ -18,6 +19,28 @@ def _set_diff(list1, list2):
 
 def _intersect(list1, list2):
     return list(set(list1).intersection(set(list2)))
+
+
+def mat_quantile(arr, q, axis=None):
+    # MATLAB calculates quantiles using different logic than Numpy: whereas
+    # Numpy treats the provided values as a whole population, MATLAB treats
+    # the input array as a sample from a population of unknown size.
+    # This function adjusts the quantiles to mimic MATLAB's behaviour.
+    q = np.asarray(q, dtype=np.float64)
+    n = len(arr)
+    q_adj = ((q - 0.5) * n / (n - 1)) + 0.5
+    return np.quantile(arr, np.clip(q_adj, 0, 1), axis=axis)
+
+
+def mat_iqr(arr, axis=None):
+    # MATLAB calculates IQRs using different logic than Numpy: whereas
+    # Numpy treats the provided values as a whole population, MATLAB treats
+    # the input array as a sample from a population of unknown size.
+    # This function adjusts the IQR to mimic MATLAB's behaviour.
+    iqr_q = np.asarray([25, 75], dtype=np.float64)
+    n = len(arr)
+    iqr_adj = ((iqr_q - 50) * n / (n - 1)) + 50
+    return iqr(arr, rng=np.clip(iqr_adj, 0, 100), axis=axis)
 
 
 def filter_design(N_order, amp, freq):
