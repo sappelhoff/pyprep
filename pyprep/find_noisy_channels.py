@@ -154,12 +154,13 @@ class NoisyChannels:
         nan_channel_mask = [False] * self.original_dimensions[0]
         no_signal_channel_mask = [False] * self.original_dimensions[0]
 
+        FLAT_THRESHOLD = 1e-15  # corresponds to 10e-10 µV in MATLAB PREP
         for i in range(0, self.original_dimensions[0]):
             nan_channel_mask[i] = np.sum(np.isnan(self.EEGData[i, :])) > 0
         for i in range(0, self.original_dimensions[0]):
             no_signal_channel_mask[i] = (
-                robust.mad(self.EEGData[i, :], c=1) < 1e-10
-                or np.std(self.EEGData[i, :]) < 1e-10
+                robust.mad(self.EEGData[i, :], c=1) < FLAT_THRESHOLD
+                or np.std(self.EEGData[i, :]) < FLAT_THRESHOLD
             )
         nan_channels = self.channels_interpolate[nan_channel_mask]
         flat_channels = self.channels_interpolate[no_signal_channel_mask]
