@@ -42,6 +42,7 @@ Bug
 ~~~
 - Fixed RANSAC to give consistent results with a fixed seed across different chunk sizes, by `Austin Hurst`_ and `Yorguin Mantilla`_ (:gh:`43`)
 - Fixed "bad channel by flat" threshold in :meth:`NoisyChannels.find_bad_by_nan_flat` to be consistent with MATLAB PREP, by `Austin Hurst`_ (:gh:`60`)
+- Changed "bad channel by deviation" and "bad channel by correlation" detection code in :class:`NoisyChannels` to produce identical results to MATLAB PREP, by `Austin Hurst`_ (:gh:`57`)
 
 API
 ~~~
