@@ -21,22 +21,67 @@ def _intersect(list1, list2):
     return list(set(list1).intersection(set(list2)))
 
 
-def mat_quantile(arr, q, axis=None):
-    # MATLAB calculates quantiles using different logic than Numpy: whereas
-    # Numpy treats the provided values as a whole population, MATLAB treats
-    # the input array as a sample from a population of unknown size.
-    # This function adjusts the quantiles to mimic MATLAB's behaviour.
+def _mat_quantile(arr, q, axis=None):
+    """Calculate the numeric value at quantile (q) for a given distribution of
+    values, using the same formula as MATLAB and Octave.
+
+    Parameters
+    ----------
+    arr : np.ndarray
+        Input array containing samples from the distribution to summarize.
+    q : float
+        The quantile to calculate for the input data. Must be between 0 and 1,
+        inclusive.
+    axis : {int, tuple of int, None}, optional
+        Axis along which quantile values should be calculated. Defaults to
+        calculating the value at the given quantile for the entire array.
+
+    Returns
+    -------
+    quantile : scalar or np.ndarray
+        If no axis is specified, returns the value at quantile (q) for the full
+        input array as a single numeric value. Otherwise, returns an
+        ``np.ndarray`` containing the values at quantile (q) for each row along
+        the specified axis.
+
+    Notes
+    -----
+    MATLAB calculates quantiles using different logic than Numpy: Numpy treats
+    the provided values as a whole population, whereas MATLAB treats them as a
+    sample from a population of unknown size and adjusts quantiles accordingly.
+    This function mimics MATLAB's logic to produce identical results.
+
+    """
     q = np.asarray(q, dtype=np.float64)
     n = len(arr)
     q_adj = ((q - 0.5) * n / (n - 1)) + 0.5
     return np.quantile(arr, np.clip(q_adj, 0, 1), axis=axis)
 
 
-def mat_iqr(arr, axis=None):
-    # MATLAB calculates IQRs using different logic than Numpy: whereas
-    # Numpy treats the provided values as a whole population, MATLAB treats
-    # the input array as a sample from a population of unknown size.
-    # This function adjusts the IQR to mimic MATLAB's behaviour.
+def _mat_iqr(arr, axis=None):
+    """Calculate the distance between the 0.25 and 0.75 quantiles for a given
+    distribution of values, using the same formula as MATLAB and Octave.
+
+    Parameters
+    ----------
+    arr : np.ndarray
+        Input array containing samples from the distribution to summarize.
+    axis : {int, tuple of int, None}, optional
+        Axis along which IQRs should be calculated. Defaults to calculating the
+        IQR for the entire array.
+
+    Returns
+    -------
+    iqr : scalar or np.ndarray
+        If no axis is specified, returns the IQR for the full input array as a
+        single numeric value. Otherwise, returns an ``np.ndarray`` containing
+        the IQRs for each row along the specified axis.
+
+    Notes
+    -----
+    See notes for :func:`utils._mat_quantile`.
+
+    """
     iqr_q = np.asarray([25, 75], dtype=np.float64)
     n = len(arr)
     iqr_adj = ((iqr_q - 50) * n / (n - 1)) + 50
