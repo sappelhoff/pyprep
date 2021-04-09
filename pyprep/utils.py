@@ -22,8 +22,7 @@ def _intersect(list1, list2):
 
 
 def _mat_quantile(arr, q, axis=None):
-    """Calculate the numeric value at quantile (q) for a given distribution of
-    values, using the same formula as MATLAB and Octave.
+    """Calculate the numeric value at quantile (q) for a given distribution.
 
     Parameters
     ----------
@@ -59,8 +58,7 @@ def _mat_quantile(arr, q, axis=None):
 
 
 def _mat_iqr(arr, axis=None):
-    """Calculate the distance between the 0.25 and 0.75 quantiles for a given
-    distribution of values, using the same formula as MATLAB and Octave.
+    """Calculate the inter-quartile range (IQR) for a given distribution.
 
     Parameters
     ----------
