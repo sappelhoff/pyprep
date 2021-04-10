@@ -22,7 +22,7 @@ def _intersect(list1, list2):
 
 
 def _mat_quantile(arr, q, axis=None):
-    """Calculate the numeric value at quantile (q) for a given distribution.
+    """Calculate the numeric value at quantile (`q`) for a given distribution.
 
     Parameters
     ----------
