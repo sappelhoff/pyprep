@@ -149,7 +149,7 @@ def test_findnoisychannels(raw, montage):
     # Test IOError when too few good channels for RANSAC sample size
     raw_tmp = raw.copy()
     # Make 80% of channels bad
-    num_bad_channels = int(raw._data.shape[0] * 0.8) 
+    num_bad_channels = int(raw._data.shape[0] * 0.8)
     raw_tmp._data[0:num_bad_channels, :] = np.zeros_like(
         raw_tmp._data[0:num_bad_channels, :]
     )
