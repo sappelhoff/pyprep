@@ -1,7 +1,7 @@
 """Test various helper functions."""
 import numpy as np
 
-from pyprep.utils import _mat_quantile, _mat_iqr
+from pyprep.utils import _mat_quantile, _mat_iqr, _get_random_subset
 
 
 def test_mat_quantile_iqr():
@@ -35,3 +35,15 @@ def test_mat_quantile_iqr():
     # Test IQR equivalence with MATLAB
     iqr_actual = _mat_iqr(tst, axis=0)
     assert all(np.isclose(iqr_expected, iqr_actual, atol=0.001))
+
+
+def test_get_random_subset():
+    """Test the function for getting random channel subsets"""
+    # Generate test data
+    rng = np.random.RandomState(435656)
+    chans = range(1, 61)
+
+    # Compare random subset equivalence with MATLAB
+    expected_picks = [6, 47, 55, 31, 29, 44, 36, 15]
+    actual_picks = _get_random_subset(chans, size=8, rand_state=rng)
+    assert all(np.equal(expected_picks, actual_picks))
