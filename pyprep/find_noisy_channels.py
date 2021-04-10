@@ -3,12 +3,11 @@ import mne
 import numpy as np
 from mne.utils import check_random_state
 from scipy import signal
-from scipy.stats import iqr
 from statsmodels import robust
 
 from pyprep.ransac import find_bad_by_ransac
 from pyprep.removeTrend import removeTrend
-from pyprep.utils import filter_design
+from pyprep.utils import filter_design, _mat_quantile, _mat_iqr
 
 
 class NoisyChannels:
@@ -195,8 +194,8 @@ class NoisyChannels:
         deviation_channel_mask = [False] * (self.new_dimensions[0])
         channel_deviation = np.zeros(self.new_dimensions[0])
         for i in range(0, self.new_dimensions[0]):
-            channel_deviation[i] = 0.7413 * iqr(self.EEGData[i, :])
-        channel_deviationSD = 0.7413 * iqr(channel_deviation)
+            channel_deviation[i] = 0.7413 * _mat_iqr(self.EEGData[i, :])
+        channel_deviationSD = 0.7413 * _mat_iqr(channel_deviation)
         channel_deviationMedian = np.nanmedian(channel_deviation)
         robust_channel_deviation = np.divide(
             np.subtract(channel_deviation, channel_deviationMedian), channel_deviationSD
@@ -325,12 +324,12 @@ class NoisyChannels:
             abs_corr = np.abs(
                 np.subtract(window_correlation, np.diag(np.diag(window_correlation)))
             )
-            channel_correlation[k, :] = np.quantile(abs_corr, 0.98, axis=0)
+            channel_correlation[k, :] = _mat_quantile(abs_corr, 0.98, axis=0)
             noiselevels[k, :] = np.divide(
                 robust.mad(np.subtract(data_portion, eeg_portion), c=1),
                 robust.mad(eeg_portion, c=1),
             )
-            channel_deviations[k, :] = 0.7413 * iqr(data_portion, axis=0)
+            channel_deviations[k, :] = 0.7413 * _mat_iqr(data_portion, axis=0)
         for i in range(0, w_correlation):
             for j in range(0, self.new_dimensions[0]):
                 drop[i, j] = np.int(
