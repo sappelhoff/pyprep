@@ -37,6 +37,7 @@ Changelog
 - Added two attributes :attr:`PrepPipeline.noisy_channels_before_interpolation <prep_pipeline.PrepPipeline>` and :attr:`PrepPipeline.noisy_channels_after_interpolation <prep_pipeline.PrepPipeline>` which have the detailed output of each noisy criteria, by `Yorguin Mantilla`_ (:gh:`45`)
 - Added two keys to the :attr:`PrepPipeline.noisy_channels_original <prep_pipeline.PrepPipeline>` dictionary: ``bad_by_dropout`` and ``bad_by_SNR``, by `Yorguin Mantilla`_ (:gh:`45`)
 - Changed RANSAC chunking logic to reduce max memory use and prefer equal chunk sizes where possible, by `Austin Hurst`_ (:gh:`44`)
+- Changed RANSAC's random channel sampling code to produce the same results as MATLAB PREP for the same random seed, additionally changing the default RANSAC sample size from 25% of all *good* channels (e.g. 15 for a 64-channel dataset with 4 bad channels) to 25% of *all* channels (e.g. 16 for the same dataset), by `Austin Hurst`_ (:gh:`62`)
 
 Bug
 ~~~

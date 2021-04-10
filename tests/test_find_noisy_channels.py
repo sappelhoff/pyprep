@@ -146,6 +146,17 @@ def test_findnoisychannels(raw, montage):
     with pytest.raises(TypeError):
         nd.find_bad_by_ransac(n_samples=n_samples)
 
+    # Test IOError when too few good channels for RANSAC sample size
+    raw_tmp = raw.copy()
+    nd = NoisyChannels(raw_tmp, random_state=rng)
+    nd.find_all_bads(ransac=False)
+    # Make 80% of channels bad
+    num_bad_channels = int(raw._data.shape[0] * 0.8)
+    bad_channels = raw.info["ch_names"][0:num_bad_channels]
+    nd.bad_by_hf_noise = bad_channels
+    with pytest.raises(IOError):
+        nd.find_bad_by_ransac()
+
     # Test IOError when not enough channels for ransac predictions
     raw_tmp = raw.copy()
     # Make flat all channels except 2

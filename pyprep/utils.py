@@ -86,6 +86,41 @@ def _mat_iqr(arr, axis=None):
     return iqr(arr, rng=np.clip(iqr_adj, 0, 100), axis=axis)
 
 
+def _get_random_subset(x, size, rand_state):
+    """Get a random subset of items from a list or array, without replacement.
+
+    Parameters
+    ----------
+    x : list or np.ndarray
+        One-dimensional array of items to sample from.
+    size : int
+        The number of items to sample. Must be less than the number of input
+        items.
+    rand_state : np.random.RandState
+        A random state object to use for random number generation.
+
+    Returns
+    -------
+    sample : list
+        A random subset of the input items.
+
+    Notes
+    -----
+    This function generates random subsets identical to the internal
+    ``randsample`` function in MATLAB PREP's ``findNoisyChannels.m``, allowing
+    the same random seed to produce identical results across both PyPREP and
+    MATLAB PREP.
+
+    """
+    sample = []
+    remaining = list(x)
+    for val in rand_state.rand(size):
+        index = round(1 + (len(remaining) - 1) * val) - 1
+        pick = remaining.pop(index)
+        sample.append(pick)
+    return sample
+
+
 def filter_design(N_order, amp, freq):
     """Create FIR low-pass filter for EEG data using frequency sampling method.
 
