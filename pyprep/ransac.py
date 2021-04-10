@@ -101,7 +101,7 @@ def find_bad_by_ransac(
     # Check if we have enough remaining channels
     # after exclusion of bad channels
     n_chans = data.shape[0]
-    n_pred_chns = int(np.ceil(fraction_good * n_chans))
+    n_pred_chns = int(np.around(fraction_good * n_chans))
 
     if n_pred_chns <= 3:
         sample_pct = int(fraction_good * 100)
