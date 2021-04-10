@@ -100,14 +100,18 @@ def find_bad_by_ransac(
 
     # Check if we have enough remaining channels
     # after exclusion of bad channels
-    n_pred_chns = int(np.ceil(fraction_good * n_chans_good))
+    n_chans = data.shape[0]
+    n_pred_chns = int(np.ceil(fraction_good * n_chans))
 
     if n_pred_chns <= 3:
-        raise IOError(
-            "Too few channels available to reliably perform"
-            " ransac. Perhaps, too many channels have failed"
-            " quality tests."
-        )
+        sample_pct = int(fraction_good * 100)
+        e = "Too few channels in the original data to reliably perform ransac "
+        e += "(minimum {0} for a sample size of {1}%)."
+        raise IOError(e.format(int(np.floor(4.0 / fraction_good))), sample_pct)
+    elif n_chans_good < (n_pred_chns + 1):
+        e = "Too many noisy channels in the data to reliably perform ransac "
+        e += "(only {0} good channels remaining, need at least {1})."
+        raise IOError(e.format(n_chans_good, n_pred_chns + 1))
 
     # Before running, make sure we have enough memory when using the
     # smallest possible chunk size
