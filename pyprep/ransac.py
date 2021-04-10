@@ -4,7 +4,7 @@ import numpy as np
 from mne.channels.interpolation import _make_interpolation_matrix
 from mne.utils import check_random_state
 
-from pyprep.utils import split_list, verify_free_ram
+from pyprep.utils import split_list, verify_free_ram, _get_random_subset
 
 
 def find_bad_by_ransac(
@@ -119,7 +119,7 @@ def find_bad_by_ransac(
     rng = check_random_state(random_state)
     for i in range(n_samples):
         # Pick a random subset of clean channels to use for interpolation
-        picks = rng.choice(good_chans, size=n_pred_chns, replace=False)
+        picks = _get_random_subset(good_chans, n_pred_chns, rng)
         random_ch_picks.append(picks)
 
     # Correlation windows setup
