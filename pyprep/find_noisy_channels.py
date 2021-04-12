@@ -421,13 +421,18 @@ class NoisyChannels:
             (2017). Autoreject: Automated Artifact Rejection for MEG and EEG
             Data. NeuroImage, 159, 417-429
         """
+        exclude_from_ransac = (
+            self.bad_by_correlation +
+            self.bad_by_deviation +
+            self.bad_by_dropout
+        )
         self.bad_by_ransac, _ = find_bad_by_ransac(
             self.EEGData,
             self.sample_rate,
             self.signal_len,
             self.ch_names_new,
             self.raw_mne._get_channel_positions(),
-            self.get_bads(),
+            exclude_from_ransac,
             n_samples,
             fraction_good,
             corr_thresh,

@@ -153,7 +153,7 @@ def test_findnoisychannels(raw, montage):
     # Make 80% of channels bad
     num_bad_channels = int(raw._data.shape[0] * 0.8)
     bad_channels = raw.info["ch_names"][0:num_bad_channels]
-    nd.bad_by_hf_noise = bad_channels
+    nd.bad_by_deviation = bad_channels
     with pytest.raises(IOError):
         nd.find_bad_by_ransac()
 
