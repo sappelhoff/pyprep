@@ -1,3 +1,6 @@
+autoreject  # for autoreject
+scikit-learn  # for autoreject
+tqdm  # for autoreject
 black
 check-manifest
 flake8
