@@ -116,11 +116,11 @@ def find_bad_by_ransac(
 
     if n_pred_chns <= 3:
         sample_pct = int(fraction_good * 100)
-        e = "Too few channels in the original data to reliably perform ransac "
+        e = "Too few channels in the original data to reliably perform RANSAC "
         e += "(minimum {0} for a sample size of {1}%)."
         raise IOError(e.format(int(np.floor(4.0 / fraction_good)), sample_pct))
     elif n_chans_good < (n_pred_chns + 1):
-        e = "Too many noisy channels in the data to reliably perform ransac "
+        e = "Too many noisy channels in the data to reliably perform RANSAC "
         e += "(only {0} good channels remaining, need at least {1})."
         raise IOError(e.format(n_chans_good, n_pred_chns + 1))
 
