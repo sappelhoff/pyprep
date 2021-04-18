@@ -35,14 +35,16 @@ class PrepPipeline:
               skip the line noise removal step.
     montage : mne.channels.DigMontage
         Digital montage of EEG data.
-    ransac : bool
-        Whether or not to use ransac.
-    random_state : int | None | np.random.RandomState
+    ransac : bool, optional
+        Whether or not to use RANSAC for noisy channel detection in addition to
+        the other methods in :class:`pyprep.find_noisy_channels.NoisyChannels`.
+        Defaults to True.
+    random_state : int | None | np.random.RandomState, optional
         The random seed at which to initialize the class. If random_state is
         an int, it will be used as a seed for RandomState.
         If None, the seed will be obtained from the operating system
         (see RandomState for details). Default is None.
-    filter_kwargs : dict | None
+    filter_kwargs : dict | None, optional
         Optional keywords arguments to be passed on to mne.filter.notch_filter.
         Do not set the "x", Fs", and "freqs" arguments via the filter_kwargs
         parameter, but use the "raw" and "prep_params" parameters instead.

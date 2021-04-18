@@ -29,9 +29,11 @@ class Reference:
         Parameters of PREP which include at least the following keys:
         - ``ref_chs``
         - ``reref_chs``
-    ransac : bool
-        Whether or not to use ransac.
-    random_state : int | None | np.random.RandomState
+    ransac : bool, optional
+        Whether or not to use RANSAC for noisy channel detection in addition to
+        the other methods in :class:`pyprep.find_noisy_channels.NoisyChannels`.
+        Defaults to True.
+    random_state : int | None | np.random.RandomState, optional
         The random seed at which to initialize the class. If random_state is
         an int, it will be used as a seed for RandomState.
         If None, the seed will be obtained from the operating system
@@ -149,11 +151,6 @@ class Reference:
 
         This function implements the functionality of the `robustReference` function
         as part of the PREP pipeline on mne raw object.
-
-        Parameters
-        ----------
-        ransac : bool
-            Whether or not to use ransac
 
         Returns
         -------
