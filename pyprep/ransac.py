@@ -10,7 +10,6 @@ from pyprep.utils import split_list, verify_free_ram, _get_random_subset
 def find_bad_by_ransac(
     data,
     sample_rate,
-    signal_len,
     complete_chn_labs,
     chn_pos,
     exclude,
@@ -41,8 +40,6 @@ def find_bad_by_ransac(
         channels removed.
     sample_rate : float
         The sample rate (in Hz) of the EEG data.
-    signal_len : float
-        Number of total samples in the signal (the length of the signal).
     complete_chn_labs : array_like
         Labels for all channels in `data`, in the same order as they appear
         in `data`.
@@ -141,8 +138,9 @@ def find_bad_by_ransac(
     correlation_frames = corr_window_secs * sample_rate
     correlation_window = np.arange(correlation_frames)
     n = correlation_window.shape[0]
+    signal_frames = data.shape[1]
     correlation_offsets = np.arange(
-        0, (signal_len - correlation_frames), correlation_frames
+        0, (signal_frames - correlation_frames), correlation_frames
     )
     w_correlation = correlation_offsets.shape[0]
 

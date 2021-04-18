@@ -56,7 +56,6 @@ class NoisyChannels:
         self.ch_names_original = np.asarray(raw.info["ch_names"])
         self.n_chans_original = len(self.ch_names_original)
         self.n_chans_new = self.n_chans_original
-        self.signal_len = len(self.raw_mne.times)
         self.original_dimensions = np.shape(self.EEGData)
         self.new_dimensions = self.original_dimensions
         self.original_channels = np.arange(self.original_dimensions[0])
@@ -433,7 +432,6 @@ class NoisyChannels:
         self.bad_by_ransac, _ = find_bad_by_ransac(
             self.EEGData,
             self.sample_rate,
-            self.signal_len,
             self.ch_names_new,
             self.raw_mne._get_channel_positions(),
             exclude_from_ransac,
