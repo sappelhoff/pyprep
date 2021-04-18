@@ -273,16 +273,18 @@ def _ransac_correlations(
 
     # For the actual data
     data_window = data[chans_to_predict, : n * w_correlation]
-    data_window = data_window.reshape(len(chans_to_predict), n, w_correlation)
+    data_window = data_window.reshape(len(chans_to_predict), w_correlation, n)
+    data_window = data_window.swapaxes(1, 0)
 
     # For the ransac predicted eeg
     pred_window = ransac_eeg[: len(chans_to_predict), : n * w_correlation]
-    pred_window = pred_window.reshape(len(chans_to_predict), n, w_correlation)
+    pred_window = pred_window.reshape(len(chans_to_predict), w_correlation, n)
+    pred_window = pred_window.swapaxes(1, 0)
 
     # Perform correlations
     for k in range(w_correlation):
-        data_portion = data_window[:, :, k]
-        pred_portion = pred_window[:, :, k]
+        data_portion = data_window[k, :, :]
+        pred_portion = pred_window[k, :, :]
 
         R = np.corrcoef(data_portion, pred_portion)
 
