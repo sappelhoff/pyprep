@@ -65,7 +65,13 @@ class NoisyChannels:
         self.channels_interpolate = self.original_channels
 
         # Extra data for debugging
-        self._extra_info = {}
+        self._extra_info = {
+            'bad_by_deviation': {},
+            'bad_by_hf_noise': {},
+            'bad_by_correlation': {},
+            'bad_by_dropout': {},
+            'bad_by_ransac': {}
+        }
 
         # random_state
         self.random_state = check_random_state(random_state)
@@ -210,11 +216,11 @@ class NoisyChannels:
         deviation_channels = self.channels_interpolate[deviation_channel_mask]
         for i in range(0, len(deviation_channels)):
             self.bad_by_deviation.append(self.ch_names_original[deviation_channels[i]])
-        self._extra_info['bad_by_deviation'] = {
+        self._extra_info['bad_by_deviation'].update({
             'median_channel_deviation': channel_deviationMedian,
             'channel_deviation_sd': channel_deviationSD,
             'robust_channel_deviations': robust_channel_deviation
-        }
+        })
 
     def find_bad_by_hfnoise(self, HF_zscore_threshold=5.0):
         """Determine noise of channel through high frequency ratio.
@@ -270,11 +276,11 @@ class NoisyChannels:
         self.EEGData = np.transpose(EEG_filt)
         for i in range(0, len(HFNoise_channels)):
             self.bad_by_hf_noise.append(self.ch_names_original[HFNoise_channels[i]])
-        self._extra_info['bad_by_hf_noise'] = {
+        self._extra_info['bad_by_hf_noise'].update({
             'median_channel_noisiness': noisiness_median,
             'channel_noisiness_sd': noiseSD,
             'hf_noise_zscores': zscore_HFNoise
-        }
+        })
 
     def find_bad_by_correlation(
         self, correlation_secs=1.0, correlation_threshold=0.4, frac_bad=0.01
