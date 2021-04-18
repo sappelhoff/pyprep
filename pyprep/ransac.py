@@ -20,6 +20,7 @@ def find_bad_by_ransac(
     corr_window_secs=5.0,
     channel_wise=False,
     random_state=None,
+    matlab_strict=False,
 ):
     """Detect channels that are not predicted well by other channels.
 
@@ -76,6 +77,10 @@ def find_bad_by_ransac(
         RANSAC. If random_state is an int, it will be used as a seed for RandomState.
         If ``None``, the seed will be obtained from the operating system
         (see RandomState for details). Defaults to ``None``.
+    matlab_strict : bool, optional
+        Whether or not RANSAC should strictly follow MATLAB PREP's internal
+        math, ignoring any improvements made in PyPREP over the original code.
+        Defaults to False.
 
     Returns
     -------
@@ -187,6 +192,7 @@ def find_bad_by_ransac(
                     n_samples,
                     n,
                     w_correlation,
+                    matlab_strict,
                 )
                 if chunk == channel_chunks[0]:
                     # If it gets here, it means it is the optimal
@@ -233,6 +239,7 @@ def _ransac_correlations(
     n_samples,
     n,
     w_correlation,
+    matlab_strict,
 ):
     """Get correlations of channels to their RANSAC-predicted values.
 
@@ -259,6 +266,9 @@ def _ransac_correlations(
         Number of frames/samples of each window.
     w_correlation: int
         Number of windows.
+    matlab_strict : bool
+        Whether or not RANSAC should strictly follow MATLAB PREP's internal
+        math, ignoring any improvements made in PyPREP over the original code.
 
     Returns
     -------
@@ -278,6 +288,7 @@ def _ransac_correlations(
         good_chn_labs=good_chn_labs,
         complete_chn_labs=complete_chn_labs,
         data=data,
+        matlab_strict=matlab_strict,
     )
 
     # Correlate ransac prediction and eeg data
@@ -316,6 +327,7 @@ def _run_ransac(
     good_chn_labs,
     complete_chn_labs,
     data,
+    matlab_strict,
 ):
     """Detect noisy channels apart from the ones described previously.
 
@@ -339,6 +351,9 @@ def _run_ransac(
         labels of the channels in data in the same order
     data : np.ndarray
         2-D EEG data
+    matlab_strict : bool
+        Whether or not RANSAC should strictly follow MATLAB PREP's internal
+        math, ignoring any improvements made in PyPREP over the original code.
 
     Returns
     -------

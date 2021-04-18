@@ -50,6 +50,10 @@ class PrepPipeline:
         parameter, but use the "raw" and "prep_params" parameters instead.
         If None is passed, the pyprep default settings for filtering are used
         instead.
+    matlab_strict : bool, optional
+        Whether or not PyPREP should strictly follow MATLAB PREP's internal
+        math, ignoring any improvements made in PyPREP over the original code.
+        Defaults to False.
 
     Attributes
     ----------
@@ -98,6 +102,7 @@ class PrepPipeline:
         ransac=True,
         random_state=None,
         filter_kwargs=None,
+        matlab_strict=False,
     ):
         """Initialize PREP class."""
         self.raw_eeg = raw.copy()
@@ -132,6 +137,7 @@ class PrepPipeline:
         self.ransac = ransac
         self.random_state = check_random_state(random_state)
         self.filter_kwargs = filter_kwargs
+        self.matlab_strict = matlab_strict
 
     @property
     def raw(self):
@@ -184,6 +190,7 @@ class PrepPipeline:
             self.prep_params,
             ransac=self.ransac,
             random_state=self.random_state,
+            matlab_strict=self.matlab_strict
         )
         reference.perform_reference()
         self.raw_eeg = reference.raw
