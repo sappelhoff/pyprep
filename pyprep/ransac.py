@@ -4,7 +4,7 @@ import numpy as np
 from mne.channels.interpolation import _make_interpolation_matrix
 from mne.utils import check_random_state
 
-from pyprep.utils import split_list, verify_free_ram, _get_random_subset
+from pyprep.utils import split_list, verify_free_ram, _get_random_subset, _mat_round
 
 
 def find_bad_by_ransac(
@@ -380,7 +380,13 @@ def _run_ransac(
         )
 
     # Form median from all predictions
-    ransac_eeg = np.median(eeg_predictions, axis=-1, overwrite_input=True)
+    if matlab_strict:
+        # Match MATLAB's rounding logic (.5 always rounded up)
+        median_idx = int(_mat_round(n_samples / 2.0) - 1)
+        eeg_predictions.sort(axis=-1)
+        ransac_eeg = eeg_predictions[:, :, median_idx]
+    else:
+        ransac_eeg = np.median(eeg_predictions, axis=-1, overwrite_input=True)
     return ransac_eeg
 
 
