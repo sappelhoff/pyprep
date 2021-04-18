@@ -21,6 +21,28 @@ def _intersect(list1, list2):
     return list(set(list1).intersection(set(list2)))
 
 
+def _mat_round(x):
+    """Round a number to the nearest whole number.
+
+    Parameters
+    ----------
+    x : float
+        The number to round.
+
+    Returns
+    -------
+    rounded : float
+        The input value, rounded to the nearest whole number.
+
+    Notes
+    -----
+    MATLAB rounds all numbers ending in .5 up to the nearest integer, whereas
+    Python (and Numpy) rounds them to the nearest even number. This function
+    mimics MATLAB's behaviour.
+    """
+    return np.ceil(x) if x % 1 >= 0.5 else np.floor(x)
+
+
 def _mat_quantile(arr, q, axis=None):
     """Calculate the numeric value at quantile (`q`) for a given distribution.
 

@@ -1,7 +1,18 @@
 """Test various helper functions."""
 import numpy as np
 
-from pyprep.utils import _mat_quantile, _mat_iqr, _get_random_subset
+from pyprep.utils import _mat_round, _mat_quantile, _mat_iqr, _get_random_subset
+
+
+def test_mat_round():
+    """Test the MATLAB-compatible rounding function."""
+    # Test normal rounding behaviour
+    assert _mat_round(1.5) == 2
+    assert _mat_round(0.4) == 0
+    assert _mat_round(0.6) == 1
+
+    # Test MATLAB-specific rounding behaviour
+    assert _mat_round(0.5) == 1
 
 
 def test_mat_quantile_iqr():
