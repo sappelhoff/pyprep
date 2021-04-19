@@ -34,7 +34,7 @@ class NoisyChannels:
         do_detrend : bool
             Whether or not to remove a trend from the data upon initializing the
             `NoisyChannels` object. Defaults to True.
-        random_state : int | None | np.random.RandomState
+        random_state : {int, None, np.random.RandomState}, optional
             The random seed at which to initialize the class. If random_state
             is an int, it will be used as a seed for RandomState.
             If None, the seed will be obtained from the operating system

@@ -33,7 +33,7 @@ class Reference:
         Whether or not to use RANSAC for noisy channel detection in addition to
         the other methods in :class:`pyprep.find_noisy_channels.NoisyChannels`.
         Defaults to True.
-    random_state : int | None | np.random.RandomState, optional
+    random_state : {int, None, np.random.RandomState}, optional
         The random seed at which to initialize the class. If random_state is
         an int, it will be used as a seed for RandomState.
         If None, the seed will be obtained from the operating system
@@ -297,8 +297,9 @@ class Reference:
             The original EEG signal.
         reference : np.ndarray, shape(times,)
             The reference signal.
-        index : list | None
-            A list channel index from which the signal was removed.
+        index : {list, None}, optional
+            A list of channel indices from which the reference signal should be
+            subtracted. Defaults to all channels in `signal`.
 
         Returns
         -------

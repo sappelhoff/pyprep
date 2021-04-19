@@ -22,13 +22,13 @@ class PrepPipeline:
     prep_params : dict
         Parameters of PREP which include at least the following keys:
 
-        - ref_chs : list | 'eeg'
+        - ref_chs : {list, 'eeg'}
             - A list of channel names to be used for rereferencing.
               Can be a str 'eeg' to use all EEG channels.
-        - reref_chs : list | 'eeg'
+        - reref_chs : {list, 'eeg'}
             - A list of channel names to be used for line-noise removed,
               and referenced. Can be a str 'eeg' to use all EEG channels.
-        - line_freqs : np.ndarray | list
+        - line_freqs : {np.ndarray, list}
             - list of floats indicating frequencies to be removed.
               For example, for 60Hz you may specify
               ``np.arange(60, sfreq / 2, 60)``. Specify an empty list to
@@ -39,12 +39,12 @@ class PrepPipeline:
         Whether or not to use RANSAC for noisy channel detection in addition to
         the other methods in :class:`pyprep.find_noisy_channels.NoisyChannels`.
         Defaults to True.
-    random_state : int | None | np.random.RandomState, optional
+    random_state : {int, None, np.random.RandomState}, optional
         The random seed at which to initialize the class. If random_state is
         an int, it will be used as a seed for RandomState.
         If None, the seed will be obtained from the operating system
         (see RandomState for details). Default is None.
-    filter_kwargs : dict | None, optional
+    filter_kwargs : {dict, None}, optional
         Optional keywords arguments to be passed on to mne.filter.notch_filter.
         Do not set the "x", Fs", and "freqs" arguments via the filter_kwargs
         parameter, but use the "raw" and "prep_params" parameters instead.
@@ -60,7 +60,7 @@ class PrepPipeline:
     raw_eeg : mne.io.Raw
         The only-eeg part of the data. It is unprocessed if accessed before
         the fit method, processed if accessed after a succesful fit method.
-    raw_non_eeg : mne.io.Raw | None
+    raw_non_eeg : {mne.io.Raw, None}
         The non-eeg part of the data. It is not processed when calling
         the fit method. If the input was only EEG it will be None.
     noisy_channels_original : dict

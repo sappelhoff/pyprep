@@ -69,7 +69,7 @@ def find_bad_by_ransac(
         Whether RANSAC should be performed one channel at a time (lower RAM
         demands) or in chunks of as many channels as can fit into the currently
         available RAM (faster). Defaults to False (i.e., using the faster method).
-    random_state : int | None | np.random.RandomState, optional
+    random_state : {int, None, np.random.RandomState}, optional
         The random seed with which to generate random samples of channels during
         RANSAC. If random_state is an int, it will be used as a seed for RandomState.
         If None, the seed will be obtained from the operating system
