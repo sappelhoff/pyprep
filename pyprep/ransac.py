@@ -48,19 +48,19 @@ def find_bad_by_ransac(
         as they appear in `data`.
     exclude : list
         Labels of channels to exclude as signal predictors during RANSAC
-        (i.e. channels already flagged as bad by metrics other than HF noise).
+        (i.e., channels already flagged as bad by metrics other than HF noise).
     n_samples : int, optional
         Number of random channel samples to use for RANSAC. Defaults to 50.
     sample_prop : float, optional
         Proportion of total channels to use for signal prediction per RANSAC
         sample. This needs to be in the range [0, 1], where obviously neither 0
-        nor 1 would make sense. Defaults to 0.25 (e.g. 16 channels per sample
+        nor 1 would make sense. Defaults to 0.25 (e.g., 16 channels per sample
         for a 64-channel dataset).
     corr_thresh : float, optional
         The minimum predicted vs. actual signal correlation for a channel to
         be considered good within a given RANSAC window. Defaults to 0.75.
     fraction_bad : float, optional
-        The minimum fraction of bad (i.e. below-threshold) RANSAC windows for a
+        The minimum fraction of bad (i.e., below-threshold) RANSAC windows for a
         channel to be considered bad-by-RANSAC. Defaults to 0.4.
     corr_window_secs : float, optional
         The duration (in seconds) of each RANSAC correlation window. Defaults to
@@ -68,7 +68,7 @@ def find_bad_by_ransac(
     channel_wise : bool, optional
         Whether RANSAC should be performed one channel at a time (lower RAM
         demands) or in chunks of as many channels as can fit into the currently
-        available RAM (faster). Defaults to False (i.e. using the faster method).
+        available RAM (faster). Defaults to False (i.e., using the faster method).
     random_state : int | None | np.random.RandomState, optional
         The random seed with which to generate random samples of channels during
         RANSAC. If random_state is an int, it will be used as a seed for RandomState.
