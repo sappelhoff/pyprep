@@ -64,6 +64,15 @@ class NoisyChannels:
         self.ch_names_new = self.ch_names_original
         self.channels_interpolate = self.original_channels
 
+        # Extra data for debugging
+        self._extra_info = {
+            'bad_by_deviation': {},
+            'bad_by_hf_noise': {},
+            'bad_by_correlation': {},
+            'bad_by_dropout': {},
+            'bad_by_ransac': {}
+        }
+
         # random_state
         self.random_state = check_random_state(random_state)
 
@@ -207,6 +216,11 @@ class NoisyChannels:
         deviation_channels = self.channels_interpolate[deviation_channel_mask]
         for i in range(0, len(deviation_channels)):
             self.bad_by_deviation.append(self.ch_names_original[deviation_channels[i]])
+        self._extra_info['bad_by_deviation'].update({
+            'median_channel_deviation': channel_deviationMedian,
+            'channel_deviation_sd': channel_deviationSD,
+            'robust_channel_deviations': robust_channel_deviation
+        })
 
     def find_bad_by_hfnoise(self, HF_zscore_threshold=5.0):
         """Determine noise of channel through high frequency ratio.
@@ -262,6 +276,11 @@ class NoisyChannels:
         self.EEGData = np.transpose(EEG_filt)
         for i in range(0, len(HFNoise_channels)):
             self.bad_by_hf_noise.append(self.ch_names_original[HFNoise_channels[i]])
+        self._extra_info['bad_by_hf_noise'].update({
+            'median_channel_noisiness': noisiness_median,
+            'channel_noisiness_sd': noiseSD,
+            'hf_noise_zscores': zscore_HFNoise
+        })
 
     def find_bad_by_correlation(
         self, correlation_secs=1.0, correlation_threshold=0.4, frac_bad=0.01
@@ -358,6 +377,17 @@ class NoisyChannels:
         dropout_channels_idx = np.argwhere(fraction_BadDropOutWindows > frac_bad)
         dropout_channels_name = self.ch_names_original[dropout_channels_idx.astype(int)]
         self.bad_by_dropout = [i[0] for i in dropout_channels_name]
+        self._extra_info['bad_by_correlation'] = {
+            'max_correlations': maximum_correlations,
+            'median_max_correlations': np.median(maximum_correlations, axis=1),
+            'bad_window_fractions': fraction_BadCorrelationWindows
+        }
+        self._extra_info['bad_by_dropout'] = {
+            'dropouts': drop_out,
+            'bad_window_fractions': fraction_BadDropOutWindows
+        }
+        self._extra_info['bad_by_deviation']['channel_deviations'] = channel_deviations
+        self._extra_info['bad_by_hf_noise']['noise_levels'] = noiselevels
 
     def find_bad_by_SNR(self):
         """Determine the channels that fail both by correlation and HF noise."""
@@ -426,7 +456,7 @@ class NoisyChannels:
             self.bad_by_deviation +
             self.bad_by_dropout
         )
-        self.bad_by_ransac, _ = find_bad_by_ransac(
+        self.bad_by_ransac, ch_correlations = find_bad_by_ransac(
             self.EEGData,
             self.sample_rate,
             self.signal_len,
@@ -441,3 +471,7 @@ class NoisyChannels:
             channel_wise,
             self.random_state,
         )
+        self._extra_info['bad_by_ransac'] = {
+            'ransac_correlations': ch_correlations,
+            'bad_window_fractions': np.mean(ch_correlations < corr_thresh, axis=0)
+        }

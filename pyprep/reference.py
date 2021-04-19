@@ -57,6 +57,7 @@ class Reference:
         self.sfreq = self.raw.info["sfreq"]
         self.ransac = ransac
         self.random_state = check_random_state(random_state)
+        self._extra_info = {}
 
     def perform_reference(self):
         """Estimate the true signal mean and interpolate bad channels.
@@ -108,6 +109,7 @@ class Reference:
             "bad_by_ransac": noisy_detector.bad_by_ransac,
             "bad_all": noisy_detector.get_bads(),
         }
+        self._extra_info['interpolated'] = noisy_detector._extra_info
 
         bad_channels = _union(self.bad_before_interpolation, self.unusable_channels)
         self.raw.info["bads"] = bad_channels
@@ -141,6 +143,7 @@ class Reference:
             "bad_by_ransac": noisy_detector.bad_by_ransac,
             "bad_all": noisy_detector.get_bads(),
         }
+        self._extra_info['remaining_bad'] = noisy_detector._extra_info
 
         return self
 
@@ -183,6 +186,7 @@ class Reference:
             "bad_by_ransac": noisy_detector.bad_by_ransac,
             "bad_all": noisy_detector.get_bads(),
         }
+        self._extra_info['initial_bad'] = noisy_detector._extra_info
 
         self.noisy_channels = self.noisy_channels_original.copy()
         logger.info("Bad channels: {}".format(self.noisy_channels))
