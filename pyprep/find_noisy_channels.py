@@ -393,26 +393,28 @@ class NoisyChannels:
         Parameters
         ----------
         n_samples : int, optional
-            Number of random channel samples to use for RANSAC. Defaults to 50.
+            Number of random channel samples to use for RANSAC. Defaults
+            to ``50``.
         sample_prop : float, optional
             Proportion of total channels to use for signal prediction per RANSAC
             sample. This needs to be in the range [0, 1], where obviously neither
-            0 nor 1 would make sense. Defaults to 0.25 (e.g., 16 channels per
+            0 nor 1 would make sense. Defaults to ``0.25`` (e.g., 16 channels per
             sample for a 64-channel dataset).
         corr_thresh : float, optional
             The minimum predicted vs. actual signal correlation for a channel to
-            be considered good within a given RANSAC window. Defaults to 0.75.
+            be considered good within a given RANSAC window. Defaults
+            to ``0.75``.
         fraction_bad : float, optional
             The minimum fraction of bad (i.e., below-threshold) RANSAC windows
-            for a channel to be considered bad-by-RANSAC. Defaults to 0.4.
+            for a channel to be considered bad-by-RANSAC. Defaults to ``0.4``.
         corr_window_secs : float, optional
             The duration (in seconds) of each RANSAC correlation window. Defaults
             to 5 seconds.
         channel_wise : bool, optional
             Whether RANSAC should be performed one channel at a time (lower RAM
             demands) or in chunks of as many channels as can fit into the
-            currently available RAM (faster). Defaults to False (i.e., using the
-            faster method).
+            currently available RAM (faster). Defaults to ``False`` (i.e., using
+            the faster method).
 
         References
         ----------
