@@ -53,9 +53,10 @@ def find_bad_by_ransac(
         Number of random channel samples to use for RANSAC. Defaults to ``50``.
     sample_prop : float, optional
         Proportion of total channels to use for signal prediction per RANSAC
-        sample. This needs to be in the range [0, 1], where obviously neither 0
-        nor 1 would make sense. Defaults to ``0.25`` (e.g., 16 channels per
-        sample for a 64-channel dataset).
+        sample. This needs to be in the range [0, 1], where 0 would mean no
+        channels would be used and 1 would mean all channels would be used
+        (neither of which would be useful values). Defaults to ``0.25`` (e.g.,
+        16 channels per sample for a 64-channel dataset).
     corr_thresh : float, optional
         The minimum predicted vs. actual signal correlation for a channel to
         be considered good within a given RANSAC window. Defaults to ``0.75``.
