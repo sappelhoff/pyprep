@@ -34,7 +34,7 @@ class NoisyChannels:
         do_detrend : bool
             Whether or not to remove a trend from the data upon initializing the
             `NoisyChannels` object. Defaults to True.
-        random_state : int | None | np.random.RandomState
+        random_state : {int, None, np.random.RandomState}, optional
             The random seed at which to initialize the class. If random_state
             is an int, it will be used as a seed for RandomState.
             If None, the seed will be obtained from the operating system
@@ -56,7 +56,6 @@ class NoisyChannels:
         self.ch_names_original = np.asarray(raw.info["ch_names"])
         self.n_chans_original = len(self.ch_names_original)
         self.n_chans_new = self.n_chans_original
-        self.signal_len = len(self.raw_mne.times)
         self.original_dimensions = np.shape(self.EEGData)
         self.new_dimensions = self.original_dimensions
         self.original_channels = np.arange(self.original_dimensions[0])
@@ -408,8 +407,8 @@ class NoisyChannels:
     ):
         """Detect channels that are not predicted well by other channels.
 
-        This method is a wrapper of the ``find_bad_by_ransac`` function
-        from the ``ransac`` module.
+        This method is a wrapper for the :func:`pyprep.ransac.find_bad_by_ransac`
+        function.
 
         Here, a ransac approach (see [1]_, and a short discussion in [2]_) is
         adopted to predict a "clean EEG" dataset. After identifying clean EEG
@@ -423,24 +422,30 @@ class NoisyChannels:
 
         Parameters
         ----------
-        n_samples : int
-            Number of samples used for computation of ransac.
-        fraction_good : float
-            Fraction of channels used for robust reconstruction of the signal.
-            This needs to be in the range [0, 1], where obviously neither 0
-            nor 1 would make sense.
-        corr_thresh : float
-            The minimum correlation threshold that should be attained within a
-            data window.
-        fraction_bad : float
-            If this percentage of all data windows in which the correlation
-            threshold was not surpassed is exceeded, classify a
-            channel as `bad_by_ransac`.
-        corr_window_secs : float
-            Size of the correlation window in seconds.
-        channel_wise : bool
-            If True the ransac will be done 1 channel at a time, if false
-            it will be done as fast as possible (more channels at a time).
+        n_samples : int, optional
+            Number of random channel samples to use for RANSAC. Defaults
+            to ``50``.
+        sample_prop : float, optional
+            Proportion of total channels to use for signal prediction per RANSAC
+            sample. This needs to be in the range [0, 1], where 0 would mean no
+            channels would be used and 1 would mean all channels would be used
+            (neither of which would be useful values). Defaults to ``0.25``
+            (e.g., 16 channels per sample for a 64-channel dataset).
+        corr_thresh : float, optional
+            The minimum predicted vs. actual signal correlation for a channel to
+            be considered good within a given RANSAC window. Defaults
+            to ``0.75``.
+        fraction_bad : float, optional
+            The minimum fraction of bad (i.e., below-threshold) RANSAC windows
+            for a channel to be considered bad-by-RANSAC. Defaults to ``0.4``.
+        corr_window_secs : float, optional
+            The duration (in seconds) of each RANSAC correlation window. Defaults
+            to 5 seconds.
+        channel_wise : bool, optional
+            Whether RANSAC should be performed one channel at a time (lower RAM
+            demands) or in chunks of as many channels as can fit into the
+            currently available RAM (faster). Defaults to ``False`` (i.e., using
+            the faster method).
 
         References
         ----------
@@ -450,6 +455,7 @@ class NoisyChannels:
         .. [2] Jas, M., Engemann, D.A., Bekhti, Y., Raimondo, F., Gramfort, A.
             (2017). Autoreject: Automated Artifact Rejection for MEG and EEG
             Data. NeuroImage, 159, 417-429
+
         """
         exclude_from_ransac = (
             self.bad_by_correlation +
@@ -459,7 +465,6 @@ class NoisyChannels:
         self.bad_by_ransac, ch_correlations = find_bad_by_ransac(
             self.EEGData,
             self.sample_rate,
-            self.signal_len,
             self.ch_names_new,
             self.raw_mne._get_channel_positions(),
             exclude_from_ransac,

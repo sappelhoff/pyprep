@@ -6,6 +6,10 @@
 docs/generated
 docs/auto_examples
 
+# Invisible system files
+.DS_Store
+.DS_STORE
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

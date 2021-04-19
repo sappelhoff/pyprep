@@ -255,24 +255,24 @@ def make_random_mne_object(
 
 
 def verify_free_ram(data, n_samples, n_channels, max_prop=0.95):
-    """Check if enough memory is free to run ransac with the given parameters.
+    """Check if enough memory is free to run RANSAC with the given parameters.
 
     Parameters
     ----------
     data : np.ndarray
         2-D EEG data
     n_samples : int
-        Number of samples to use for computation of ransac.
+        Number of samples to use for computation of RANSAC.
     n_channels : int
         Number of channels to process per chunk.
     max_prop : float
-        The maximum proportion of available memory that ransac is allowed to
+        The maximum proportion of available memory that RANSAC is allowed to
         use.
 
     Raises
     ------
     MemoryError
-        If insufficient free memory to perform ransac with the given data and
+        If insufficient free memory to perform RANSAC with the given data and
         parameters.
 
     """

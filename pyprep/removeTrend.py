@@ -25,7 +25,7 @@ def removeTrend(
         Rate at which the EEG data was sampled.
     detrendCutoff : float
         High pass cut-off frequency.
-    detrendChannels : list | None
+    detrendChannels : {list, None}, optional
         List of all the channels that require detrending/filtering. If None,
         all channels are used (default).
 
