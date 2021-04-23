@@ -1,7 +1,9 @@
 """Test various helper functions."""
 import numpy as np
 
-from pyprep.utils import _mat_round, _mat_quantile, _mat_iqr, _get_random_subset
+from pyprep.utils import (
+    _mat_round, _mat_quantile, _mat_iqr, _get_random_subset, _correlate_arrays
+)
 
 
 def test_mat_round():
@@ -58,3 +60,35 @@ def test_get_random_subset():
     expected_picks = [6, 47, 55, 31, 29, 44, 36, 15]
     actual_picks = _get_random_subset(chans, size=8, rand_state=rng)
     assert all(np.equal(expected_picks, actual_picks))
+
+
+def test_correlate_arrays():
+    """Test MATLAB PREP-compatible array correlation function.
+
+    MATLAB code used to generate the comparison results:
+
+    .. code-block:: matlab
+
+       % Generate test data
+       rng(435656);
+       a = rand(100, 3) - 0.5;
+       b = rand(100, 3) - 0.5;
+
+       % Calculate correlations
+       correlations = sum(a.*b)./(sqrt(sum(a.^2)).*sqrt(sum(b.^2)));
+
+    """
+    # Generate test data
+    np.random.seed(435656)
+    a = np.random.rand(3, 100) - 0.5
+    b = np.random.rand(3, 100) - 0.5
+
+    # Test regular Pearson correlation
+    corr_expected = np.asarray([-0.0898, 0.0340, -0.1068])
+    corr_actual = _correlate_arrays(a, b)
+    assert all(np.isclose(corr_expected, corr_actual, atol=0.001))
+
+    # Test correlation equivalence with MATLAB PREP
+    corr_expected = np.asarray([-0.0898, 0.0327, -0.1140])
+    corr_actual = _correlate_arrays(a, b, matlab_strict=True)
+    assert all(np.isclose(corr_expected, corr_actual, atol=0.001))

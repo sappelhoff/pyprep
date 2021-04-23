@@ -4,7 +4,9 @@ import numpy as np
 from mne.channels.interpolation import _make_interpolation_matrix
 from mne.utils import check_random_state
 
-from pyprep.utils import split_list, verify_free_ram, _get_random_subset, _mat_round
+from pyprep.utils import (
+    split_list, verify_free_ram, _get_random_subset, _mat_round, _correlate_arrays
+)
 
 
 def find_bad_by_ransac(
@@ -307,13 +309,7 @@ def _ransac_correlations(
     for k in range(w_correlation):
         data_portion = data_window[k, :, :]
         pred_portion = pred_window[k, :, :]
-
-        R = np.corrcoef(data_portion, pred_portion)
-
-        # Take only correlations of data with pred
-        # and use diag to extract correlation of
-        # data_i with pred_i
-        R = np.diag(R[0 : len(chans_to_predict), len(chans_to_predict) :])
+        R = _correlate_arrays(data_portion, pred_portion, matlab_strict)
         channel_correlations[k, :] = R
 
     return channel_correlations
