@@ -13,7 +13,7 @@ or :class:`pyprep.find_noisy_channels.NoisyChannels` as ``True`` to match the
 original PREP's internal math.
 
 .. contents:: Table of Contents
-    :depth: 2
+    :depth: 3
 
 
 Differences in RANSAC
@@ -56,7 +56,9 @@ Calculation of median estimated signal
 In MATLAB PREP, the median signal in step 3 is calculated by sorting the
 different predictions for each EEG sample/channel from low to high and then
 taking the value at the middle index for each. The relevant lines of MATLAB
-PREP's ``findNoisyChannels.m`` are reproduced below:: matlab
+PREP's ``findNoisyChannels.m`` are reproduced below:
+
+.. code-block:: matlab
 
    function rX = calculateRansacWindow(XX, P, n, m, p)
        YY = sort(reshape(XX*P, n, m, p),3);
@@ -81,7 +83,9 @@ In MATLAB PREP, RANSAC channel predictions are correlated with actual data
 in step 4 using a non-standard method: essentialy, it uses the standard Pearson
 correlation formula but without subtracting the channel means from each channel
 before calculating sums of squares. This is done in the last line of the
-``calculateRansacWindow`` function reproduced above:: matlab
+``calculateRansacWindow`` function reproduced above:
+
+.. code-block:: matlab
 
    rX = sum(XX.*YY)./(sqrt(sum(XX.^2)).*sqrt(sum(YY.^2)));
 
