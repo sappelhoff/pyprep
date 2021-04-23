@@ -81,8 +81,8 @@ def find_bad_by_ransac(
         (see RandomState for details). Defaults to ``None``.
     matlab_strict : bool, optional
         Whether or not RANSAC should strictly follow MATLAB PREP's internal
-        math, ignoring any improvements made in PyPREP over the original code.
-        Defaults to False.
+        math, ignoring any improvements made in PyPREP over the original code
+        (see :ref:`matlab-diffs` for more details). Defaults to ``False``.
 
     Returns
     -------

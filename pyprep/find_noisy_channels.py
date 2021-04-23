@@ -33,16 +33,16 @@ class NoisyChannels:
             The MNE raw object.
         do_detrend : bool, optional
             Whether or not to remove a trend from the data upon initializing the
-            `NoisyChannels` object. Defaults to True.
+            `NoisyChannels` object. Defaults to ``True``.
         random_state : {int, None, np.random.RandomState}, optional
             The random seed at which to initialize the class. If random_state
             is an int, it will be used as a seed for RandomState.
-            If None, the seed will be obtained from the operating system
-            (see RandomState for details). Default is None.
+            If ``None``, the seed will be obtained from the operating system
+            (see RandomState for details). Default is ``None``.
         matlab_strict : bool, optional
             Whether or not PyPREP should strictly follow MATLAB PREP's internal
-            math, ignoring any improvements made in PyPREP over the original code.
-            Defaults to False.
+            math, ignoring any improvements made in PyPREP over the original code
+            (see :ref:`matlab-diffs` for more details). Defaults to ``False``.
 
         """
         # Make sure that we got an MNE object
