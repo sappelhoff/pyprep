@@ -39,6 +39,7 @@ Changelog
 - Changed RANSAC chunking logic to reduce max memory use and prefer equal chunk sizes where possible, by `Austin Hurst`_ (:gh:`44`)
 - Changed RANSAC's random channel sampling code to produce the same results as MATLAB PREP for the same random seed, additionally changing the default RANSAC sample size from 25% of all *good* channels (e.g. 15 for a 64-channel dataset with 4 bad channels) to 25% of *all* channels (e.g. 16 for the same dataset), by `Austin Hurst`_ (:gh:`62`)
 - Changed RANSAC so that "bad by high-frequency noise" channels are retained when making channel predictions (provided they aren't flagged as bad by any other metric), matching MATLAB PREP behaviour, by `Austin Hurst`_ (:gh:`64`)
+- Added a new flag ``matlab_strict`` to :class:`pyprep.prep_pipeline.PrepPipeline`, :class:`pyprep.reference.Reference`, :class:`pyprep.find_noisy_channels.NoisyChannels`, and :func:`pyprep.ransac.find_bad_by_ransac` for optionally matching MATLAB PREP's internal math as closely as possible, overriding areas where PyPREP attempts to improve on the original, by `Austin Hurst`_ (:gh:`70`)
 
 Bug
 ~~~
@@ -52,6 +53,7 @@ API
 - The permissible parameters for the following methods were removed and/or reordered: :func:`ransac.ransac_correlations`, :func:`ransac.run_ransac`, and :func:`ransac.get_ransac_pred` methods, by `Yorguin Mantilla`_ (:gh:`51`)
 - The following methods have been moved to a new module named :mod:`ransac` and are now private: :meth:`NoisyChannels.ransac_correlations`, :meth:`NoisyChannels.run_ransac <find_noisy_channels.NoisyChannels.run_ransac>`, and :meth:`NoisyChannels.get_ransac_pred <find_noisy_channels.NoisyChannels.get_ransac_pred>` methods, by `Yorguin Mantilla`_ (:gh:`51`)
 - The permissible parameters for the following methods were removed and/or reordered: :meth:`NoisyChannels.ransac_correlations <find_noisy_channels.NoisyChannels.ransac_correlations>`, :meth:`NoisyChannels.run_ransac`, and :meth:`NoisyChannels.get_ransac_pred <find_noisy_channels.NoisyChannels.get_ransac_pred>` methods, by `Austin Hurst`_ and `Yorguin Mantilla`_ (:gh:`43`)
+
 
 .. _changes_0_3_1:
 
