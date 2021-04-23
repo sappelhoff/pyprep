@@ -91,6 +91,7 @@ html_theme_options = {
         ("Examples", "auto_examples/index"),
         ("API", "api"),
         ("What's new", "whats_new"),
+        ("Differences from PREP", "matlab_differences"),
         ("GitHub", "https://github.com/sappelhoff/pyprep", True),
     ],
 }
