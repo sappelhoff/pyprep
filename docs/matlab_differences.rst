@@ -10,10 +10,9 @@ version of PREP, there are a few places where PyPREP has deliberately chosen
 to use different defaults than the MATLAB PREP.
 
 To override these differerences, you can set the ``matlab_strict`` argument to
-:class:`~pyprep.prep_pipeline.PrepPipeline`,
-:class:`~pyprep.reference.Reference`,
-or :class:`~pyprep.find_noisy_channels.NoisyChannels` as ``True`` to match the
-original PREP's internal math.
+:class:`~pyprep.PrepPipeline`, :class:`~pyprep.Reference`, or
+:class:`~pyprep.NoisyChannels` as ``True`` to match the original PREP's
+internal math.
 
 .. contents:: Table of Contents
     :depth: 3

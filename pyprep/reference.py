@@ -31,8 +31,7 @@ class Reference:
         - ``reref_chs``
     ransac : bool, optional
         Whether or not to use RANSAC for noisy channel detection in addition to
-        the other methods in :class:`~pyprep.find_noisy_channels.NoisyChannels`.
-        Defaults to True.
+        the other methods in :class:`~pyprep.NoisyChannels`. Defaults to True.
     random_state : {int, None, np.random.RandomState}, optional
         The random seed at which to initialize the class. If random_state is
         an int, it will be used as a seed for RandomState.

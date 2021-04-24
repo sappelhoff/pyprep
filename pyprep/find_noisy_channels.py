@@ -412,7 +412,7 @@ class NoisyChannels:
     ):
         """Detect channels that are not predicted well by other channels.
 
-        This method is a wrapper for the :func:`pyprep.ransac.find_bad_by_ransac`
+        This method is a wrapper for the :func:`ransac.find_bad_by_ransac`
         function.
 
         Here, a ransac approach (see [1]_, and a short discussion in [2]_) is
