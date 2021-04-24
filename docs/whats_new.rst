@@ -7,11 +7,11 @@ People who contributed to this software across releases (in **alphabetical order
 
 * `Aamna Lawrence`_
 * `Adam Li`_
+* `Austin Hurst`_
 * `Christian Oreilly`_
 * `Stefan Appelhoff`_
 * `Victor Xiang`_
 * `Yorguin Mantilla`_
-* `Austin Hurst`_
 
 .. _whats_new:
 
