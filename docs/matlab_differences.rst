@@ -1,3 +1,5 @@
+:orphan:
+
 .. _matlab-diffs:
 
 Deliberate Differences from MATLAB PREP
@@ -8,8 +10,9 @@ version of PREP, there are a few places where PyPREP has deliberately chosen
 to use different defaults than the MATLAB PREP.
 
 To override these differerences, you can set the ``matlab_strict`` argument to
-:class:`pyprep.prep_pipeline.PrepPipeline`, :class:`pyprep.reference.Reference`,
-or :class:`pyprep.find_noisy_channels.NoisyChannels` as ``True`` to match the
+:class:`~pyprep.prep_pipeline.PrepPipeline`,
+:class:`~pyprep.reference.Reference`,
+or :class:`~pyprep.find_noisy_channels.NoisyChannels` as ``True`` to match the
 original PREP's internal math.
 
 .. contents:: Table of Contents
@@ -20,7 +23,7 @@ Differences in RANSAC
 ---------------------
 
 During the "find-bad-by-RANSAC" step of noisy channel detection (see
-:func:`pyprep.ransac.find_bad_by_ransac`), PREP does the follwing steps to
+:func:`~pyprep.ransac.find_bad_by_ransac`), PREP does the follwing steps to
 identify channels that aren't well-predicted by the signals of other channels:
 
 1) Generates a bunch of random subsets of currently-good channels from the data
@@ -76,8 +79,8 @@ the current function will instead return the true median signal across
 predictions unless strict MATLAB equivalence is requested.
 
 
-Calculation of correlations in RANSAC
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Correlation of predicted vs. actual signals
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 In MATLAB PREP, RANSAC channel predictions are correlated with actual data
 in step 4 using a non-standard method: essentialy, it uses the standard Pearson
