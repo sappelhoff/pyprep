@@ -31,13 +31,16 @@ class Reference:
         - ``reref_chs``
     ransac : bool, optional
         Whether or not to use RANSAC for noisy channel detection in addition to
-        the other methods in :class:`pyprep.find_noisy_channels.NoisyChannels`.
-        Defaults to True.
+        the other methods in :class:`~pyprep.NoisyChannels`. Defaults to True.
     random_state : {int, None, np.random.RandomState}, optional
         The random seed at which to initialize the class. If random_state is
         an int, it will be used as a seed for RandomState.
         If None, the seed will be obtained from the operating system
         (see RandomState for details). Default is None.
+    matlab_strict : bool, optional
+        Whether or not PyPREP should strictly follow MATLAB PREP's internal
+        math, ignoring any improvements made in PyPREP over the original code.
+        Defaults to False.
 
     References
     ----------
@@ -47,7 +50,9 @@ class Reference:
 
     """
 
-    def __init__(self, raw, params, ransac=True, random_state=None):
+    def __init__(
+        self, raw, params, ransac=True, random_state=None, matlab_strict=False
+    ):
         """Initialize the class."""
         self.raw = raw.copy()
         self.ch_names = self.raw.ch_names
@@ -60,6 +65,7 @@ class Reference:
         self.ransac = ransac
         self.random_state = check_random_state(random_state)
         self._extra_info = {}
+        self.matlab_strict = matlab_strict
 
     def perform_reference(self):
         """Estimate the true signal mean and interpolate bad channels.
@@ -94,7 +100,9 @@ class Reference:
 
         # Phase 2: Find the bad channels and interpolate
         self.raw._data = self.EEG * 1e-6
-        noisy_detector = NoisyChannels(self.raw, random_state=self.random_state)
+        noisy_detector = NoisyChannels(
+            self.raw, random_state=self.random_state, matlab_strict=self.matlab_strict
+        )
         noisy_detector.find_all_bads(ransac=self.ransac)
 
         # Record Noisy channels and EEG before interpolation
@@ -130,7 +138,9 @@ class Reference:
 
         # Still noisy channels after interpolation
         self.interpolated_channels = bad_channels
-        noisy_detector = NoisyChannels(self.raw, random_state=self.random_state)
+        noisy_detector = NoisyChannels(
+            self.raw, random_state=self.random_state, matlab_strict=self.matlab_strict
+        )
         noisy_detector.find_all_bads(ransac=self.ransac)
         self.still_noisy_channels = noisy_detector.get_bads()
         self.raw.info["bads"] = self.still_noisy_channels
@@ -169,7 +179,10 @@ class Reference:
 
         # Determine unusable channels and remove them from the reference channels
         noisy_detector = NoisyChannels(
-            raw, do_detrend=False, random_state=self.random_state
+            raw,
+            do_detrend=False,
+            random_state=self.random_state,
+            matlab_strict=self.matlab_strict
         )
         noisy_detector.find_all_bads(ransac=self.ransac)
         self.noisy_channels_original = {
@@ -222,7 +235,10 @@ class Reference:
         while True:
             raw_tmp._data = signal_tmp * 1e-6
             noisy_detector = NoisyChannels(
-                raw_tmp, do_detrend=False, random_state=self.random_state
+                raw_tmp,
+                do_detrend=False,
+                random_state=self.random_state,
+                matlab_strict=self.matlab_strict
             )
             # Detrend applied at the beginning of the function.
             noisy_detector.find_all_bads(ransac=self.ransac)

@@ -4,7 +4,9 @@ import numpy as np
 from mne.channels.interpolation import _make_interpolation_matrix
 from mne.utils import check_random_state
 
-from pyprep.utils import split_list, verify_free_ram, _get_random_subset
+from pyprep.utils import (
+    split_list, verify_free_ram, _get_random_subset, _mat_round, _correlate_arrays
+)
 
 
 def find_bad_by_ransac(
@@ -20,6 +22,7 @@ def find_bad_by_ransac(
     corr_window_secs=5.0,
     channel_wise=False,
     random_state=None,
+    matlab_strict=False,
 ):
     """Detect channels that are not predicted well by other channels.
 
@@ -76,6 +79,10 @@ def find_bad_by_ransac(
         RANSAC. If random_state is an int, it will be used as a seed for RandomState.
         If ``None``, the seed will be obtained from the operating system
         (see RandomState for details). Defaults to ``None``.
+    matlab_strict : bool, optional
+        Whether or not RANSAC should strictly follow MATLAB PREP's internal
+        math, ignoring any improvements made in PyPREP over the original code
+        (see :ref:`matlab-diffs` for more details). Defaults to ``False``.
 
     Returns
     -------
@@ -187,6 +194,7 @@ def find_bad_by_ransac(
                     n_samples,
                     n,
                     w_correlation,
+                    matlab_strict,
                 )
                 if chunk == channel_chunks[0]:
                     # If it gets here, it means it is the optimal
@@ -233,6 +241,7 @@ def _ransac_correlations(
     n_samples,
     n,
     w_correlation,
+    matlab_strict,
 ):
     """Get correlations of channels to their RANSAC-predicted values.
 
@@ -259,6 +268,9 @@ def _ransac_correlations(
         Number of frames/samples of each window.
     w_correlation: int
         Number of windows.
+    matlab_strict : bool
+        Whether or not RANSAC should strictly follow MATLAB PREP's internal
+        math, ignoring any improvements made in PyPREP over the original code.
 
     Returns
     -------
@@ -278,6 +290,7 @@ def _ransac_correlations(
         good_chn_labs=good_chn_labs,
         complete_chn_labs=complete_chn_labs,
         data=data,
+        matlab_strict=matlab_strict,
     )
 
     # Correlate ransac prediction and eeg data
@@ -296,13 +309,7 @@ def _ransac_correlations(
     for k in range(w_correlation):
         data_portion = data_window[k, :, :]
         pred_portion = pred_window[k, :, :]
-
-        R = np.corrcoef(data_portion, pred_portion)
-
-        # Take only correlations of data with pred
-        # and use diag to extract correlation of
-        # data_i with pred_i
-        R = np.diag(R[0 : len(chans_to_predict), len(chans_to_predict) :])
+        R = _correlate_arrays(data_portion, pred_portion, matlab_strict)
         channel_correlations[k, :] = R
 
     return channel_correlations
@@ -316,6 +323,7 @@ def _run_ransac(
     good_chn_labs,
     complete_chn_labs,
     data,
+    matlab_strict,
 ):
     """Detect noisy channels apart from the ones described previously.
 
@@ -339,6 +347,9 @@ def _run_ransac(
         labels of the channels in data in the same order
     data : np.ndarray
         2-D EEG data
+    matlab_strict : bool
+        Whether or not RANSAC should strictly follow MATLAB PREP's internal
+        math, ignoring any improvements made in PyPREP over the original code.
 
     Returns
     -------
@@ -365,7 +376,13 @@ def _run_ransac(
         )
 
     # Form median from all predictions
-    ransac_eeg = np.median(eeg_predictions, axis=-1, overwrite_input=True)
+    if matlab_strict:
+        # Match MATLAB's rounding logic (.5 always rounded up)
+        median_idx = int(_mat_round(n_samples / 2.0) - 1)
+        eeg_predictions.sort(axis=-1)
+        ransac_eeg = eeg_predictions[:, :, median_idx]
+    else:
+        ransac_eeg = np.median(eeg_predictions, axis=-1, overwrite_input=True)
     return ransac_eeg
 
 

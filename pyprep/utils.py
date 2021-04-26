@@ -21,6 +21,28 @@ def _intersect(list1, list2):
     return list(set(list1).intersection(set(list2)))
 
 
+def _mat_round(x):
+    """Round a number to the nearest whole number.
+
+    Parameters
+    ----------
+    x : float
+        The number to round.
+
+    Returns
+    -------
+    rounded : float
+        The input value, rounded to the nearest whole number.
+
+    Notes
+    -----
+    MATLAB rounds all numbers ending in .5 up to the nearest integer, whereas
+    Python (and Numpy) rounds them to the nearest even number. This function
+    mimics MATLAB's behaviour.
+    """
+    return np.ceil(x) if x % 1 >= 0.5 else np.floor(x)
+
+
 def _mat_quantile(arr, q, axis=None):
     """Calculate the numeric value at quantile (`q`) for a given distribution.
 
@@ -119,6 +141,56 @@ def _get_random_subset(x, size, rand_state):
         pick = remaining.pop(index)
         sample.append(pick)
     return sample
+
+
+def _correlate_arrays(a, b, matlab_strict=False):
+    """Calculate correlations between two equally-sized 2-D arrays of EEG data.
+
+    Both input arrays must be in the shape (channels, samples).
+
+    Parameters
+    ----------
+    a : np.ndarray
+        A 2-D array to correlate with `a`.
+    b : np.ndarray
+        A 2-D array to correlate with `b`.
+    matlab_strict : bool, optional
+        Whether or not correlations should be calculated identically to MATLAB
+        PREP (i.e., without mean subtraction) instead of by traditional Pearson
+        product-moment correlation (see Notes for details). Defaults to
+        ``False`` (Pearson correlation).
+
+    Returns
+    -------
+    correlations : np.ndarray
+        A one-dimensional array containing the correlations of the two input arrays
+        along the second axis.
+
+    Notes
+    -----
+    In MATLAB PREP, RANSAC channel predictions are correlated with actual data
+    using a non-standard method: essentialy, it uses the standard Pearson
+    correlation formula but without subtracting the channel means from each channel
+    before calculating sums of squares, i.e.,::
+
+       SSa = np.sum(a ** 2)
+       SSb = np.sum(b ** 2)
+       correlation = np.sum(a * b) / (np.sqrt(SSa) * np.sqrt(SSb))
+
+    Because EEG data is roughly mean-centered to begin with, this produces similar
+    values to normal Pearson correlation. However, to avoid making any assumptions
+    about the signal for any given channel/window, PyPREP defaults to normal
+    Pearson correlation unless strict MATLAB equivalence is requested.
+
+    """
+    if matlab_strict:
+        SSa = np.sum(a ** 2, axis=1)
+        SSb = np.sum(b ** 2, axis=1)
+        SSab = np.sum(a * b, axis=1)
+        return SSab / (np.sqrt(SSa) * np.sqrt(SSb))
+    else:
+        n_chan = a.shape[0]
+        return np.diag(np.corrcoef(a, b)[:n_chan, n_chan:])
 
 
 def filter_design(N_order, amp, freq):

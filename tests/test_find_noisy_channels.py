@@ -121,6 +121,16 @@ def test_findnoisychannels(raw, montage):
     bads = nd.bad_by_ransac
     assert bads == raw_tmp.ch_names[0:6]
 
+    # Test for finding bad channels by matlab_strict RANSAC
+    raw_tmp = raw.copy()
+    # Ransac identifies channels that go bad together and are highly correlated.
+    # Inserting highly correlated signal in channels 0 through 3 at 30 Hz
+    raw_tmp._data[0:6, :] = np.cos(2 * np.pi * raw.times * 30) * 1e-6
+    nd = NoisyChannels(raw_tmp, random_state=rng, matlab_strict=True)
+    nd.find_bad_by_ransac()
+    bads = nd.bad_by_ransac
+    assert bads == raw_tmp.ch_names[0:6]
+
     # Test for finding bad channels by channel-wise RANSAC
     raw_tmp = raw.copy()
     # Ransac identifies channels that go bad together and are highly correlated.

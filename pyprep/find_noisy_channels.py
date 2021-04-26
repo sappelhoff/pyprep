@@ -24,21 +24,25 @@ class NoisyChannels:
 
     """
 
-    def __init__(self, raw, do_detrend=True, random_state=None):
+    def __init__(self, raw, do_detrend=True, random_state=None, matlab_strict=False):
         """Initialize the class.
 
         Parameters
         ----------
         raw : mne.io.Raw
             The MNE raw object.
-        do_detrend : bool
+        do_detrend : bool, optional
             Whether or not to remove a trend from the data upon initializing the
-            `NoisyChannels` object. Defaults to True.
+            `NoisyChannels` object. Defaults to ``True``.
         random_state : {int, None, np.random.RandomState}, optional
             The random seed at which to initialize the class. If random_state
             is an int, it will be used as a seed for RandomState.
-            If None, the seed will be obtained from the operating system
-            (see RandomState for details). Default is None.
+            If ``None``, the seed will be obtained from the operating system
+            (see RandomState for details). Default is ``None``.
+        matlab_strict : bool, optional
+            Whether or not PyPREP should strictly follow MATLAB PREP's internal
+            math, ignoring any improvements made in PyPREP over the original code
+            (see :ref:`matlab-diffs` for more details). Defaults to ``False``.
 
         """
         # Make sure that we got an MNE object
@@ -50,6 +54,7 @@ class NoisyChannels:
             self.raw_mne._data = removeTrend(
                 self.raw_mne.get_data(), sample_rate=self.sample_rate
             )
+        self.matlab_strict = matlab_strict
 
         self.EEGData = self.raw_mne.get_data(picks="eeg")
         self.EEGData_beforeFilt = self.EEGData
@@ -407,7 +412,7 @@ class NoisyChannels:
     ):
         """Detect channels that are not predicted well by other channels.
 
-        This method is a wrapper for the :func:`pyprep.ransac.find_bad_by_ransac`
+        This method is a wrapper for the :func:`ransac.find_bad_by_ransac`
         function.
 
         Here, a ransac approach (see [1]_, and a short discussion in [2]_) is
@@ -475,6 +480,7 @@ class NoisyChannels:
             corr_window_secs,
             channel_wise,
             self.random_state,
+            self.matlab_strict,
         )
         self._extra_info['bad_by_ransac'] = {
             'ransac_correlations': ch_correlations,
