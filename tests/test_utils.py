@@ -97,14 +97,20 @@ def test_correlate_arrays():
 
 def test_eeglab_create_highpass():
     """Test EEGLAB-equivalent high-pass filter creation.
-    
+
     NOTE: EEGLAB values were obtained using breakpoints in ``pop_eegfiltnew``,
     since filter creation and data filtering are both done in the same function.
     Values here are first 4 values of the array ``b`` which contains the FIR
     filter coefficents used by the function.
 
     """
-    # Compare FIR filter coefficents with EEGLAB
+    # Compare initial FIR filter coefficents with EEGLAB
     expected_vals = [5.3691e-5, 5.4165e-5, 5.4651e-5, 5.5149e-5]
     actual_vals = _eeglab_create_highpass(cutoff=1.0, srate=256)[:4]
-    assert all(np.equal(expected_vals, actual_vals, atol=0.001))
+    assert all(np.isclose(expected_vals, actual_vals, atol=0.001))
+
+    # Compare middle FIR filter coefficent with EEGLAB
+    vals = _eeglab_create_highpass(cutoff=1.0, srate=256)
+    expected_val = 0.9961
+    actual_val = vals[len(vals) // 2]
+    assert np.isclose(expected_val, actual_val, atol=0.001)

@@ -143,8 +143,10 @@ def _eeglab_create_highpass(cutoff, srate):
     transition = (stop + cutoff) / srate
 
     # Generate highpass filter
-    filt = firwin(order + 1, transition, window='hamming', nyq=1)
-
+    N = order + 1
+    filt = np.zeros(N)
+    filt[N // 2] = 1
+    filt -= firwin(N, transition, window='hamming', nyq=1)
     return filt
 
 
