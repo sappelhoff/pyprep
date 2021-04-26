@@ -6,6 +6,7 @@ import mne
 import numpy as np
 import scipy.interpolate
 from scipy.stats import iqr
+from scipy.signal import firwin
 from psutil import virtual_memory
 
 
@@ -106,6 +107,45 @@ def _mat_iqr(arr, axis=None):
     n = len(arr)
     iqr_adj = ((iqr_q - 50) * n / (n - 1)) + 50
     return iqr(arr, rng=np.clip(iqr_adj, 0, 100), axis=axis)
+
+
+def _eeglab_create_highpass(cutoff, srate):
+    """Create a high-pass FIR filter using Hamming windows.
+
+    Parameters
+    ----------
+    cutoff : float
+        The lower pass-band edge of the filter, in Hz.
+    srate : float
+        The sampling rate of the EEG signal, in Hz.
+
+    Returns
+    -------
+    filter : np.ndarray
+        A 1-dimensional array of FIR filter coefficients.
+
+    Notes
+    -----
+    In MATLAB PREP, the internal ``removeTrend`` function uses EEGLAB's
+    ``pop_eegfiltnew`` to high-pass the EEG data to remove slow drifts.
+    Because MNE's ``mne.filter.filter_data`` and EEGLAB's ``pop_eegfiltnew``
+    calculate filter parameters slightly differently, this function is
+    used to precisely match EEGLAB & MATLAB PREP's filtering method.
+
+    """
+    TRANSITION_WIDTH_RATIO = 0.25
+    trans_bandwidth = cutoff if cutoff < 2 else cutoff * TRANSITION_WIDTH_RATIO
+
+    # Calculate parameters for constructing filter
+    order = 3.3 / (trans_bandwidth / srate)
+    order = int(np.ceil(order / 2) * 2)  # ensure order is even
+    stop = cutoff - trans_bandwidth
+    transition = (stop + cutoff) / srate
+
+    # Generate highpass filter
+    filt = firwin(order + 1, transition, window='hamming', nyq=1)
+
+    return filt
 
 
 def _get_random_subset(x, size, rand_state):

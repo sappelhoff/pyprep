@@ -2,7 +2,8 @@
 import numpy as np
 
 from pyprep.utils import (
-    _mat_round, _mat_quantile, _mat_iqr, _get_random_subset, _correlate_arrays
+    _mat_round, _mat_quantile, _mat_iqr, _get_random_subset, _correlate_arrays,
+    _eeglab_create_highpass
 )
 
 
@@ -92,3 +93,18 @@ def test_correlate_arrays():
     corr_expected = np.asarray([-0.0898, 0.0327, -0.1140])
     corr_actual = _correlate_arrays(a, b, matlab_strict=True)
     assert all(np.isclose(corr_expected, corr_actual, atol=0.001))
+
+
+def test_eeglab_create_highpass():
+    """Test EEGLAB-equivalent high-pass filter creation.
+    
+    NOTE: EEGLAB values were obtained using breakpoints in ``pop_eegfiltnew``,
+    since filter creation and data filtering are both done in the same function.
+    Values here are first 4 values of the array ``b`` which contains the FIR
+    filter coefficents used by the function.
+
+    """
+    # Compare FIR filter coefficents with EEGLAB
+    expected_vals = [5.3691e-5, 5.4165e-5, 5.4651e-5, 5.5149e-5]
+    actual_vals = _eeglab_create_highpass(cutoff=1.0, srate=256)[:4]
+    assert all(np.equal(expected_vals, actual_vals, atol=0.001))
