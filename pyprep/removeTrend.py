@@ -4,6 +4,8 @@ import logging
 import mne
 import numpy as np
 
+from pyprep.utils import _eeglab_create_highpass
+
 
 def removeTrend(
     EEG,
@@ -44,8 +46,9 @@ def removeTrend(
         EEG = np.reshape(EEG, (1, EEG.shape[0]))
 
     if detrendType == "High pass":
-        EEG = mne.filter.filter_data(
-            EEG, sfreq=sample_rate, l_freq=1, h_freq=None, picks=detrendChannels
+        filt = _eeglab_create_highpass(detrendCutoff, sample_rate)
+        EEG = mne.filter._overlap_add_filter(
+            EEG, filt, phase='zero', picks=detrendChannels, pad='reflect_limited'
         )
 
     elif detrendType == "High pass sinc":
@@ -60,6 +63,7 @@ def removeTrend(
             filter_length=fOrder,
             fir_window="blackman",
         )
+
     elif detrendType == "Local detrend":
         if detrendChannels is None:
             detrendChannels = np.arange(0, EEG.shape[0])
@@ -82,10 +86,12 @@ def removeTrend(
             for ch in detrendChannels:
                 EEG[:, ch] = runline(EEG[:, ch], np.int(n), np.int(dn))
         EEG = np.transpose(EEG)
+
     else:
         logging.warning(
             "No filtering/detreding performed since the detrend type did not match"
         )
+
     return EEG
 
 
