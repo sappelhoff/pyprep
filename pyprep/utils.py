@@ -158,7 +158,7 @@ def _eeglab_fir_filter(data, filt):
     data : np.ndarray
         A 2-D array of EEG data to filter.
     filt : np.ndarray
-        A 1-D array of FIR filter coefficients. 
+        A 1-D array of FIR filter coefficients.
 
     Returns
     -------
