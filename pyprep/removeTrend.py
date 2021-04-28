@@ -9,48 +9,51 @@ from pyprep.utils import _eeglab_create_highpass, _eeglab_fir_filter
 
 def removeTrend(
     EEG,
-    detrendType="High pass",
-    sample_rate=160.0,
+    sample_rate,
+    detrendType="high pass",
     detrendCutoff=1.0,
     detrendChannels=None,
 ):
-    """Perform high pass filtering or detrending.
+    """Remove trends (i.e., slow drifts in baseline) from an array of EEG data.
 
     Parameters
     ----------
     EEG : np.ndarray
-        The input EEG data.
-    detrendType : str
-        Type of detrending to be performed: high pass, high pass sinc, or local
-        detrending.
+        A 2-D array of EEG data to detrend.
     sample_rate : float
-        Rate at which the EEG data was sampled.
-    detrendCutoff : float
-        High pass cut-off frequency.
+        The sample rate (in Hz) of the input EEG data.
+    detrendType : str, optional
+        Type of detrending to be performed: must be one of 'high pass',
+        'high pass sinc, or 'local detrend'. Defaults to 'high pass'.
+    detrendCutoff : float, optional
+        The high-pass cutoff frequency (in Hz) to use for detrending. Defaults
+        to 1.0 Hz.
     detrendChannels : {list, None}, optional
-        List of all the channels that require detrending/filtering. If None,
-        all channels are used (default).
+        List of the indices of all channels that require detrending/filtering.
+        If ``None``, all channels are used (default).
 
     Returns
     -------
     EEG : np.ndarray
-        Filtered/detrended EEG data.
+        A 2-D array containing the filtered/detrended EEG data.
 
     Notes
     -----
-    Filtering is implemented using the MNE filter function mne.filter.filter_data.
-    Local detrending is the python implementation of the chronux_2 runline command.
+    High-pass filtering is implemented using the MNE filter function
+    :func:``mne.filter.filter_data``. Local detrending is performed using a
+    Python re-implementation of the ``runline`` command from the chronux_2
+    MATLAB package.
 
     """
     if len(EEG.shape) == 1:
         EEG = np.reshape(EEG, (1, EEG.shape[0]))
 
-    if detrendType == "High pass":
+    if detrendType.lower() == "high pass":
         picks = detrendChannels if detrendChannels else range(EEG.shape[0])
         filt = _eeglab_create_highpass(detrendCutoff, sample_rate)
         EEG[picks, :] = _eeglab_fir_filter(EEG[picks, :], filt)
 
-    elif detrendType == "High pass sinc":
+    elif detrendType.lower() == "high pass sinc":
         fOrder = np.round(14080 * sample_rate / 512)
         fOrder = np.int(fOrder + fOrder % 2)
         EEG = mne.filter.filter_data(
@@ -63,7 +66,7 @@ def removeTrend(
             fir_window="blackman",
         )
 
-    elif detrendType == "Local detrend":
+    elif detrendType.lower() == "local detrend":
         if detrendChannels is None:
             detrendChannels = np.arange(0, EEG.shape[0])
         windowSize = 1.5 / detrendCutoff
