@@ -13,6 +13,7 @@ def removeTrend(
     detrendType="high pass",
     detrendCutoff=1.0,
     detrendChannels=None,
+    matlab_strict=False,
 ):
     """Remove trends (i.e., slow drifts in baseline) from an array of EEG data.
 
@@ -31,6 +32,10 @@ def removeTrend(
     detrendChannels : {list, None}, optional
         List of the indices of all channels that require detrending/filtering.
         If ``None``, all channels are used (default).
+    matlab_strict : bool, optional
+        Whether or not detrending should strictly follow MATLAB PREP's internal
+        math, ignoring any improvements made in PyPREP over the original code
+        (see :ref:`matlab-diffs` for more details). Defaults to ``False``.
 
     Returns
     -------
@@ -40,18 +45,29 @@ def removeTrend(
     Notes
     -----
     High-pass filtering is implemented using the MNE filter function
-    :func:``mne.filter.filter_data``. Local detrending is performed using a
-    Python re-implementation of the ``runline`` command from the chronux_2
-    MATLAB package.
+    :func:``mne.filter.filter_data`` unless `matlab_strict` is ``True``, in
+    which case it is performed using a minimal re-implementation of EEGLAB's
+    ``pop_eegfiltnew``. Local detrending is performed using a Python
+    re-implementation of the ``runline`` command from the chronux_2 MATLAB
+    package.
 
     """
     if len(EEG.shape) == 1:
         EEG = np.reshape(EEG, (1, EEG.shape[0]))
 
     if detrendType.lower() == "high pass":
-        picks = detrendChannels if detrendChannels else range(EEG.shape[0])
-        filt = _eeglab_create_highpass(detrendCutoff, sample_rate)
-        EEG[picks, :] = _eeglab_fir_filter(EEG[picks, :], filt)
+        if matlab_strict:
+            picks = detrendChannels if detrendChannels else range(EEG.shape[0])
+            filt = _eeglab_create_highpass(detrendCutoff, sample_rate)
+            EEG[picks, :] = _eeglab_fir_filter(EEG[picks, :], filt)
+        else:
+            EEG = mne.filter.filter_data(
+                EEG,
+                sfreq=sample_rate,
+                l_freq=detrendCutoff,
+                h_freq=None,
+                picks=detrendChannels
+            )
 
     elif detrendType.lower() == "high pass sinc":
         fOrder = np.round(14080 * sample_rate / 512)

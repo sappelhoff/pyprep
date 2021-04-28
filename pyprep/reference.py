@@ -175,7 +175,9 @@ class Reference:
 
         """
         raw = self.raw.copy()
-        raw._data = removeTrend(raw.get_data(), sample_rate=self.sfreq)
+        raw._data = removeTrend(
+            raw.get_data(), self.sfreq, matlab_strict=self.matlab_strict
+        )
 
         # Determine unusable channels and remove them from the reference channels
         noisy_detector = NoisyChannels(
