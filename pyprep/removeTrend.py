@@ -48,8 +48,12 @@ def removeTrend(
     :func:``mne.filter.filter_data`` unless `matlab_strict` is ``True``, in
     which case it is performed using a minimal re-implementation of EEGLAB's
     ``pop_eegfiltnew``. Local detrending is performed using a Python
-    re-implementation of the ``runline`` command from the chronux_2 MATLAB
-    package.
+    re-implementation of the ``runline`` function from the Chronux package for
+    MATLAB [1]_.
+
+    References
+    ----------
+    .. [1] http://chronux.org/
 
     """
     if len(EEG.shape) == 1:
@@ -114,21 +118,28 @@ def removeTrend(
 
 
 def runline(y, n, dn):
-    """Implement chronux_2 runline command for performing local linear regression.
+    """Perform local linear regression on a channel of EEG data.
+
+    A re-implementation of the ``runline`` function from the Chronux package
+    for MATLAB [1]_.
 
     Parameters
     ----------
     y : np.ndarray
-        Input from one EEG channel.
+        A 1-D array of data from a single EEG channel.
     n : int
-        length of the detrending window.
+        Length of the detrending window.
     dn : int
-        length of the window step size.
+        Length of the window step size.
 
     Returns
     -------
     y: np.ndarray
-       Detrended EEG signal for one channel.
+       The detrended signal for the given EEG channel.
+
+    References
+    ----------
+    .. [1] http://chronux.org/
 
     """
     nt = y.shape[0]
