@@ -134,10 +134,11 @@ def _eeglab_create_highpass(cutoff, srate):
 
     """
     TRANSITION_WIDTH_RATIO = 0.25
-    trans_bandwidth = cutoff if cutoff < 2 else cutoff * TRANSITION_WIDTH_RATIO
+    HAMMING_CONSTANT = 3.3  # note: not entirely clear what this represents
 
     # Calculate parameters for constructing filter
-    order = 3.3 / (trans_bandwidth / srate)
+    trans_bandwidth = cutoff if cutoff < 2 else cutoff * TRANSITION_WIDTH_RATIO
+    order = HAMMING_CONSTANT / (trans_bandwidth / srate)
     order = int(np.ceil(order / 2) * 2)  # ensure order is even
     stop = cutoff - trans_bandwidth
     transition = (stop + cutoff) / srate

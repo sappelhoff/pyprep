@@ -22,7 +22,7 @@ Differences in Signal Detrending
 --------------------------------
 
 In the PREP pipeline, trends (i.e., slow drifts in EEG baseline signal) are
-temporarily removed from the data prior to line-noise removal with CleanLine
+temporarily removed from the data prior to adaptive line-noise removal
 as well as prior to bad channel detection via :class:`~pyprep.NoisyChannels`,
 which occurs at multiple points during robust re-referencing. This is done to
 improve the accuracy of both of these processes, which are sensitive to
