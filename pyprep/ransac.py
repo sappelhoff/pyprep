@@ -5,7 +5,8 @@ from mne.channels.interpolation import _make_interpolation_matrix
 from mne.utils import check_random_state
 
 from pyprep.utils import (
-    split_list, verify_free_ram, _get_random_subset, _mat_round, _correlate_arrays
+    _get_random_subset, _mat_round, _correlate_arrays, print_progress,
+    split_list, verify_free_ram
 )
 
 
@@ -314,6 +315,9 @@ def _ransac_by_window(data, interpolation_mats, win_size, win_count, matlab_stri
     correlations = np.ones((win_count, ch_count))
 
     for window in range(win_count):
+
+        # Print RANSAC progress in 10% increments
+        print_progress(window + 1, win_count, every=0.1)
 
         # Get the current window of EEG data
         start = window * win_size

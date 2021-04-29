@@ -362,6 +362,44 @@ def split_list(mylist, chunk_size):
     ]
 
 
+def print_progress(current, end, start=None, stepsize=1, every=0.1):
+    """Print the current progress in a loop.
+
+    Parameters
+    ----------
+    current: {int, float}
+        The index or numeric value of the current position in the loop.
+    end: {int, float}
+        The final index or numeric value in the loop.
+    start: {int, float, None}, optional
+        The first index or numeric value in the loop. If ``None``, the start
+        index will assumed to be `stepsize` (i.e., 3 if `stepsize` is 3).
+        Defaults to ``None``.
+    stepsize: {int, float}, optional
+        The fixed amount by which `current` increases every iteration of the
+        loop. Defaults to ``1``.
+    every: float, optional
+        The frequency with which to print progress updates during the loop,
+        as a proportion between 0 and 1, exclusive. Defaults to ``0.1``, which
+        prints a progress update after every 10%.
+
+    """
+    start = stepsize if not start else start
+    end = end - start + 1
+    current = current - start + 1
+
+    if current == 1:
+        print("Progress:", end=" ", flush=True)
+    elif current == end:
+        print("100%")
+    elif current > 0:
+        progress = float(current) / end
+        last = float(current - stepsize) / end
+        if int(progress / every) > int(last / every):
+            pct = int(progress / every) * every * 100
+            print("{0}%...".format(int(pct)), end=" ", flush=True)
+
+
 def make_random_mne_object(
     ch_names,
     ch_types,
