@@ -6,6 +6,7 @@ import mne
 import numpy as np
 import scipy.interpolate
 from scipy.stats import iqr
+from scipy.signal import firwin, lfilter, lfilter_zi
 from psutil import virtual_memory
 
 
@@ -106,6 +107,104 @@ def _mat_iqr(arr, axis=None):
     n = len(arr)
     iqr_adj = ((iqr_q - 50) * n / (n - 1)) + 50
     return iqr(arr, rng=np.clip(iqr_adj, 0, 100), axis=axis)
+
+
+def _eeglab_create_highpass(cutoff, srate):
+    """Create a high-pass FIR filter using Hamming windows.
+
+    Parameters
+    ----------
+    cutoff : float
+        The lower pass-band edge of the filter, in Hz.
+    srate : float
+        The sampling rate of the EEG signal, in Hz.
+
+    Returns
+    -------
+    filter : np.ndarray
+        A 1-dimensional array of FIR filter coefficients.
+
+    Notes
+    -----
+    In MATLAB PREP, the internal ``removeTrend`` function uses EEGLAB's
+    ``pop_eegfiltnew`` to high-pass the EEG data to remove slow drifts.
+    Because MNE's ``mne.filter.filter_data`` and EEGLAB's ``pop_eegfiltnew``
+    calculate filter parameters slightly differently, this function is
+    used to precisely match EEGLAB & MATLAB PREP's filtering method.
+
+    """
+    TRANSITION_WIDTH_RATIO = 0.25
+    HAMMING_CONSTANT = 3.3  # note: not entirely clear what this represents
+
+    # Calculate parameters for constructing filter
+    trans_bandwidth = cutoff if cutoff < 2 else cutoff * TRANSITION_WIDTH_RATIO
+    order = HAMMING_CONSTANT / (trans_bandwidth / srate)
+    order = int(np.ceil(order / 2) * 2)  # ensure order is even
+    stop = cutoff - trans_bandwidth
+    transition = (stop + cutoff) / srate
+
+    # Generate highpass filter
+    N = order + 1
+    filt = np.zeros(N)
+    filt[N // 2] = 1
+    filt -= firwin(N, transition, window='hamming', nyq=1)
+    return filt
+
+
+def _eeglab_fir_filter(data, filt):
+    """Apply an FIR filter to a 2-D array of EEG data.
+
+    Parameters
+    ----------
+    data : np.ndarray
+        A 2-D array of EEG data to filter.
+    filt : np.ndarray
+        A 1-D array of FIR filter coefficients.
+
+    Returns
+    -------
+    filtered : np.ndarray
+        A 2-D array of FIR-filtered EEG data.
+
+    Notes
+    -----
+    Produces identical output to EEGLAB's ``firfilt`` function (for non-epoched
+    data). For internal use within :mod:`pyprep.removeTrend`.
+
+    """
+    # Initialize parameters for FIR filtering
+    frames_per_window = 2000
+    group_delay = int((len(filt) - 1) / 2)
+    n_samples = data.shape[1]
+    n_windows = int(np.ceil((n_samples - group_delay) / frames_per_window))
+    pad_len = min(group_delay, n_samples)
+
+    # Prepare initial state of filter, using padding at start of data
+    start_pad_idx = np.zeros(pad_len, dtype=np.uint8)
+    start_padded = np.concatenate(
+        (data[:, start_pad_idx], data[:, :pad_len]),
+        axis=1
+    )
+    zi_init = lfilter_zi(filt, 1) * np.take(start_padded, [0], axis=0)
+    _, zi = lfilter(filt, 1, start_padded, axis=1, zi=zi_init)
+
+    # Iterate over windows of signal, filtering in chunks
+    out = np.zeros_like(data)
+    for w in range(n_windows):
+        start = group_delay + w * frames_per_window
+        end = min(start + frames_per_window, n_samples)
+        start_out = start - group_delay
+        end_out = end - group_delay
+        out[:, start_out:end_out], zi = lfilter(
+            filt, 1, data[:, start:end], axis=1, zi=zi
+        )
+
+    # Finish filtering data, using padding at end to calculate final values
+    end_pad_idx = np.zeros(pad_len, dtype=np.uint8) + (n_samples - 1)
+    end, _ = lfilter(filt, 1, data[:, end_pad_idx], axis=1, zi=zi)
+    out[:, (n_samples - pad_len):] = end[:, (group_delay - pad_len):]
+
+    return out
 
 
 def _get_random_subset(x, size, rand_state):

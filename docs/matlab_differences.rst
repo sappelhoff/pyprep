@@ -18,6 +18,31 @@ internal math.
     :depth: 3
 
 
+Differences in Signal Detrending
+--------------------------------
+
+In the PREP pipeline, trends (i.e., slow drifts in EEG baseline signal) are
+temporarily removed from the data prior to adaptive line-noise removal
+as well as prior to bad channel detection via :class:`~pyprep.NoisyChannels`,
+which occurs at multiple points during robust re-referencing. This is done to
+improve the accuracy of both of these processes, which are sensitive to
+influence from trends in the signal.
+
+In MATLAB PREP, the default method of trend removal is to use EEGLAB's
+``pop_eegfiltnew``, which creates and applies an FIR high-pass filter to the
+data. MNE's :func:`mne.filter.filter_data` offers similar functionality, but
+uses slightly different filter creation math and a different filtering
+algorithm such that its results and subsequent :class:`~pyprep.NoisyChannels`
+values also differ slightly (on the order of ~0.002) for RANSAC correlations.
+
+Because the practical differences are small and MNE's filtering is fast and
+well-tested, PyPREP defaults to using :func:`mne.filter.filter_data` for
+high-pass trend removal. However, for exact numerical compatibility, PyPREP
+has a basic re-implementaion of EEGLAB's ``pop_eegfiltnew`` in Python that
+produces identical results to MATLAB PREP's ``removeTrend`` when
+``matlab_strict`` is set to ``True``.
+
+
 Differences in RANSAC
 ---------------------
 

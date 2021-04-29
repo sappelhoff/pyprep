@@ -157,7 +157,9 @@ class PrepPipeline:
         # reference_channels = _set_diff(self.prep_params["ref_chs"], unusable_channels)
         # Step 1: 1Hz high pass filtering
         if len(self.prep_params["line_freqs"]) != 0:
-            self.EEG_new = removeTrend(self.EEG_raw, sample_rate=self.sfreq)
+            self.EEG_new = removeTrend(
+                self.EEG_raw, self.sfreq, matlab_strict=self.matlab_strict
+            )
 
             # Step 2: Removing line noise
             linenoise = self.prep_params["line_freqs"]

@@ -17,10 +17,19 @@ def test_highpass():
     lowpass_filt2 = removeTrend.removeTrend(
         signal, detrendType="High pass", sample_rate=srate, detrendCutoff=1
     )
+    lowpass_filt3 = removeTrend.removeTrend(
+        signal,
+        detrendType="High pass",
+        sample_rate=srate,
+        detrendCutoff=1,
+        matlab_strict=True
+    )
     error1 = lowpass_filt1 - highfreq_signal
     error2 = lowpass_filt2 - highfreq_signal
+    error3 = lowpass_filt3 - highfreq_signal
     assert np.sqrt(np.mean(error1 ** 2)) < 0.1
     assert np.sqrt(np.mean(error2 ** 2)) < 0.1
+    assert np.sqrt(np.mean(error3 ** 2)) < 0.1
 
 
 def test_detrend():
