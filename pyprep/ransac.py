@@ -22,7 +22,7 @@ def find_bad_by_ransac(
     fraction_bad=0.4,
     corr_window_secs=5.0,
     channel_wise=False,
-    window_wise=False,
+    max_chunk_size=None,
     random_state=None,
     matlab_strict=False,
 ):
@@ -72,10 +72,17 @@ def find_bad_by_ransac(
         The duration (in seconds) of each RANSAC correlation window. Defaults to
         5 seconds.
     channel_wise : bool, optional
-        Whether RANSAC should be performed one channel at a time (lower RAM
-        demands) or in chunks of as many channels as can fit into the currently
-        available RAM (faster). Defaults to ``False`` (i.e., using the faster
-        method).
+        Whether RANSAC should predict signals for whole chunks of channels at
+        once instead of predicting signals for each RANSAC window individually.
+        Channel-wise RANSAC generally has higher RAM demands than window-wise
+        RANSAC (especially if `max_chunk_size` is ``None``), but can be faster
+        on systems with lots of RAM to spare. Defaults to ``False``.
+    max_chunk_size : {int, None}, optional
+        The maximum number of channels to predict at once during channel-wise
+        RANSAC. If ``None``, RANSAC will use the largest chunk size that will
+        fit into the available RAM, which may slow down other programs on the
+        host system. If using window-wise RANSAC (the default), this parameter
+        has no effect. Defaults to ``None``.
     random_state : {int, None, np.random.RandomState}, optional
         The random seed with which to generate random samples of channels during
         RANSAC. If random_state is an int, it will be used as a seed for RandomState.
@@ -133,11 +140,11 @@ def find_bad_by_ransac(
 
     # Before running, make sure we have enough memory when using the
     # smallest possible chunk size
-    if window_wise:
+    if channel_wise:
+        verify_free_ram(data, n_samples, 1)
+    else:
         window_size = int(sample_rate * corr_window_secs)
         verify_free_ram(data[:, :window_size], n_samples, n_chans_good)
-    else:
-        verify_free_ram(data, n_samples, 1)
 
     # Generate random channel picks for each RANSAC sample
     random_ch_picks = []
@@ -170,7 +177,7 @@ def find_bad_by_ransac(
     print("Executing RANSAC\nThis may take a while, so be patient...")
 
     # If enabled, run window-wise RANSAC
-    if window_wise:
+    if not channel_wise:
         # Get correlations between actual vs predicted signals for each RANSAC window
         channel_correlations[:, good_idx] = _ransac_by_window(
             data[good_idx, :], interp_mats, win_size, win_count, matlab_strict
@@ -183,14 +190,15 @@ def find_bad_by_ransac(
         n_chunks = int(np.ceil(n_chans_good / i))
         if n_chunks != chunk_count:
             chunk_count = n_chunks
-            chunk_sizes.append(i)
+            if not max_chunk_size or i <= max_chunk_size:
+                chunk_sizes.append(i)
 
-    chunk_size = 1 if channel_wise else chunk_sizes.pop()
+    chunk_size = chunk_sizes.pop()
     mem_error = True
     job = list(range(n_chans_good))
 
     # If not using window-wise RANSAC, do channel-wise RANSAC
-    while mem_error and not window_wise:
+    while mem_error and channel_wise:
         try:
             channel_chunks = split_list(job, chunk_size)
             total_chunks = len(channel_chunks)

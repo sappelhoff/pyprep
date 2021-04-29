@@ -409,6 +409,7 @@ class NoisyChannels:
         fraction_bad=0.4,
         corr_window_secs=5.0,
         channel_wise=False,
+        max_chunk_size=None,
     ):
         """Detect channels that are not predicted well by other channels.
 
@@ -447,10 +448,18 @@ class NoisyChannels:
             The duration (in seconds) of each RANSAC correlation window. Defaults
             to 5 seconds.
         channel_wise : bool, optional
-            Whether RANSAC should be performed one channel at a time (lower RAM
-            demands) or in chunks of as many channels as can fit into the
-            currently available RAM (faster). Defaults to ``False`` (i.e., using
-            the faster method).
+            Whether RANSAC should predict signals for whole chunks of channels
+            at once instead of predicting signals for each RANSAC window
+            individually. Channel-wise RANSAC generally has higher RAM demands
+            than window-wise RANSAC (especially if `max_chunk_size` is
+            ``None``), but can be faster on systems with lots of RAM to spare.
+            Defaults to ``False``.
+        max_chunk_size : {int, None}, optional
+            The maximum number of channels to predict at once during
+            channel-wise RANSAC. If ``None``, RANSAC will use the largest chunk
+            size that will fit into the available RAM, which may slow down
+            other programs on the host system. If using window-wise RANSAC
+            (the default), this parameter has no effect. Defaults to ``None``.
 
         References
         ----------
@@ -479,7 +488,7 @@ class NoisyChannels:
             fraction_bad,
             corr_window_secs,
             channel_wise,
-            False,
+            max_chunk_size,
             self.random_state,
             self.matlab_strict,
         )
