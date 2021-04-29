@@ -197,12 +197,12 @@ def find_bad_by_ransac(
             for chunk in channel_chunks:
                 interp_mats_for_chunk = [mat[chunk, :] for mat in interp_mats]
                 channel_correlations[:, good_idx[chunk]] = _ransac_by_channel(
-                    chunk,
-                    random_ch_picks,
-                    interp_mats_for_chunk,
                     data[good_idx, :],
+                    interp_mats_for_chunk,
                     win_size,
                     win_count,
+                    chunk,
+                    random_ch_picks,
                     matlab_strict,
                 )
                 if chunk == channel_chunks[0]:
@@ -292,22 +292,26 @@ def _ransac_by_window(data, interpolation_mats, win_size, win_count, matlab_stri
     Parameters
     ----------
     data : np.ndarray
-        A 2-D array containing the EEG signals from currently-good channels.
+        A 2-D array containing the EEG signals from all currently-good channels.
     interpolation_mats : list of np.ndarray
         A list of interpolation matrices, one for each RANSAC sample of channels.
     win_size : int
         Number of frames/samples of EEG data in each RANSAC correlation window.
     win_count: int
         Number of RANSAC correlation windows.
+    matlab_strict : bool
+        Whether or not RANSAC should strictly follow MATLAB PREP's internal
+        math, ignoring any improvements made in PyPREP over the original code.
 
     Returns
     -------
-    channel_correlations : np.ndarray
+    correlations : np.ndarray
         Correlations of the given channels to their predicted values within each
         RANSAC window.
+
     """
     ch_count = data.shape[0]
-    ch_correlations = np.ones((win_count, ch_count))
+    correlations = np.ones((win_count, ch_count))
 
     for window in range(win_count):
 
@@ -320,9 +324,9 @@ def _ransac_by_window(data, interpolation_mats, win_size, win_count, matlab_stri
         predicted = _predict_median_signals(actual, interpolation_mats, matlab_strict)
 
         # Calculate the actual vs predicted signal correlation for each channel
-        ch_correlations[window, :] = _correlate_arrays(actual, predicted, matlab_strict)
+        correlations[window, :] = _correlate_arrays(actual, predicted, matlab_strict)
 
-    return ch_correlations
+    return correlations
 
 
 def _predict_median_signals(window, interpolation_mats, matlab_strict=False):
@@ -335,9 +339,9 @@ def _predict_median_signals(window, interpolation_mats, matlab_strict=False):
     interpolation_mats : list of np.ndarray
         A set of channel interpolation matrices, one for each RANSAC sample of
         channels.
-    matlab_strict : bool, optional
-        Whether MATLAB PREP's internal logic should be strictly followed (see Notes).
-        Defaults to False.
+    matlab_strict : bool
+        Whether or not RANSAC should strictly follow MATLAB PREP's internal
+        math, ignoring any improvements made in PyPREP over the original code.
 
     Returns
     -------
@@ -372,12 +376,12 @@ def _predict_median_signals(window, interpolation_mats, matlab_strict=False):
 
 
 def _ransac_by_channel(
+    data,
+    interpolation_mats,
+    win_size,
+    win_count,
     chans_to_predict,
     random_ch_picks,
-    interpolation_mats,
-    data,
-    n,
-    w_correlation,
     matlab_strict,
 ):
     """Calculate correlations of channels with their RANSAC-predicted values.
@@ -390,107 +394,107 @@ def _ransac_by_channel(
 
     Parameters
     ----------
-    chans_to_predict : list of int
-        Indices of the channels to predict (as they appear in `data`).
-    random_ch_picks : list
-        Each element is a list of indexes of the channels (as they appear
-        in `data`) to use for reconstruction in each of the samples.
+    data : np.ndarray
+        A 2-D array containing the EEG signals from all currently-good channels.
     interpolation_mats : list of np.ndarray
         A set of channel interpolation matrices, one for each RANSAC sample of
         channels.
-    data : np.ndarray
-        2-D EEG data
-    n : int
-        Number of frames/samples of each window.
-    w_correlation: int
-        Number of windows.
+    win_size : int
+        Number of frames/samples of EEG data in each RANSAC correlation window.
+    win_count: int
+        Number of RANSAC correlation windows.
+    chans_to_predict : list of int
+        Indices of the channels to predict (as they appear in `data`) within the
+        current chunk.
+    random_ch_picks : list of list of int
+        A list containing multiple random subsets of currently-good channels.
     matlab_strict : bool
         Whether or not RANSAC should strictly follow MATLAB PREP's internal
         math, ignoring any improvements made in PyPREP over the original code.
 
     Returns
     -------
-    channel_correlations : np.ndarray
-        correlations of the given channels to their RANSAC-predicted values.
+    correlations : np.ndarray
+        Correlations of the given channels to their predicted values within each
+        RANSAC window.
 
     """
-    # Preallocate
-    channel_correlations = np.ones((w_correlation, len(chans_to_predict)))
+    # Preallocate RANSAC correlation matrix for current chunk
+    chunk_size = len(chans_to_predict)
+    correlations = np.ones((win_count, chunk_size))
 
-    # Make the ransac predictions
-    ransac_eeg = _predict_median_signals_channelwise(
-        chans_to_predict=chans_to_predict,
-        random_ch_picks=random_ch_picks,
-        interpolation_mats=interpolation_mats,
+    # Get median RANSAC predictions for each channel in the current chunk
+    predicted_chans = _predict_median_signals_channelwise(
         data=data,
+        interpolation_mats=interpolation_mats,
+        random_ch_picks=random_ch_picks,
+        chunk_size=len(chans_to_predict),
         matlab_strict=matlab_strict,
     )
 
     # Correlate ransac prediction and eeg data
 
     # For the actual data
-    data_window = data[chans_to_predict, : n * w_correlation]
-    data_window = data_window.reshape(len(chans_to_predict), w_correlation, n)
+    data_window = data[chans_to_predict, : win_size * win_count]
+    data_window = data_window.reshape(chunk_size, win_count, win_size)
     data_window = data_window.swapaxes(1, 0)
 
     # For the ransac predicted eeg
-    pred_window = ransac_eeg[: len(chans_to_predict), : n * w_correlation]
-    pred_window = pred_window.reshape(len(chans_to_predict), w_correlation, n)
+    pred_window = predicted_chans[: chunk_size, : win_size * win_count]
+    pred_window = pred_window.reshape(chunk_size, win_count, win_size)
     pred_window = pred_window.swapaxes(1, 0)
 
     # Perform correlations
-    for k in range(w_correlation):
+    for k in range(win_count):
         data_portion = data_window[k, :, :]
         pred_portion = pred_window[k, :, :]
         R = _correlate_arrays(data_portion, pred_portion, matlab_strict)
-        channel_correlations[k, :] = R
+        correlations[k, :] = R
 
-    return channel_correlations
+    return correlations
 
 
 def _predict_median_signals_channelwise(
-    chans_to_predict,
-    random_ch_picks,
-    interpolation_mats,
     data,
+    interpolation_mats,
+    random_ch_picks,
+    chunk_size,
     matlab_strict,
 ):
     """Calculate the median RANSAC-predicted signal for a given chunk of channels.
 
     Parameters
     ----------
-    chans_to_predict : list of int
-        Indices of the channels to predict (as they appear in `data`).
-    random_ch_picks : list
-        Each element is a list of indexes of the channels (as they appear
-        in `data`) to use for reconstruction in each of the samples.
+    data : np.ndarray
+        A 2-D array containing the EEG signals from all currently-good channels.
     interpolation_mats : list of np.ndarray
         A set of channel interpolation matrices, one for each RANSAC sample of
         channels.
-    data : np.ndarray
-        2-D EEG data
+    random_ch_picks : list of list of int
+        A list containing multiple random subsets of currently-good channels.
+    chunk_size : int
+        The number of channels to predict in the current chunk.
     matlab_strict : bool
         Whether or not RANSAC should strictly follow MATLAB PREP's internal
         math, ignoring any improvements made in PyPREP over the original code.
 
     Returns
     -------
-    ransac_eeg : np.ndarray
-        The EEG data predicted by RANSAC
+    predicted_chans : np.ndarray
+        The median RANSAC-predicted EEG signals for the given chunk of channels.
 
     """
     # n_chns, n_timepts = data.shape
     # 2 next lines should be equivalent but support single channel processing
     ransac_samples = len(interpolation_mats)
     n_timepts = data.shape[1]
-    n_chns = len(chans_to_predict)
 
     # Before running, make sure we have enough memory
-    verify_free_ram(data, ransac_samples, n_chns)
+    verify_free_ram(data, ransac_samples, chunk_size)
 
     # Memory seems to be fine ...
     # Make the predictions
-    eeg_predictions = np.zeros((n_chns, n_timepts, ransac_samples))
+    eeg_predictions = np.zeros((chunk_size, n_timepts, ransac_samples))
     for sample in range(ransac_samples):
         # Get the random channels & interpolation matrix for the current sample
         reconstr_idx = random_ch_picks[sample]
@@ -503,8 +507,6 @@ def _predict_median_signals_channelwise(
         # Match MATLAB's rounding logic (.5 always rounded up)
         median_idx = int(_mat_round(ransac_samples / 2.0) - 1)
         eeg_predictions.sort(axis=-1)
-        ransac_eeg = eeg_predictions[:, :, median_idx]
+        return eeg_predictions[:, :, median_idx]
     else:
-        ransac_eeg = np.median(eeg_predictions, axis=-1, overwrite_input=True)
-
-    return ransac_eeg
+        return np.median(eeg_predictions, axis=-1, overwrite_input=True)
