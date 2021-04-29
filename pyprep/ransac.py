@@ -21,6 +21,7 @@ def find_bad_by_ransac(
     fraction_bad=0.4,
     corr_window_secs=5.0,
     channel_wise=False,
+    window_wise=False,
     random_state=None,
     matlab_strict=False,
 ):
@@ -131,7 +132,11 @@ def find_bad_by_ransac(
 
     # Before running, make sure we have enough memory when using the
     # smallest possible chunk size
-    verify_free_ram(data, n_samples, 1)
+    if window_wise:
+        window_size = int(sample_rate * corr_window_secs)
+        verify_free_ram(data[:, :window_size], n_samples, n_chans_good)
+    else:
+        verify_free_ram(data, n_samples, 1)
 
     # Generate random channel picks for each RANSAC sample
     random_ch_picks = []
@@ -145,24 +150,30 @@ def find_bad_by_ransac(
     # Generate interpolation matrix for each RANSAC sample
     interp_mats = _make_interpolation_matrices(random_ch_picks, chn_pos_good)
 
-    # Correlation windows setup
+    # Calculate the size (in frames) and count of correlation windows
     correlation_frames = corr_window_secs * sample_rate
-    correlation_window = np.arange(correlation_frames)
-    n = correlation_window.shape[0]
     signal_frames = data.shape[1]
     correlation_offsets = np.arange(
         0, (signal_frames - correlation_frames), correlation_frames
     )
-    w_correlation = correlation_offsets.shape[0]
+    win_size = int(correlation_frames)
+    win_count = correlation_offsets.shape[0]
 
-    # Preallocate
+    # Preallocate RANSAC correlation matrix
     n_chans_complete = len(complete_chn_labs)
-    channel_correlations = np.ones((w_correlation, n_chans_complete))
+    channel_correlations = np.ones((win_count, n_chans_complete))
     # Notice self.EEGData.shape[0] = self.n_chans_new
     # Is now data.shape[0] = n_chans_complete
     # They came from the same drop of channels
 
     print("Executing RANSAC\nThis may take a while, so be patient...")
+
+    # If enabled, run window-wise RANSAC
+    if window_wise:
+        # Get correlations between actual vs predicted signals for each RANSAC window
+        channel_correlations[:, good_idx] = _ransac_by_window(
+            data[good_idx, :], interp_mats, win_size, win_count, matlab_strict
+        )
 
     # Calculate smallest chunk size for each possible chunk count
     chunk_sizes = []
@@ -173,26 +184,25 @@ def find_bad_by_ransac(
             chunk_count = n_chunks
             chunk_sizes.append(i)
 
-    chunk_size = chunk_sizes.pop()
+    chunk_size = 1 if channel_wise else chunk_sizes.pop()
     mem_error = True
     job = list(range(n_chans_good))
 
-    if channel_wise:
-        chunk_size = 1
-    while mem_error:
+    # If not using window-wise RANSAC, do channel-wise RANSAC
+    while mem_error and not window_wise:
         try:
             channel_chunks = split_list(job, chunk_size)
             total_chunks = len(channel_chunks)
             current = 1
             for chunk in channel_chunks:
                 interp_mats_for_chunk = [mat[chunk, :] for mat in interp_mats]
-                channel_correlations[:, good_idx[chunk]] = _ransac_correlations(
+                channel_correlations[:, good_idx[chunk]] = _ransac_by_channel(
                     chunk,
                     random_ch_picks,
                     interp_mats_for_chunk,
                     data[good_idx, :],
-                    n,
-                    w_correlation,
+                    win_size,
+                    win_count,
                     matlab_strict,
                 )
                 if chunk == channel_chunks[0]:
@@ -270,7 +280,98 @@ def _make_interpolation_matrices(random_ch_picks, chn_pos_good):
     return interpolation_mats
 
 
-def _ransac_correlations(
+def _ransac_by_window(data, interpolation_mats, win_size, win_count, matlab_strict):
+    """Calculate correlations of channels with their RANSAC-predicted values.
+
+    This function calculates RANSAC correlations for each RANSAC window
+    individually, requiring RAM equivalent to [channels * sample rate * seconds
+    per RANSAC window] to run. Generally, this method will use less RAM than
+    :func:`_ransac_by_channel`, with the exception of short recordings with high
+    electrode counts.
+
+    Parameters
+    ----------
+    data : np.ndarray
+        A 2-D array containing the EEG signals from currently-good channels.
+    interpolation_mats : list of np.ndarray
+        A list of interpolation matrices, one for each RANSAC sample of channels.
+    win_size : int
+        Number of frames/samples of EEG data in each RANSAC correlation window.
+    win_count: int
+        Number of RANSAC correlation windows.
+
+    Returns
+    -------
+    channel_correlations : np.ndarray
+        Correlations of the given channels to their predicted values within each
+        RANSAC window.
+    """
+    ch_count = data.shape[0]
+    ch_correlations = np.ones((win_count, ch_count))
+
+    for window in range(win_count):
+
+        # Get the current window of EEG data
+        start = window * win_size
+        end = (window + 1) * win_size
+        actual = data[:, start:end]
+
+        # Get the median RANSAC-predicted signal for each channel
+        predicted = _predict_median_signals(actual, interpolation_mats, matlab_strict)
+
+        # Calculate the actual vs predicted signal correlation for each channel
+        ch_correlations[window, :] = _correlate_arrays(actual, predicted, matlab_strict)
+
+    return ch_correlations
+
+
+def _predict_median_signals(window, interpolation_mats, matlab_strict=False):
+    """Calculate the median RANSAC-predicted signal for a given window of data.
+
+    Parameters
+    ----------
+    window : np.ndarray
+        A 2-D window of EEG data with the shape `[channels, samples]`.
+    interpolation_mats : list of np.ndarray
+        A set of channel interpolation matrices, one for each RANSAC sample of
+        channels.
+    matlab_strict : bool, optional
+        Whether MATLAB PREP's internal logic should be strictly followed (see Notes).
+        Defaults to False.
+
+    Returns
+    -------
+    predicted : np.ndarray
+        The median RANSAC-predicted EEG signal for the given window of data.
+
+    Notes
+    -----
+    In MATLAB PREP, the median signal is calculated by sorting the different
+    predictions for each EEG sample/channel from low to high and then taking the value
+    at the middle index (as calculated by `int(n_ransac_samples / 2.0)`) for each.
+    Because this logic only returns the correct result for odd numbers of samples, the
+    current function will instead return the true median signal across predictions
+    unless strict MATLAB equivalence is requested.
+
+    """
+    ransac_samples = len(interpolation_mats)
+    merged_mats = np.concatenate(interpolation_mats, axis=0)
+
+    predictions_per_sample = np.reshape(
+        np.matmul(merged_mats, window),
+        (ransac_samples, window.shape[0], window.shape[1])
+    )
+
+    if matlab_strict:
+        # Match MATLAB's rounding logic (.5 always rounded up)
+        median_idx = int(_mat_round(ransac_samples / 2.0) - 1)
+        predictions_per_sample.sort(axis=0)
+        return predictions_per_sample[median_idx, :, :]
+    else:
+        return np.median(predictions_per_sample, axis=0)
+
+
+def _ransac_by_channel(
     chans_to_predict,
     random_ch_picks,
     interpolation_mats,
@@ -279,7 +380,13 @@ def _ransac_correlations(
     w_correlation,
     matlab_strict,
 ):
-    """Get correlations of channels to their RANSAC-predicted values.
+    """Calculate correlations of channels with their RANSAC-predicted values.
+
+    This function calculates RANSAC correlations on one (or more) full channels
+    at once, requiring RAM equivalent to [channels per chunk * sample rate *
+    length of recording in seconds] to run. Generally, this method will use
+    more RAM than :func:`_ransac_by_window`, but may be faster for systems with
+    large amounts of RAM.
 
     Parameters
     ----------
@@ -311,7 +418,7 @@ def _ransac_correlations(
     channel_correlations = np.ones((w_correlation, len(chans_to_predict)))
 
     # Make the ransac predictions
-    ransac_eeg = _run_ransac(
+    ransac_eeg = _predict_median_signals_channelwise(
         chans_to_predict=chans_to_predict,
         random_ch_picks=random_ch_picks,
         interpolation_mats=interpolation_mats,
@@ -341,17 +448,14 @@ def _ransac_correlations(
     return channel_correlations
 
 
-def _run_ransac(
+def _predict_median_signals_channelwise(
     chans_to_predict,
     random_ch_picks,
     interpolation_mats,
     data,
     matlab_strict,
 ):
-    """Detect noisy channels apart from the ones described previously.
-
-    It creates a random subset of the so-far good channels
-    and predicts the values of the channels not in the subset.
+    """Calculate the median RANSAC-predicted signal for a given chunk of channels.
 
     Parameters
     ----------

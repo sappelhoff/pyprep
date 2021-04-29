@@ -479,6 +479,7 @@ class NoisyChannels:
             fraction_bad,
             corr_window_secs,
             channel_wise,
+            False,
             self.random_state,
             self.matlab_strict,
         )
