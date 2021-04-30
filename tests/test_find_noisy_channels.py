@@ -3,6 +3,7 @@ import numpy as np
 import pytest
 
 from pyprep.find_noisy_channels import NoisyChannels
+from pyprep.removeTrend import removeTrend
 
 
 @pytest.mark.usefixtures("raw", "montage")
@@ -111,48 +112,68 @@ def test_findnoisychannels(raw, montage):
     nd.find_bad_by_SNR()
     assert rand_chn_lab in nd.bad_by_SNR
 
-    # Test for finding bad channels by RANSAC
-    raw_tmp = raw.copy()
-    # Ransac identifies channels that go bad together and are highly correlated.
-    # Inserting highly correlated signal in channels 0 through 3 at 30 Hz
-    raw_tmp._data[0:6, :] = np.cos(2 * np.pi * raw.times * 30) * 1e-6
-    nd = NoisyChannels(raw_tmp, random_state=rng)
-    nd.find_bad_by_ransac()
-    bads = nd.bad_by_ransac
-    assert bads == raw_tmp.ch_names[0:6]
 
-    # Test for finding bad channels by matlab_strict RANSAC
-    raw_tmp = raw.copy()
-    # Ransac identifies channels that go bad together and are highly correlated.
-    # Inserting highly correlated signal in channels 0 through 3 at 30 Hz
-    raw_tmp._data[0:6, :] = np.cos(2 * np.pi * raw.times * 30) * 1e-6
-    nd = NoisyChannels(raw_tmp, random_state=rng, matlab_strict=True)
-    nd.find_bad_by_ransac()
-    bads = nd.bad_by_ransac
-    assert bads == raw_tmp.ch_names[0:6]
+@pytest.mark.usefixtures("raw", "montage")
+def test_find_bad_by_ransac(raw, montage):
+    """Test the RANSAC component of NoisyChannels."""
+    # Set a fixed random seed and a montage for the tests
+    rng = 435656
+    raw.set_montage(montage)
 
-    # Test for finding bad channels by channel-wise RANSAC
-    raw_tmp = raw.copy()
-    # Ransac identifies channels that go bad together and are highly correlated.
+    # RANSAC identifies channels that go bad together and are highly correlated.
     # Inserting highly correlated signal in channels 0 through 3 at 30 Hz
-    raw_tmp._data[0:6, :] = np.cos(2 * np.pi * raw.times * 30) * 1e-6
-    nd = NoisyChannels(raw_tmp, random_state=rng)
-    nd.find_bad_by_ransac(channel_wise=True)
-    bads = nd.bad_by_ransac
-    assert bads == raw_tmp.ch_names[0:6]
-
-    # Test not-enough-memory and n_samples type exceptions
     raw_tmp = raw.copy()
     raw_tmp._data[0:6, :] = np.cos(2 * np.pi * raw.times * 30) * 1e-6
-    nd = NoisyChannels(raw_tmp, random_state=rng)
+
+    # Pre-detrend data to save time during NoisyChannels initialization
+    raw_tmp._data = removeTrend(raw_tmp.get_data(), raw.info["sfreq"])
+
+    # Run different variations of RANSAC on the same data
+    test_matrix = {
+        # List items represent [matlab_strict, channel_wise, max_chunk_size]
+        'by_window': [False, False, None],
+        'by_channel': [False, True, None],
+        'by_channel_maxchunk': [False, True, 2],
+        'by_window_strict': [True, False, None],
+        'by_channel_strict': [True, True, None]
+    }
+    bads = {}
+    corr = {}
+    for name, args in test_matrix.items():
+        nd = NoisyChannels(
+            raw_tmp, do_detrend=False, random_state=rng, matlab_strict=args[0]
+        )
+        nd.find_bad_by_ransac(channel_wise=args[1], max_chunk_size=args[2])
+        # Save bad channels and RANSAC correlation matrix for later comparison
+        bads[name] = nd.bad_by_ransac
+        corr[name] = nd._extra_info['bad_by_ransac']['ransac_correlations']
+
+    # Test whether all methods detected bad channels properly
+    assert bads['by_window'] == raw_tmp.ch_names[0:6]
+    assert bads['by_channel'] == raw_tmp.ch_names[0:6]
+    assert bads['by_channel_maxchunk'] == raw_tmp.ch_names[0:6]
+    assert bads['by_window_strict'] == raw_tmp.ch_names[0:6]
+    assert bads['by_channel_strict'] == raw_tmp.ch_names[0:6]
+
+    # Make sure non-strict correlation matrices all match
+    assert np.allclose(corr['by_window'], corr['by_channel'])
+    assert np.allclose(corr['by_window'], corr['by_channel_maxchunk'])
+
+    # Make sure MATLAB-strict correlation matrices match
+    assert np.allclose(corr['by_window_strict'], corr['by_channel_strict'])
+
+    # Make sure strict and non-strict matrices differ
+    assert not np.allclose(corr['by_window'], corr['by_window_strict'])
 
     # Set n_samples very very high to trigger a memory error
     n_samples = int(1e100)
+    nd = NoisyChannels(raw_tmp, do_detrend=False, random_state=rng)
     with pytest.raises(MemoryError):
         nd.find_bad_by_ransac(n_samples=n_samples)
 
     # Set n_samples to a float to trigger a type error
     n_samples = 35.5
+    nd = NoisyChannels(raw_tmp, do_detrend=False, random_state=rng)
     with pytest.raises(TypeError):
         nd.find_bad_by_ransac(n_samples=n_samples)
 
