@@ -3,7 +3,7 @@ import numpy as np
 
 from pyprep.utils import (
     _mat_round, _mat_quantile, _mat_iqr, _get_random_subset, _correlate_arrays,
-    _eeglab_create_highpass
+    _eeglab_create_highpass, print_progress
 )
 
 
@@ -114,3 +114,43 @@ def test_eeglab_create_highpass():
     expected_val = 0.9961
     actual_val = vals[len(vals) // 2]
     assert np.isclose(expected_val, actual_val, atol=0.001)
+
+
+def test_print_progress(capsys):
+    """Test the function for printing progress updates within a loop."""
+    # Test printing start value
+    print_progress(1, 20)
+    captured = capsys.readouterr()
+    assert captured.out == "Progress: "
+
+    # Test printing end values
+    iterations = 27
+    for i in range(iterations):
+        print_progress(i + 1, iterations, every=0.2)
+    captured = capsys.readouterr()
+    assert captured.out == "Progress: 20%... 40%... 60%... 80%... 100%\n"
+
+    # Test printing of updates at right times
+    iterations = 176
+    for i in range(iterations):
+        print_progress(i + 1, iterations)
+        if (i + 1) == 17:
+            captured = capsys.readouterr()
+            assert captured.out == "Progress: "
+        elif (i + 1) == 18:
+            captured = capsys.readouterr()
+            assert captured.out == "10%... "
+            break
+
+    # Test shifted start value
+    iterations = 25
+    start = 5
+    for i in range(start, iterations + 1):
+        print_progress(i, iterations, start=start)
+        if i == 6:
+            captured = capsys.readouterr()
+            assert captured.out == "Progress: "
+        elif i == 7:
+            captured = capsys.readouterr()
+            assert captured.out == "10%... "
+            break

@@ -144,22 +144,45 @@ class NoisyChannels:
             )
         return bads
 
-    def find_all_bads(self, ransac=True):
+    def find_all_bads(self, ransac=True, channel_wise=False, max_chunk_size=None):
         """Call all the functions to detect bad channels.
 
         This function calls all the bad-channel detecting functions.
 
         Parameters
         ----------
-        ransac : bool
-            To detect channels by ransac or not.
+        ransac : bool, optional
+            Whether RANSAC should be used for bad channel detection, in addition
+            to the other methods. RANSAC can detect bad channels that other
+            methods are unable to catch, but also slows down noisy channel
+            detection considerably. Defaults to ``True``.
+        channel_wise : bool, optional
+            Whether RANSAC should predict signals for chunks of channels over the
+            entire signal length ("channel-wise RANSAC", see `max_chunk_size`
+            parameter). If ``False``, RANSAC will instead predict signals for all
+            channels at once but over a number of smaller time windows instead of
+            over the entire signal length ("window-wise RANSAC"). Channel-wise
+            RANSAC generally has higher RAM demands than window-wise RANSAC
+            (especially if `max_chunk_size` is ``None``), but can be faster on
+            systems with lots of RAM to spare. Has no effect if not using RANSAC.
+            Defaults to ``False``.
+        max_chunk_size : {int, None}, optional
+            The maximum number of channels to predict at once during
+            channel-wise RANSAC. If ``None``, RANSAC will use the largest chunk
+            size that will fit into the available RAM, which may slow down
+            other programs on the host system. If using window-wise RANSAC
+            (the default) or not using RANSAC at all, this parameter has no
+            effect. Defaults to ``None``.
 
         """
         self.find_bad_by_nan_flat()
         self.find_bad_by_deviation()
         self.find_bad_by_SNR()
         if ransac:
-            self.find_bad_by_ransac()
+            self.find_bad_by_ransac(
+                channel_wise=channel_wise,
+                max_chunk_size=max_chunk_size
+            )
 
     def find_bad_by_nan_flat(self):
         """Detect channels that appear flat or have NaN values."""
@@ -409,6 +432,7 @@ class NoisyChannels:
         fraction_bad=0.4,
         corr_window_secs=5.0,
         channel_wise=False,
+        max_chunk_size=None,
     ):
         """Detect channels that are not predicted well by other channels.
 
@@ -447,10 +471,20 @@ class NoisyChannels:
             The duration (in seconds) of each RANSAC correlation window. Defaults
             to 5 seconds.
         channel_wise : bool, optional
-            Whether RANSAC should be performed one channel at a time (lower RAM
-            demands) or in chunks of as many channels as can fit into the
-            currently available RAM (faster). Defaults to ``False`` (i.e., using
-            the faster method).
+            Whether RANSAC should predict signals for chunks of channels over the
+            entire signal length ("channel-wise RANSAC", see `max_chunk_size`
+            parameter). If ``False``, RANSAC will instead predict signals for all
+            channels at once but over a number of smaller time windows instead of
+            over the entire signal length ("window-wise RANSAC"). Channel-wise
+            RANSAC generally has higher RAM demands than window-wise RANSAC
+            (especially if `max_chunk_size` is ``None``), but can be faster on
+            systems with lots of RAM to spare. Defaults to ``False``.
+        max_chunk_size : {int, None}, optional
+            The maximum number of channels to predict at once during
+            channel-wise RANSAC. If ``None``, RANSAC will use the largest chunk
+            size that will fit into the available RAM, which may slow down
+            other programs on the host system. If using window-wise RANSAC
+            (the default), this parameter has no effect. Defaults to ``None``.
 
         References
         ----------
@@ -479,6 +513,7 @@ class NoisyChannels:
             fraction_bad,
             corr_window_secs,
             channel_wise,
+            max_chunk_size,
             self.random_state,
             self.matlab_strict,
         )

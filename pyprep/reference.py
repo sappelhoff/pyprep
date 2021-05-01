@@ -32,6 +32,22 @@ class Reference:
     ransac : bool, optional
         Whether or not to use RANSAC for noisy channel detection in addition to
         the other methods in :class:`~pyprep.NoisyChannels`. Defaults to True.
+    channel_wise : bool, optional
+        Whether RANSAC should predict signals for chunks of channels over the
+        entire signal length ("channel-wise RANSAC", see `max_chunk_size`
+        parameter). If ``False``, RANSAC will instead predict signals for all
+        channels at once but over a number of smaller time windows instead of
+        over the entire signal length ("window-wise RANSAC"). Channel-wise
+        RANSAC generally has higher RAM demands than window-wise RANSAC
+        (especially if `max_chunk_size` is ``None``), but can be faster on
+        systems with lots of RAM to spare. Has no effect if not using RANSAC.
+        Defaults to ``False``.
+    max_chunk_size : {int, None}, optional
+        The maximum number of channels to predict at once during channel-wise
+        RANSAC. If ``None``, RANSAC will use the largest chunk size that will
+        fit into the available RAM, which may slow down other programs on the
+        host system. If using window-wise RANSAC (the default) or not using
+        RANSAC at all, this parameter has no effect. Defaults to ``None``.
     random_state : {int, None, np.random.RandomState}, optional
         The random seed at which to initialize the class. If random_state is
         an int, it will be used as a seed for RandomState.
@@ -51,7 +67,14 @@ class Reference:
     """
 
     def __init__(
-        self, raw, params, ransac=True, random_state=None, matlab_strict=False
+        self,
+        raw,
+        params,
+        ransac=True,
+        channel_wise=False,
+        max_chunk_size=None,
+        random_state=None,
+        matlab_strict=False
     ):
         """Initialize the class."""
         self.raw = raw.copy()
@@ -62,7 +85,11 @@ class Reference:
         self.reference_channels = params["ref_chs"]
         self.rereferenced_channels = params["reref_chs"]
         self.sfreq = self.raw.info["sfreq"]
-        self.ransac = ransac
+        self.ransac_settings = {
+            'ransac': ransac,
+            'channel_wise': channel_wise,
+            'max_chunk_size': max_chunk_size
+        }
         self.random_state = check_random_state(random_state)
         self._extra_info = {}
         self.matlab_strict = matlab_strict
@@ -103,7 +130,7 @@ class Reference:
         noisy_detector = NoisyChannels(
             self.raw, random_state=self.random_state, matlab_strict=self.matlab_strict
         )
-        noisy_detector.find_all_bads(ransac=self.ransac)
+        noisy_detector.find_all_bads(**self.ransac_settings)
 
         # Record Noisy channels and EEG before interpolation
         self.bad_before_interpolation = noisy_detector.get_bads(verbose=True)
@@ -141,7 +168,7 @@ class Reference:
         noisy_detector = NoisyChannels(
             self.raw, random_state=self.random_state, matlab_strict=self.matlab_strict
         )
-        noisy_detector.find_all_bads(ransac=self.ransac)
+        noisy_detector.find_all_bads(**self.ransac_settings)
         self.still_noisy_channels = noisy_detector.get_bads()
         self.raw.info["bads"] = self.still_noisy_channels
         self.noisy_channels_after_interpolation = {
@@ -186,7 +213,7 @@ class Reference:
             random_state=self.random_state,
             matlab_strict=self.matlab_strict
         )
-        noisy_detector.find_all_bads(ransac=self.ransac)
+        noisy_detector.find_all_bads(**self.ransac_settings)
         self.noisy_channels_original = {
             "bad_by_nan": noisy_detector.bad_by_nan,
             "bad_by_flat": noisy_detector.bad_by_flat,
@@ -243,7 +270,7 @@ class Reference:
                 matlab_strict=self.matlab_strict
             )
             # Detrend applied at the beginning of the function.
-            noisy_detector.find_all_bads(ransac=self.ransac)
+            noisy_detector.find_all_bads(**self.ransac_settings)
             self.noisy_channels["bad_by_nan"] = _union(
                 self.noisy_channels["bad_by_nan"], noisy_detector.bad_by_nan
             )
