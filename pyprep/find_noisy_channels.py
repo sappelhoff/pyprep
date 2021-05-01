@@ -161,7 +161,7 @@ class NoisyChannels:
             entire signal length ("channel-wise RANSAC", see `max_chunk_size`
             parameter). If ``False``, RANSAC will instead predict signals for all
             channels at once but over a number of smaller time windows instead of
-            over the entirem signal length ("window-wise RANSAC"). Channel-wise
+            over the entire signal length ("window-wise RANSAC"). Channel-wise
             RANSAC generally has higher RAM demands than window-wise RANSAC
             (especially if `max_chunk_size` is ``None``), but can be faster on
             systems with lots of RAM to spare. Has no effect if not using RANSAC.
@@ -475,7 +475,7 @@ class NoisyChannels:
             entire signal length ("channel-wise RANSAC", see `max_chunk_size`
             parameter). If ``False``, RANSAC will instead predict signals for all
             channels at once but over a number of smaller time windows instead of
-            over the entirem signal length ("window-wise RANSAC"). Channel-wise
+            over the entire signal length ("window-wise RANSAC"). Channel-wise
             RANSAC generally has higher RAM demands than window-wise RANSAC
             (especially if `max_chunk_size` is ``None``), but can be faster on
             systems with lots of RAM to spare. Defaults to ``False``.
