@@ -144,22 +144,42 @@ class NoisyChannels:
             )
         return bads
 
-    def find_all_bads(self, ransac=True):
+    def find_all_bads(self, ransac=True, channel_wise=False, max_chunk_size=None):
         """Call all the functions to detect bad channels.
 
         This function calls all the bad-channel detecting functions.
 
         Parameters
         ----------
-        ransac : bool
-            To detect channels by ransac or not.
+        ransac : bool, optional
+            Whether RANSAC should be for bad channel detection, in addition to
+            the other methods. RANSAC can detect bad channels that other methods
+            are unable to catch, but also slows down noisy channel detection
+            considerably. Defaults to ``True``.
+        channel_wise : bool, optional
+            Whether RANSAC should predict signals for whole chunks of channels
+            at once instead of predicting signals for each RANSAC window
+            individually. Channel-wise RANSAC generally has higher RAM demands
+            than window-wise RANSAC (especially if `max_chunk_size` is
+            ``None``), but can be faster on systems with lots of RAM to spare.
+            Has no effect if not using RANSAC. Defaults to ``False``.
+        max_chunk_size : {int, None}, optional
+            The maximum number of channels to predict at once during
+            channel-wise RANSAC. If ``None``, RANSAC will use the largest chunk
+            size that will fit into the available RAM, which may slow down
+            other programs on the host system. If using window-wise RANSAC
+            (the default) or not using RANSAC at all, this parameter has no
+            effect. Defaults to ``None``.
 
         """
         self.find_bad_by_nan_flat()
         self.find_bad_by_deviation()
         self.find_bad_by_SNR()
         if ransac:
-            self.find_bad_by_ransac()
+            self.find_bad_by_ransac(
+                channel_wise=channel_wise,
+                max_chunk_size=max_chunk_size
+            )
 
     def find_bad_by_nan_flat(self):
         """Detect channels that appear flat or have NaN values."""

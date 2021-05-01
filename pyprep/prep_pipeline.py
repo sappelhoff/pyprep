@@ -38,6 +38,19 @@ class PrepPipeline:
     ransac : bool, optional
         Whether or not to use RANSAC for noisy channel detection in addition to
         the other methods in :class:`~pyprep.NoisyChannels`. Defaults to True.
+    channel_wise : bool, optional
+        Whether RANSAC should predict signals for whole chunks of channels at
+        once instead of predicting signals for each RANSAC window
+        individually. Channel-wise RANSAC generally has higher RAM demands than
+        window-wise RANSAC (especially if `max_chunk_size` is ``None``), but can
+        be faster on systems with lots of RAM to spare.nHas no effect if not
+        using RANSAC. Defaults to ``False``.
+    max_chunk_size : {int, None}, optional
+        The maximum number of channels to predict at once during channel-wise
+        RANSAC. If ``None``, RANSAC will use the largest chunk size that will
+        fit into the available RAM, which may slow down other programs on the
+        host system. If using window-wise RANSAC (the default) or not using
+        RANSAC at all, this parameter has no effect. Defaults to ``None``.
     random_state : {int, None, np.random.RandomState}, optional
         The random seed at which to initialize the class. If random_state is
         an int, it will be used as a seed for RandomState.
@@ -99,6 +112,8 @@ class PrepPipeline:
         prep_params,
         montage,
         ransac=True,
+        channel_wise=False,
+        max_chunk_size=None,
         random_state=None,
         filter_kwargs=None,
         matlab_strict=False,
@@ -133,7 +148,11 @@ class PrepPipeline:
         if self.prep_params["reref_chs"] == "eeg":
             self.prep_params["reref_chs"] = self.ch_names_eeg
         self.sfreq = self.raw_eeg.info["sfreq"]
-        self.ransac = ransac
+        self.ransac_settings = {
+            'ransac': ransac,
+            'channel_wise': channel_wise,
+            'max_chunk_size': max_chunk_size
+        }
         self.random_state = check_random_state(random_state)
         self.filter_kwargs = filter_kwargs
         self.matlab_strict = matlab_strict
@@ -189,9 +208,9 @@ class PrepPipeline:
         reference = Reference(
             self.raw_eeg,
             self.prep_params,
-            ransac=self.ransac,
             random_state=self.random_state,
-            matlab_strict=self.matlab_strict
+            matlab_strict=self.matlab_strict,
+            **self.ransac_settings
         )
         reference.perform_reference()
         self.raw_eeg = reference.raw
