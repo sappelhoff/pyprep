@@ -72,11 +72,14 @@ def find_bad_by_ransac(
         The duration (in seconds) of each RANSAC correlation window. Defaults to
         5 seconds.
     channel_wise : bool, optional
-        Whether RANSAC should predict signals for whole chunks of channels at
-        once instead of predicting signals for each RANSAC window individually.
-        Channel-wise RANSAC generally has higher RAM demands than window-wise
-        RANSAC (especially if `max_chunk_size` is ``None``), but can be faster
-        on systems with lots of RAM to spare. Defaults to ``False``.
+        Whether RANSAC should predict signals for chunks of channels over the
+        entire signal length ("channel-wise RANSAC", see `max_chunk_size`
+        parameter). If ``False``, RANSAC will instead predict signals for all
+        channels at once but over a number of smaller time windows instead of
+        over the entirem signal length ("window-wise RANSAC"). Channel-wise
+        RANSAC generally has higher RAM demands than window-wise RANSAC
+        (especially if `max_chunk_size` is ``None``), but can be faster on
+        systems with lots of RAM to spare. Defaults to ``False``.
     max_chunk_size : {int, None}, optional
         The maximum number of channels to predict at once during channel-wise
         RANSAC. If ``None``, RANSAC will use the largest chunk size that will
