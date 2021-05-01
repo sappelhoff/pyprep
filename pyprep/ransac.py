@@ -364,7 +364,7 @@ def _predict_median_signals(window, interpolation_mats, matlab_strict=False):
     -----
     In MATLAB PREP, the median signal is calculated by sorting the different
     predictions for each EEG sample/channel from low to high and then taking the value
-    at the middle index (as calculated by `int(n_ransac_samples / 2.0)`) for each.
+    at the middle index (as calculated by ``int(n_ransac_samples / 2.0)``) for each.
     Because this logic only returns the correct result for odd numbers of samples, the
     current function will instead return the true median signal across predictions
     unless strict MATLAB equivalence is requested.
