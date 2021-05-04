@@ -17,7 +17,8 @@ sys.path.append(os.path.abspath(os.path.join(curdir, "sphinxext")))
 
 # -- Project information -----------------------------------------------------
 project = "pyprep"
-copyright = "2018-{}, pyprep developers".format(date.today().year)
+today = date.today()
+copyright = f"2018-{today.year}, pyprep developers. Last updated {today.isoformat()}."
 author = "pyprep developers"
 
 # The short X.Y version
