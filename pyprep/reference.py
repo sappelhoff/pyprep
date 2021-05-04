@@ -226,22 +226,29 @@ class Reference:
             "bad_all": noisy_detector.get_bads(),
         }
         self._extra_info['initial_bad'] = noisy_detector._extra_info
+        logger.info("Bad channels: {}".format(self.noisy_channels_original))
 
-        self.noisy_channels = self.noisy_channels_original.copy()
-        logger.info("Bad channels: {}".format(self.noisy_channels))
-
+        # Determine channels to use/exclude from initial reference estimation
         self.unusable_channels = _union(
-            noisy_detector.bad_by_nan, noisy_detector.bad_by_flat
+            noisy_detector.bad_by_nan + noisy_detector.bad_by_flat,
+            noisy_detector.bad_by_SNR
         )
-
-        # According to the Matlab Implementation (see robustReference.m)
-        # self.unusable_channels = _union(self.unusable_channels,
-        # noisy_detector.bad_by_SNR)
-        # but maybe this makes no difference...
-
         self.reference_channels = _set_diff(
             self.reference_channels, self.unusable_channels
         )
+
+        # Initialize channels to permanently flag as bad during referencing
+        self.noisy_channels = {
+            "bad_by_nan": noisy_detector.bad_by_nan,
+            "bad_by_flat": noisy_detector.bad_by_flat,
+            "bad_by_deviation": [],
+            "bad_by_hf_noise": [],
+            "bad_by_correlation": [],
+            "bad_by_SNR": noisy_detector.bad_by_SNR,
+            "bad_by_dropout": [],
+            "bad_by_ransac": [],
+            "bad_all": self.unusable_channels,
+        }
 
         # Get initial estimate of the reference by the specified method
         signal = raw.get_data() * 1e6
