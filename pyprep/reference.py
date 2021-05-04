@@ -230,15 +230,11 @@ class Reference:
         self.noisy_channels = self.noisy_channels_original.copy()
         logger.info("Bad channels: {}".format(self.noisy_channels))
 
+        # Determine channels to use/exclude from initial reference estimation
         self.unusable_channels = _union(
-            noisy_detector.bad_by_nan, noisy_detector.bad_by_flat
+            noisy_detector.bad_by_nan + noisy_detector.bad_by_flat,
+            noisy_detector.bad_by_SNR
         )
-
-        # According to the Matlab Implementation (see robustReference.m)
-        # self.unusable_channels = _union(self.unusable_channels,
-        # noisy_detector.bad_by_SNR)
-        # but maybe this makes no difference...
-
         self.reference_channels = _set_diff(
             self.reference_channels, self.unusable_channels
         )
