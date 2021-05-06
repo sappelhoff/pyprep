@@ -53,6 +53,7 @@ Bug
 - Changed "bad channel by deviation" and "bad channel by correlation" detection code in :class:`NoisyChannels` to compute IQR and quantiles in the same manner as MATLAB, thus producing identical results to MATLAB PREP, by `Austin Hurst`_ (:gh:`57`)
 - Fixed a bug where EEG data was getting reshaped into RANSAC windows incorrectly (channel samples were not sequential), which was causing considerable variability and noise in RANSAC results, by `Austin Hurst`_ (:gh:`67`)
 - Fixed RANSAC to avoid making unnecessary signal predictions for known-bad channels, matching MATLAB behaviour and reducing RAM requirements, by `Austin Hurst`_ (:gh:`72`)
+- Fixed a bug in :meth:`NoisyChannels.find_bad_by_correlation` that prevented it from being able to handle channels with dropouts (intermittent flat regions), by `Austin Hurst`_ (:gh:`81`).
 
 API
 ~~~
