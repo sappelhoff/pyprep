@@ -85,6 +85,23 @@ def test_findnoisychannels(raw, montage):
     nd = NoisyChannels(raw_tmp, random_state=rng)
     nd.find_bad_by_correlation()
     assert rand_chn_lab in nd.bad_by_correlation
+    bad_by_correlation_orig = nd.bad_by_correlation  # save for dropout tests
+
+    # Test for channels with signal dropouts (reuse data from correlation tests)
+    dropout_idx = rand_chn_idx - 1 if rand_chn_idx > 0 else 1
+    # Make 2nd and 4th quarters of the dropout channel completely flat
+    raw_tmp._data[dropout_idx, :int(n/4)] = 0
+    raw_tmp._data[dropout_idx, int(3*n/4):] = 0
+    # Run correlation and dropout detection on data
+    nd = NoisyChannels(raw_tmp, random_state=rng)
+    nd.find_bad_by_correlation()  # also does dropout detection
+    # Test if dropout channel detected correctly
+    assert raw_tmp.ch_names[dropout_idx] in nd.bad_by_dropout
+    # Test if correlations still detected correctly
+    bad_orig_plus_dropout = bad_by_correlation_orig + nd.bad_by_dropout
+    same_bads = set(nd.bad_by_correlation) == set(bad_by_correlation_orig)
+    same_plus_dropout = set(nd.bad_by_correlation) == set(bad_orig_plus_dropout)
+    assert same_bads or same_plus_dropout
 
     # Test for high freq noise detection
     raw_tmp = raw.copy()
