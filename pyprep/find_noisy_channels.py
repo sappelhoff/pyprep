@@ -382,7 +382,7 @@ class NoisyChannels:
                     np.isnan(channel_correlation[i, j]) or np.isnan(noiselevels[i, j])
                 )
                 if drop[i, j] == 1:
-                    channel_deviations[i, j] = 0
+                    channel_correlation[i, j] = 0
                     noiselevels[i, j] = 0
         maximum_correlations[self.channels_interpolate, :] = np.transpose(
             channel_correlation
