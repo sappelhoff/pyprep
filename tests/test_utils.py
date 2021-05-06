@@ -71,6 +71,10 @@ def test_mat_quantile_iqr():
     iqr_actual = _mat_iqr(tst_nan, axis=0)
     assert all(np.isclose(iqr_expected, iqr_actual, atol=0.001))
 
+    # Test quantile behaviour in special cases
+    assert _mat_quantile([0.3], 0.98) == 0.3
+    assert np.isnan(_mat_quantile([], 0.98))
+
 
 def test_get_random_subset():
     """Test the function for getting random channel subsets."""
