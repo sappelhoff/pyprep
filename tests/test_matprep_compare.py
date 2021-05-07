@@ -59,11 +59,11 @@ def matprep_noisy(matprep_artifacts):
     # Read in and parse noisy channel info artifact from MATLAB PREP
     info_path = matprep_artifacts['matprep_info']
     matprep_info = scipy.io.loadmat(info_path, simplify_cells=True)['prep_info']
-    matprep_noisy_all = matprep_info['noiseDetection']['reference']
+    matprep_noisy_all = matprep_info['reference']
     matprep_noisy = matprep_noisy_all['noisyStatisticsOriginal']
 
     # Gather bad channel names from MatPREP, converting numbers to labels
-    ch_names = matprep_info['noiseDetection']['originalChannelLabels']
+    ch_names = matprep_info['originalChannelLabels']
     bad_types = {
         'badChannelsFromNaNs': 'by_nan',
         'badChannelsFromNoData': 'by_flat',
@@ -135,15 +135,21 @@ def test_compare_removeTrend(matprep_artifacts):
 
     # Check MATLAB equivalence at start of recording
     win_size = 500  # window of samples to check
-    assert np.allclose(expected[:, :win_size], actual[:, :win_size])
+    assert np.allclose(
+        actual[:, :win_size], expected[:, :win_size], equal_nan=True
+    )
 
     # Check MATLAB equivalence in middle of recording
     win_start = int(actual.shape[1] / 2)
     win_end = win_start + win_size
-    assert np.allclose(expected[:, win_start:win_end], actual[:, win_start:win_end])
+    assert np.allclose(
+        actual[:, win_start:win_end], expected[:, win_start:win_end], equal_nan=True
+    )
 
     # Check MATLAB equivalence at end of recording
-    assert np.allclose(expected[:, -win_size:], actual[:, -win_size:])
+    assert np.allclose(
+        actual[:, -win_size:], expected[:, -win_size:], equal_nan=True
+    )
 
 
 class TestCompareNoisyChannels(object):
@@ -252,7 +258,9 @@ class TestCompareNoisyChannels(object):
 
     def test_bad_by_SNR(self, pyprep_noisy, matprep_noisy):
         """Compare bad-by-SNR results between PyPREP and MatPREP."""
-        assert pyprep_noisy.bad_by_SNR == matprep_noisy['bads']['by_SNR']
+        pyprep_bads_snr = sorted(pyprep_noisy.bad_by_SNR)
+        matprep_bads_snr = sorted(matprep_noisy['bads']['by_SNR'])
+        assert pyprep_bads_snr == matprep_bads_snr
 
     def test_bad_by_dropout(self, pyprep_noisy, matprep_noisy):
         """Compare bad-by-dropout results between PyPREP and MatPREP."""
