@@ -45,6 +45,9 @@ Changelog
 - Added `max_chunk_size` parameter for specifying the maximum chunk size to use for channel-wise RANSAC, allowing more control over PyPREP RAM usage, by `Austin Hurst`_ (:gh:`66`)
 - Changed :class:`~pyprep.Reference` to exclude "bad-by-SNR" channels from initial average referencing, matching MATLAB PREP behaviour, by `Austin Hurst`_ (:gh:`78`)
 - Changed :class:`~pyprep.Reference` to only flag "unusable" channels (bad by flat, NaNs, or low SNR) from the first pass of noisy detection for permanent exclusion from the reference signal, matching MATLAB PREP behaviour, by `Austin Hurst`_ (:gh:`78`)
+- Added a framework for automated testing of PyPREP's components against their MATLAB PREP counterparts (using ``.mat`` and ``.set`` files generated with the `matprep_artifacts`_ script), helping verify that the two PREP implementations are numerically equivalent when `matlab_strict` is ``True``, by `Austin Hurst`_ (:gh:`79`)
+
+.. matprep_artifacts: https://github.com/a-hurst/matprep_artifacts
 
 Bug
 ~~~
@@ -54,6 +57,7 @@ Bug
 - Fixed a bug where EEG data was getting reshaped into RANSAC windows incorrectly (channel samples were not sequential), which was causing considerable variability and noise in RANSAC results, by `Austin Hurst`_ (:gh:`67`)
 - Fixed RANSAC to avoid making unnecessary signal predictions for known-bad channels, matching MATLAB behaviour and reducing RAM requirements, by `Austin Hurst`_ (:gh:`72`)
 - Fixed a bug in :meth:`NoisyChannels.find_bad_by_correlation` that prevented it from being able to handle channels with dropouts (intermittent flat regions), by `Austin Hurst`_ (:gh:`81`).
+- Fixed :class:`~pyprep.NoisyChannels` so that it always runs "bad channel by NaN" and "bad channel by flat" detection, preventing these channels from causing problems with other :class:`~pyprep.NoisyChannels` methods, by `Austin Hurst`_ (:gh:`79`)
 
 API
 ~~~
