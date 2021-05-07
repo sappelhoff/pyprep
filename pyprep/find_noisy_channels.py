@@ -366,15 +366,17 @@ class NoisyChannels:
         for k in range(0, w_correlation):
             eeg_portion = np.transpose(np.squeeze(EEG_new_win[:, :, k]))
             data_portion = np.transpose(np.squeeze(data_win[:, :, k]))
-            window_correlation = np.corrcoef(np.transpose(eeg_portion))
+            with np.errstate(invalid='ignore'):  # suppress divide-by-zero warnings
+                window_correlation = np.corrcoef(np.transpose(eeg_portion))
             abs_corr = np.abs(
                 np.subtract(window_correlation, np.diag(np.diag(window_correlation)))
             )
             channel_correlation[k, :] = _mat_quantile(abs_corr, 0.98, axis=0)
-            noiselevels[k, :] = np.divide(
-                robust.mad(np.subtract(data_portion, eeg_portion), c=1),
-                robust.mad(eeg_portion, c=1),
-            )
+            with np.errstate(invalid='ignore'):  # suppress divide-by-zero warnings
+                noiselevels[k, :] = np.divide(
+                    robust.mad(np.subtract(data_portion, eeg_portion), c=1),
+                    robust.mad(eeg_portion, c=1),
+                )
             channel_deviations[k, :] = 0.7413 * _mat_iqr(data_portion, axis=0)
         for i in range(0, w_correlation):
             for j in range(0, self.new_dimensions[0]):
@@ -382,7 +384,7 @@ class NoisyChannels:
                     np.isnan(channel_correlation[i, j]) or np.isnan(noiselevels[i, j])
                 )
                 if drop[i, j] == 1:
-                    channel_deviations[i, j] = 0
+                    channel_correlation[i, j] = 0
                     noiselevels[i, j] = 0
         maximum_correlations[self.channels_interpolate, :] = np.transpose(
             channel_correlation

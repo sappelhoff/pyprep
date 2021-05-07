@@ -33,6 +33,11 @@ def test_mat_quantile_iqr():
        quantile(tst, 0.98);
        iqr(tst);
 
+       % Add NaNs to input and re-test
+       tst(1, :) = nan;
+       quantile(tst, 0.98);
+       iqr(tst);
+
     """
     # Generate test data
     np.random.seed(435656)
@@ -49,6 +54,26 @@ def test_mat_quantile_iqr():
     # Test IQR equivalence with MATLAB
     iqr_actual = _mat_iqr(tst, axis=0)
     assert all(np.isclose(iqr_expected, iqr_actual, atol=0.001))
+
+    # Add NaNs to test data
+    tst_nan = tst.copy()
+    tst_nan[0, :] = np.NaN
+
+    # Create arrays containing MATLAB results for NaN test case
+    quantile_expected = np.asarray([0.9712, 0.9880, 0.9807])
+    iqr_expected = np.asarray([0.4764, 0.5188, 0.5044])
+
+    # Test quantile equivalence with MATLAB for array with NaN
+    quantile_actual = _mat_quantile(tst_nan, 0.98, axis=0)
+    assert all(np.isclose(quantile_expected, quantile_actual, atol=0.001))
+
+    # Test IQR equivalence with MATLAB for array with NaN
+    iqr_actual = _mat_iqr(tst_nan, axis=0)
+    assert all(np.isclose(iqr_expected, iqr_actual, atol=0.001))
+
+    # Test quantile behaviour in special cases
+    assert _mat_quantile([0.3], 0.98) == 0.3
+    assert np.isnan(_mat_quantile([], 0.98))
 
 
 def test_get_random_subset():

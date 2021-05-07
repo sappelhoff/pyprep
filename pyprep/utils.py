@@ -5,7 +5,6 @@ from cmath import sqrt
 import mne
 import numpy as np
 import scipy.interpolate
-from scipy.stats import iqr
 from scipy.signal import firwin, lfilter, lfilter_zi
 from psutil import virtual_memory
 
@@ -74,10 +73,27 @@ def _mat_quantile(arr, q, axis=None):
     This function mimics MATLAB's logic to produce identical results.
 
     """
+    def _mat_quantile_1d(arr, q):
+        arr = arr[~np.isnan(arr)]
+        n = len(arr)
+        if n == 0:
+            return np.NaN
+        elif n == 1:
+            return arr[0]
+        else:
+            q_adj = ((q - 0.5) * n / (n - 1)) + 0.5
+            return np.quantile(arr, np.clip(q_adj, 0, 1))
+
+    # Make sure inputs are both Numpy arrays
+    arr = np.asarray(arr)
     q = np.asarray(q, dtype=np.float64)
-    n = len(arr)
-    q_adj = ((q - 0.5) * n / (n - 1)) + 0.5
-    return np.quantile(arr, np.clip(q_adj, 0, 1), axis=axis)
+
+    if axis is not None and len(arr.shape) > 1:
+        # If an axis is specified, calculate quantiles along it
+        return np.apply_along_axis(_mat_quantile_1d, axis, arr, q)
+    else:
+        # Otherwise, calculate the quantile for the full sample
+        return _mat_quantile_1d(arr, q)
 
 
 def _mat_iqr(arr, axis=None):
@@ -103,10 +119,7 @@ def _mat_iqr(arr, axis=None):
     See notes for :func:`utils._mat_quantile`.
 
     """
-    iqr_q = np.asarray([25, 75], dtype=np.float64)
-    n = len(arr)
-    iqr_adj = ((iqr_q - 50) * n / (n - 1)) + 50
-    return iqr(arr, rng=np.clip(iqr_adj, 0, 100), axis=axis)
+    return _mat_quantile(arr, 0.75, axis) - _mat_quantile(arr, 0.25, axis)
 
 
 def _eeglab_create_highpass(cutoff, srate):
