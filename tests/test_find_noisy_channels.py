@@ -118,6 +118,12 @@ def test_findnoisychannels(raw, montage):
     nd.find_bad_by_hfnoise()
     assert rand_chn_lab in nd.bad_by_hf_noise
 
+    # Test for high freq noise detection when sample rate < 100 Hz
+    raw_tmp.resample(80)  # downsample to 80 Hz
+    nd = NoisyChannels(raw_tmp, random_state=rng)
+    nd.find_bad_by_hfnoise()
+    assert len(nd.bad_by_hf_noise) == 0
+
     # Test for signal to noise ratio in EEG data
     raw_tmp = raw.copy()
     m, n = raw_tmp._data.shape
