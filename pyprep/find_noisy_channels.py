@@ -49,24 +49,13 @@ class NoisyChannels:
         assert isinstance(raw, mne.io.BaseRaw)
 
         self.raw_mne = raw.copy()
+        self.raw_mne.pick_types(eeg=True)
         self.sample_rate = raw.info["sfreq"]
         if do_detrend:
             self.raw_mne._data = removeTrend(
                 self.raw_mne.get_data(), self.sample_rate, matlab_strict=matlab_strict
             )
         self.matlab_strict = matlab_strict
-
-        self.EEGData = self.raw_mne.get_data(picks="eeg")
-        self.EEGData_beforeFilt = self.EEGData
-        self.ch_names_original = np.asarray(raw.info["ch_names"])
-        self.n_chans_original = len(self.ch_names_original)
-        self.n_chans_new = self.n_chans_original
-        self.original_dimensions = np.shape(self.EEGData)
-        self.new_dimensions = self.original_dimensions
-        self.original_channels = np.arange(self.original_dimensions[0])
-        self.new_channels = self.original_channels
-        self.ch_names_new = self.ch_names_original
-        self.channels_interpolate = self.original_channels
 
         # Extra data for debugging
         self._extra_info = {
@@ -89,6 +78,25 @@ class NoisyChannels:
         self.bad_by_SNR = []
         self.bad_by_dropout = []
         self.bad_by_ransac = []
+
+        # Get original EEG channel names, channel count & samples
+        ch_names = np.asarray(self.raw_mne.info["ch_names"])
+        self.ch_names_original = ch_names
+        self.n_chans_original = len(ch_names)
+        self.n_samples = raw._data.shape[1]
+
+        # Before anything else, flag bad-by-NaNs and bad-by-flats
+        self.find_bad_by_nan_flat()
+        bads_by_nan_flat = self.bad_by_nan + self.bad_by_flat
+
+        # Make a subset of the data containing only usable EEG channels
+        self.usable_idx = np.isin(ch_names, bads_by_nan_flat, invert=True)
+        self.EEGData = self.raw_mne.get_data(picks=ch_names[self.usable_idx])
+        self.EEGData_beforeFilt = self.EEGData
+
+        # Get usable EEG channel names & channel counts
+        self.ch_names_new = np.asarray(ch_names[self.usable_idx])
+        self.n_chans_new = len(self.ch_names_new)
 
     def get_bads(self, verbose=False):
         """Get a list of all bad channels.
@@ -186,35 +194,23 @@ class NoisyChannels:
 
     def find_bad_by_nan_flat(self):
         """Detect channels that appear flat or have NaN values."""
-        nan_channel_mask = [False] * self.original_dimensions[0]
-        no_signal_channel_mask = [False] * self.original_dimensions[0]
+        # Get all EEG channels from original copy of data
+        EEGData = self.raw_mne.get_data()
 
+        # Detect channels containing any NaN values
+        nan_channel_mask = np.isnan(np.sum(EEGData, axis=1))
+        nan_channels = self.ch_names_original[nan_channel_mask]
+
+        # Detect channels with flat or extremely weak signals
         FLAT_THRESHOLD = 1e-15  # corresponds to 10e-10 µV in MATLAB PREP
-        for i in range(0, self.original_dimensions[0]):
-            nan_channel_mask[i] = np.sum(np.isnan(self.EEGData[i, :])) > 0
-        for i in range(0, self.original_dimensions[0]):
-            no_signal_channel_mask[i] = (
-                robust.mad(self.EEGData[i, :], c=1) < FLAT_THRESHOLD
-                or np.std(self.EEGData[i, :]) < FLAT_THRESHOLD
-            )
-        nan_channels = self.channels_interpolate[nan_channel_mask]
-        flat_channels = self.channels_interpolate[no_signal_channel_mask]
+        flat_by_mad = robust.mad(EEGData, axis=1, c=1) < FLAT_THRESHOLD
+        flat_by_stdev = np.std(EEGData, axis=1) < FLAT_THRESHOLD
+        flat_channel_mask = flat_by_mad | flat_by_stdev
+        flat_channels = self.ch_names_original[flat_channel_mask]
 
-        nans_no_data_channels = np.union1d(nan_channels, flat_channels)
-        self.channels_interpolate = np.setdiff1d(
-            self.channels_interpolate, nans_no_data_channels
-        )
-
-        for i in range(0, len(nan_channels)):
-            self.bad_by_nan.append(self.ch_names_original[nan_channels[i]])
-        for i in range(0, len(flat_channels)):
-            self.bad_by_flat.append(self.ch_names_original[flat_channels[i]])
-
-        self.raw_mne.drop_channels(list(set(self.bad_by_nan + self.bad_by_flat)))
-        self.EEGData = self.raw_mne.get_data(picks="eeg")
-        self.ch_names_new = np.asarray(self.raw_mne.info["ch_names"])
-        self.n_chans_new = len(self.ch_names_new)
-        self.new_dimensions = np.shape(self.EEGData)
+        # Update names of bad channels by NaN or flat signal
+        self.bad_by_nan = nan_channels.tolist()
+        self.bad_by_flat = flat_channels.tolist()
 
     def find_bad_by_deviation(self, deviation_threshold=5.0):
         """Robust z-score of the robust standard deviation for each channel is calculated.
@@ -227,22 +223,22 @@ class NoisyChannels:
             z-score threshold above which channels will be labelled bad.
 
         """
-        deviation_channel_mask = [False] * (self.new_dimensions[0])
-        channel_deviation = np.zeros(self.new_dimensions[0])
-        for i in range(0, self.new_dimensions[0]):
+        deviation_channel_mask = [False] * (self.n_chans_original)
+        robust_channel_deviation = np.zeros(self.n_chans_original, dtype=np.float64)
+        channel_deviation = np.zeros(self.n_chans_new)
+        for i in range(0, self.n_chans_new):
             channel_deviation[i] = 0.7413 * _mat_iqr(self.EEGData[i, :])
         channel_deviationSD = 0.7413 * _mat_iqr(channel_deviation)
         channel_deviationMedian = np.nanmedian(channel_deviation)
-        robust_channel_deviation = np.divide(
+        robust_channel_deviation[self.usable_idx] = np.divide(
             np.subtract(channel_deviation, channel_deviationMedian), channel_deviationSD
         )
-        for i in range(0, self.new_dimensions[0]):
+        for i in range(0, self.n_chans_original):
             deviation_channel_mask[i] = abs(
                 robust_channel_deviation[i]
             ) > deviation_threshold or np.isnan(robust_channel_deviation[i])
-        deviation_channels = self.channels_interpolate[deviation_channel_mask]
-        for i in range(0, len(deviation_channels)):
-            self.bad_by_deviation.append(self.ch_names_original[deviation_channels[i]])
+        deviation_channels = self.ch_names_original[deviation_channel_mask]
+        self.bad_by_deviation = deviation_channels.tolist()
         self._extra_info['bad_by_deviation'].update({
             'median_channel_deviation': channel_deviationMedian,
             'channel_deviation_sd': channel_deviationSD,
@@ -266,6 +262,7 @@ class NoisyChannels:
         """
         data_tmp = np.transpose(self.EEGData)
         dimension = np.shape(data_tmp)
+        zscore_HFNoise = np.zeros(self.n_chans_original, dtype=np.float64)
         if self.sample_rate > 100:
             EEG_filt = np.zeros((dimension[0], dimension[1]))
             bandpass_filter = filter_design(
@@ -284,25 +281,19 @@ class NoisyChannels:
                 np.median(np.absolute(np.subtract(noisiness, np.median(noisiness))))
                 * 1.4826
             )
-            zscore_HFNoise = np.divide(
+            zscore_HFNoise[self.usable_idx] = np.divide(
                 np.subtract(noisiness, noisiness_median), noiseSD
             )
-            HFnoise_channel_mask = [False] * self.new_dimensions[0]
-            for i in range(0, self.new_dimensions[0]):
-                HFnoise_channel_mask[i] = zscore_HFNoise[
-                    i
-                ] > HF_zscore_threshold or np.isnan(zscore_HFNoise[i])
-            HFNoise_channels = self.channels_interpolate[HFnoise_channel_mask]
+            hf_mask = np.isnan(zscore_HFNoise) | (zscore_HFNoise > HF_zscore_threshold)
+            HFNoise_channels = self.ch_names_original[hf_mask]
         else:
             EEG_filt = data_tmp
             noisiness_median = 0
-            # noisinessSD = 1
-            zscore_HFNoise = np.zeros((self.new_dimensions[0], 1))
-            HFNoise_channels = []
+            noiseSD = 1
+            HFNoise_channels = np.asarray([])
         self.EEGData_beforeFilt = data_tmp
         self.EEGData = np.transpose(EEG_filt)
-        for i in range(0, len(HFNoise_channels)):
-            self.bad_by_hf_noise.append(self.ch_names_original[HFNoise_channels[i]])
+        self.bad_by_hf_noise = HFNoise_channels.tolist()
         self._extra_info['bad_by_hf_noise'].update({
             'median_channel_noisiness': noisiness_median,
             'channel_noisiness_sd': noiseSD,
@@ -337,30 +328,29 @@ class NoisyChannels:
 
         """
         self.find_bad_by_hfnoise()  # since filtering is performed there
+        usable_idx = self.usable_idx
         correlation_frames = correlation_secs * self.sample_rate
         correlation_window = np.arange(correlation_frames)
         correlation_offsets = np.arange(
-            1, (self.new_dimensions[1] - correlation_frames), correlation_frames
+            1, (self.n_samples - correlation_frames), correlation_frames
         )
         w_correlation = len(correlation_offsets)
-        maximum_correlations = np.ones((self.original_dimensions[0], w_correlation))
-        drop_out = np.zeros((self.new_dimensions[0], w_correlation))
-        channel_correlation = np.ones((w_correlation, self.new_dimensions[0]))
-        noiselevels = np.zeros((w_correlation, self.new_dimensions[0]))
-        channel_deviations = np.zeros((w_correlation, self.new_dimensions[0]))
-        drop = np.zeros((w_correlation, self.new_dimensions[0]))
+        channel_correlation = np.ones((w_correlation, self.n_chans_original))
+        noiselevels = np.zeros((w_correlation, self.n_chans_original))
+        channel_deviations = np.zeros((w_correlation, self.n_chans_original))
+        drop = np.zeros((w_correlation, self.n_chans_original))
         len_correlation_window = len(correlation_window)
         EEGData = np.transpose(self.EEGData)
         EEG_new_win = np.reshape(
             np.transpose(EEGData[0 : len_correlation_window * w_correlation, :]),
-            (self.new_dimensions[0], len_correlation_window, w_correlation),
+            (self.n_chans_new, len_correlation_window, w_correlation),
             order="F",
         )
         data_win = np.reshape(
             np.transpose(
                 self.EEGData_beforeFilt[0 : len_correlation_window * w_correlation, :]
             ),
-            (self.new_dimensions[0], len_correlation_window, w_correlation),
+            (self.n_chans_new, len_correlation_window, w_correlation),
             order="F",
         )
         for k in range(0, w_correlation):
@@ -371,41 +361,38 @@ class NoisyChannels:
             abs_corr = np.abs(
                 np.subtract(window_correlation, np.diag(np.diag(window_correlation)))
             )
-            channel_correlation[k, :] = _mat_quantile(abs_corr, 0.98, axis=0)
+            channel_correlation[k, usable_idx] = _mat_quantile(abs_corr, 0.98, axis=0)
             with np.errstate(invalid='ignore'):  # suppress divide-by-zero warnings
-                noiselevels[k, :] = np.divide(
+                noiselevels[k, usable_idx] = np.divide(
                     robust.mad(np.subtract(data_portion, eeg_portion), c=1),
                     robust.mad(eeg_portion, c=1),
                 )
-            channel_deviations[k, :] = 0.7413 * _mat_iqr(data_portion, axis=0)
+            channel_deviations[k, usable_idx] = 0.7413 * _mat_iqr(data_portion, axis=0)
         for i in range(0, w_correlation):
-            for j in range(0, self.new_dimensions[0]):
+            for j in range(0, self.n_chans_original):
                 drop[i, j] = np.int(
                     np.isnan(channel_correlation[i, j]) or np.isnan(noiselevels[i, j])
                 )
                 if drop[i, j] == 1:
                     channel_correlation[i, j] = 0
                     noiselevels[i, j] = 0
-        maximum_correlations[self.channels_interpolate, :] = np.transpose(
-            channel_correlation
-        )
-        drop_out[:] = np.transpose(drop)
+
+        # Flag channels with above-threshold fractions of bad correlation windows
+        maximum_correlations = np.transpose(channel_correlation)
         thresholded_correlations = maximum_correlations < correlation_threshold
         thresholded_correlations = thresholded_correlations.astype(int)
         fraction_BadCorrelationWindows = np.mean(thresholded_correlations, axis=1)
+        bad_correlation_mask = fraction_BadCorrelationWindows > frac_bad
+        bad_correlation_channels = self.ch_names_original[bad_correlation_mask]
+        self.bad_by_correlation = bad_correlation_channels.tolist()
+
+        # Flag channels with above-threshold fractions of drop-out windows
+        drop_out = np.transpose(drop)
         fraction_BadDropOutWindows = np.mean(drop_out, axis=1)
+        dropout_mask = fraction_BadDropOutWindows > frac_bad
+        dropout_channels = self.ch_names_original[dropout_mask]
+        self.bad_by_dropout = dropout_channels.tolist()
 
-        bad_correlation_channels_idx = np.argwhere(
-            fraction_BadCorrelationWindows > frac_bad
-        )
-        bad_correlation_channels_name = self.ch_names_original[
-            bad_correlation_channels_idx.astype(int)
-        ]
-        self.bad_by_correlation = [i[0] for i in bad_correlation_channels_name]
-
-        dropout_channels_idx = np.argwhere(fraction_BadDropOutWindows > frac_bad)
-        dropout_channels_name = self.ch_names_original[dropout_channels_idx.astype(int)]
-        self.bad_by_dropout = [i[0] for i in dropout_channels_name]
         self._extra_info['bad_by_correlation'] = {
             'max_correlations': maximum_correlations,
             'median_max_correlations': np.median(maximum_correlations, axis=1),
@@ -503,11 +490,11 @@ class NoisyChannels:
             self.bad_by_deviation +
             self.bad_by_dropout
         )
-        self.bad_by_ransac, ch_correlations = find_bad_by_ransac(
+        self.bad_by_ransac, ch_correlations_usable = find_bad_by_ransac(
             self.EEGData,
             self.sample_rate,
             self.ch_names_new,
-            self.raw_mne._get_channel_positions(),
+            self.raw_mne._get_channel_positions()[self.usable_idx, :],
             exclude_from_ransac,
             n_samples,
             fraction_good,
@@ -519,6 +506,12 @@ class NoisyChannels:
             self.random_state,
             self.matlab_strict,
         )
+
+        # Reshape correlation matrix to match original channel count
+        n_ransac_windows = ch_correlations_usable.shape[0]
+        ch_correlations = np.ones((n_ransac_windows, self.n_chans_original))
+        ch_correlations[:, self.usable_idx] = ch_correlations_usable
+
         self._extra_info['bad_by_ransac'] = {
             'ransac_correlations': ch_correlations,
             'bad_window_fractions': np.mean(ch_correlations < corr_thresh, axis=0)
