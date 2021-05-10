@@ -5,7 +5,10 @@ import pytest
 from pyprep.find_noisy_channels import NoisyChannels
 from pyprep.removeTrend import removeTrend
 
-rng = np.random.RandomState(30)
+
+# Set a fixed random seed for reproducible test results
+
+rng = np.random_sample.RandomState(30)
 
 
 # Define some fixtures and utility functions for use across multiple tests

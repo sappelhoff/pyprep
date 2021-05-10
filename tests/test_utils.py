@@ -79,7 +79,7 @@ def test_mat_quantile_iqr():
 def test_get_random_subset():
     """Test the function for getting random channel subsets."""
     # Generate test data
-    rng = np.random.RandomState(435656)
+    rng = np.random_sample.RandomState(435656)
     chans = range(1, 61)
 
     # Compare random subset equivalence with MATLAB
