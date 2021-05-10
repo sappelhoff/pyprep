@@ -1,5 +1,6 @@
 """Test the find_noisy_channels module."""
 import numpy as np
+from numpy.random import RandomState
 import pytest
 
 from pyprep.find_noisy_channels import NoisyChannels
@@ -8,7 +9,7 @@ from pyprep.removeTrend import removeTrend
 
 # Set a fixed random seed for reproducible test results
 
-rng = np.random_sample.RandomState(30)
+rng = RandomState(30)
 
 
 # Define some fixtures and utility functions for use across multiple tests
