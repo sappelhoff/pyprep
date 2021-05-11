@@ -5,8 +5,8 @@ from cmath import sqrt
 import mne
 import numpy as np
 import scipy.interpolate
-from scipy.signal import firwin, lfilter, lfilter_zi
 from psutil import virtual_memory
+from scipy.signal import firwin, lfilter, lfilter_zi
 
 
 def _union(list1, list2):
@@ -73,6 +73,7 @@ def _mat_quantile(arr, q, axis=None):
     This function mimics MATLAB's logic to produce identical results.
 
     """
+
     def _mat_quantile_1d(arr, q):
         arr = arr[~np.isnan(arr)]
         n = len(arr)
@@ -160,7 +161,7 @@ def _eeglab_create_highpass(cutoff, srate):
     N = order + 1
     filt = np.zeros(N)
     filt[N // 2] = 1
-    filt -= firwin(N, transition, window='hamming', nyq=1)
+    filt -= firwin(N, transition, window="hamming", nyq=1)
     return filt
 
 
@@ -194,10 +195,7 @@ def _eeglab_fir_filter(data, filt):
 
     # Prepare initial state of filter, using padding at start of data
     start_pad_idx = np.zeros(pad_len, dtype=np.uint8)
-    start_padded = np.concatenate(
-        (data[:, start_pad_idx], data[:, :pad_len]),
-        axis=1
-    )
+    start_padded = np.concatenate((data[:, start_pad_idx], data[:, :pad_len]), axis=1)
     zi_init = lfilter_zi(filt, 1) * np.take(start_padded, [0], axis=0)
     _, zi = lfilter(filt, 1, start_padded, axis=1, zi=zi_init)
 
@@ -215,7 +213,7 @@ def _eeglab_fir_filter(data, filt):
     # Finish filtering data, using padding at end to calculate final values
     end_pad_idx = np.zeros(pad_len, dtype=np.uint8) + (n_samples - 1)
     end, _ = lfilter(filt, 1, data[:, end_pad_idx], axis=1, zi=zi)
-    out[:, (n_samples - pad_len):] = end[:, (group_delay - pad_len):]
+    out[:, (n_samples - pad_len) :] = end[:, (group_delay - pad_len) :]
 
     return out
 

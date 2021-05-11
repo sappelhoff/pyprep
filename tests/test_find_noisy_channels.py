@@ -1,11 +1,10 @@
 """Test the find_noisy_channels module."""
 import numpy as np
-from numpy.random import RandomState
 import pytest
+from numpy.random import RandomState
 
 from pyprep.find_noisy_channels import NoisyChannels
 from pyprep.removeTrend import removeTrend
-
 
 # Set a fixed random seed for reproducible test results
 
@@ -13,6 +12,7 @@ RNG = RandomState(30)
 
 
 # Define some fixtures and utility functions for use across multiple tests
+
 
 @pytest.fixture(scope="session")
 def raw_clean_detrend(raw_clean):
@@ -26,8 +26,7 @@ def raw_clean_detrend(raw_clean):
     """
     raw_clean_detrended = raw_clean.copy()
     raw_clean_detrended._data = removeTrend(
-        raw_clean.get_data(),
-        raw_clean.info["sfreq"]
+        raw_clean.get_data(), raw_clean.info["sfreq"]
     )
     return raw_clean_detrended
 
@@ -47,12 +46,13 @@ def raw_tmp(raw_clean_detrend):
 def _generate_signal(fmin, fmax, timepoints, fcount=1):
     """Generate an EEG signal from one or more sine waves in a frequency range."""
     signal = np.zeros_like(timepoints)
-    for freq in RNG.randint(fmin, fmax+1, fcount):
+    for freq in RNG.randint(fmin, fmax + 1, fcount):
         signal += np.sin(2 * np.pi * timepoints * freq)
     return signal * 1e-6
 
 
 # Run unit tests for each bad channel type detected by NoisyChannels
+
 
 def test_bad_by_nan(raw_tmp):
     """Test the detection of channels containing any NaN values."""
@@ -139,8 +139,8 @@ def test_bad_by_hf_noise(raw_tmp):
     nd = NoisyChannels(raw_tmp, do_detrend=False)
     nd.find_bad_by_hfnoise()
     assert len(nd.bad_by_hf_noise) == 0
-    assert nd._extra_info['bad_by_hf_noise']['median_channel_noisiness'] == 0
-    assert nd._extra_info['bad_by_hf_noise']['channel_noisiness_sd'] == 1
+    assert nd._extra_info["bad_by_hf_noise"]["median_channel_noisiness"] == 0
+    assert nd._extra_info["bad_by_hf_noise"]["channel_noisiness_sd"] == 1
 
 
 def test_bad_by_dropout(raw_tmp):
@@ -211,11 +211,11 @@ def test_find_bad_by_ransac(raw_tmp):
     # Run different variations of RANSAC on the same data
     test_matrix = {
         # List items represent [matlab_strict, channel_wise, max_chunk_size]
-        'by_window': [False, False, None],
-        'by_channel': [False, True, None],
-        'by_channel_maxchunk': [False, True, 2],
-        'by_window_strict': [True, False, None],
-        'by_channel_strict': [True, True, None]
+        "by_window": [False, False, None],
+        "by_channel": [False, True, None],
+        "by_channel_maxchunk": [False, True, 2],
+        "by_window_strict": [True, False, None],
+        "by_channel_strict": [True, True, None],
     }
     bads = {}
     corr = {}
@@ -226,24 +226,24 @@ def test_find_bad_by_ransac(raw_tmp):
         nd.find_bad_by_ransac(channel_wise=args[1], max_chunk_size=args[2])
         # Save bad channels and RANSAC correlation matrix for later comparison
         bads[name] = nd.bad_by_ransac
-        corr[name] = nd._extra_info['bad_by_ransac']['ransac_correlations']
+        corr[name] = nd._extra_info["bad_by_ransac"]["ransac_correlations"]
 
     # Test whether all methods detected bad channels properly
-    assert bads['by_window'] == raw_tmp.ch_names[0:6]
-    assert bads['by_channel'] == raw_tmp.ch_names[0:6]
-    assert bads['by_channel_maxchunk'] == raw_tmp.ch_names[0:6]
-    assert bads['by_window_strict'] == raw_tmp.ch_names[0:6]
-    assert bads['by_channel_strict'] == raw_tmp.ch_names[0:6]
+    assert bads["by_window"] == raw_tmp.ch_names[0:6]
+    assert bads["by_channel"] == raw_tmp.ch_names[0:6]
+    assert bads["by_channel_maxchunk"] == raw_tmp.ch_names[0:6]
+    assert bads["by_window_strict"] == raw_tmp.ch_names[0:6]
+    assert bads["by_channel_strict"] == raw_tmp.ch_names[0:6]
 
     # Make sure non-strict correlation matrices all match
-    assert np.allclose(corr['by_window'], corr['by_channel'])
-    assert np.allclose(corr['by_window'], corr['by_channel_maxchunk'])
+    assert np.allclose(corr["by_window"], corr["by_channel"])
+    assert np.allclose(corr["by_window"], corr["by_channel_maxchunk"])
 
     # Make sure MATLAB-strict correlation matrices match
-    assert np.allclose(corr['by_window_strict'], corr['by_channel_strict'])
+    assert np.allclose(corr["by_window_strict"], corr["by_channel_strict"])
 
     # Make sure strict and non-strict matrices differ
-    assert not np.allclose(corr['by_window'], corr['by_window_strict'])
+    assert not np.allclose(corr["by_window"], corr["by_window_strict"])
 
 
 def test_find_bad_by_ransac_err(raw_tmp):
@@ -263,12 +263,12 @@ def test_find_bad_by_ransac_err(raw_tmp):
     # Test IOError when too few good channels for RANSAC sample size
     n_chans = raw_tmp._data.shape[0]
     nd = NoisyChannels(raw_tmp, do_detrend=False)
-    nd.bad_by_deviation = raw_tmp.info["ch_names"][0:int(n_chans * 0.8)]
+    nd.bad_by_deviation = raw_tmp.info["ch_names"][0 : int(n_chans * 0.8)]
     with pytest.raises(IOError):
         nd.find_bad_by_ransac()
 
     # Test IOError when not enough channels for RANSAC predictions
-    raw_tmp._data[0:(n_chans - 2), :] = 0  # make all channels flat except 2
+    raw_tmp._data[0 : (n_chans - 2), :] = 0  # make all channels flat except 2
     nd = NoisyChannels(raw_tmp, do_detrend=False)
     with pytest.raises(IOError):
         nd.find_bad_by_ransac()

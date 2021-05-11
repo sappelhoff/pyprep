@@ -22,7 +22,7 @@ def test_highpass():
         detrendType="High pass",
         sample_rate=srate,
         detrendCutoff=1,
-        matlab_strict=True
+        matlab_strict=True,
     )
     error1 = lowpass_filt1 - highfreq_signal
     error2 = lowpass_filt2 - highfreq_signal

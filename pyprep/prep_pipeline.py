@@ -152,9 +152,9 @@ class PrepPipeline:
             self.prep_params["reref_chs"] = self.ch_names_eeg
         self.sfreq = self.raw_eeg.info["sfreq"]
         self.ransac_settings = {
-            'ransac': ransac,
-            'channel_wise': channel_wise,
-            'max_chunk_size': max_chunk_size
+            "ransac": ransac,
+            "channel_wise": channel_wise,
+            "max_chunk_size": max_chunk_size,
         }
         self.random_state = check_random_state(random_state)
         self.filter_kwargs = filter_kwargs
@@ -213,7 +213,7 @@ class PrepPipeline:
             self.prep_params,
             random_state=self.random_state,
             matlab_strict=self.matlab_strict,
-            **self.ransac_settings
+            **self.ransac_settings,
         )
         reference.perform_reference()
         self.raw_eeg = reference.raw

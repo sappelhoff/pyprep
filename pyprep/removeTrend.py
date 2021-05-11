@@ -70,7 +70,7 @@ def removeTrend(
                 sfreq=sample_rate,
                 l_freq=detrendCutoff,
                 h_freq=None,
-                picks=detrendChannels
+                picks=detrendChannels,
             )
 
     elif detrendType.lower() == "high pass sinc":

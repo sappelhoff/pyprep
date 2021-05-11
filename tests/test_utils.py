@@ -3,8 +3,13 @@ import numpy as np
 from numpy.random import RandomState
 
 from pyprep.utils import (
-    _mat_round, _mat_quantile, _mat_iqr, _get_random_subset, _correlate_arrays,
-    _eeglab_create_highpass, print_progress
+    _correlate_arrays,
+    _eeglab_create_highpass,
+    _get_random_subset,
+    _mat_iqr,
+    _mat_quantile,
+    _mat_round,
+    print_progress,
 )
 
 
