@@ -1,5 +1,6 @@
 """Test various helper functions."""
 import numpy as np
+from numpy.random import RandomState
 
 from pyprep.utils import (
     _mat_round, _mat_quantile, _mat_iqr, _get_random_subset, _correlate_arrays,
@@ -79,7 +80,7 @@ def test_mat_quantile_iqr():
 def test_get_random_subset():
     """Test the function for getting random channel subsets."""
     # Generate test data
-    rng = np.random.RandomState(435656)
+    rng = RandomState(435656)
     chans = range(1, 61)
 
     # Compare random subset equivalence with MATLAB

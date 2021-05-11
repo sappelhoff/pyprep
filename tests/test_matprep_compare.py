@@ -164,15 +164,12 @@ class TestCompareNoisyChannels(object):
 
     def test_bad_by_nan(self, pyprep_noisy, matprep_noisy):
         """Compare bad-by-NaN results between PyPREP and MatPREP."""
-        # NOTE: The current test artifacts contain no channels with NaN values
-        # (when does that ever happen?), meaning that this may not be testing
-        # anything useful
+        # Compare names of bad-by-NaN channels
         assert pyprep_noisy.bad_by_nan == matprep_noisy['bads']['by_nan']
 
     def test_bad_by_flat(self, pyprep_noisy, matprep_noisy):
         """Compare bad-by-flat results between PyPREP and MatPREP."""
-        # NOTE: The current test artifacts contain no flat channels, meaning
-        # that this may not be testing anything useful
+        # Compare names of bad-by-flat channels
         assert pyprep_noisy.bad_by_flat == matprep_noisy['bads']['by_flat']
 
     def test_bad_by_deviation(self, pyprep_noisy, matprep_noisy):
@@ -264,9 +261,6 @@ class TestCompareNoisyChannels(object):
 
     def test_bad_by_dropout(self, pyprep_noisy, matprep_noisy):
         """Compare bad-by-dropout results between PyPREP and MatPREP."""
-        # NOTE: The current test artifacts contain no channels with dropouts,
-        # meaning that this may not be testing anything useful
-
         # Gather PyPREP and MATLAB PREP dropout info
         matprep_dropouts = matprep_noisy['dropOuts']
         pyprep_dropouts = pyprep_noisy._extra_info['bad_by_dropout']['dropouts']
