@@ -42,10 +42,10 @@ def raw():
 def raw_clean(montage):
     """Return an `mne.io.Raw` object with no bad channels for use with tests.
 
-    This fixture downloads and reads in subject 1, run 1 from the Physionet
-    BCI2000 (eegbci) open dataset, interpolates its two bad channels (T10 & F8),
-    and performs average referencing on the data. Intended for use with tests
-    where channels are made artifically bad.
+    This fixture downloads and reads in subject 30, run 2 from the Physionet
+    BCI2000 (eegbci) open dataset, which contains no bad channels on an initial
+    pass of :class:`pyprep.NoisyChannels`. Intended for use with tests where
+    channels are made artifically bad.
 
     File attributes:
     - Channels: 64 EEG
@@ -57,17 +57,12 @@ def raw_clean(montage):
     """
     mne.set_log_level("WARNING")
 
-    # Download and read S001R01.edf from the BCI2000 dataset
-    edf_fpath = eegbci.load_data(1, 1, update_path=True)[0]
+    # Download and read S030R02.edf from the BCI2000 dataset
+    edf_fpath = eegbci.load_data(30, 2, update_path=True)[0]
     raw = mne.io.read_raw_edf(edf_fpath, preload=True)
     eegbci.standardize(raw)  # Fix non-standard channel names
 
-    # Interpolate the file's few bad channels to produce a clean dataset
+    # Set a montage for use with RANSAC
     raw.set_montage(montage)
-    raw.info["bads"] = ["T10", "F8"]
-    raw.interpolate_bads()
-
-    # Re-reference the data after interpolating bad channels
-    mne.set_eeg_reference(raw, 'average', copy=False, ch_type='eeg')
 
     return raw
