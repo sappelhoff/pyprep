@@ -39,6 +39,7 @@ jobs:
         flake8 --docstring-convention numpy .
         check-manifest .
         black . --check
+        isort . --check
 
     - name: Test with pytest
       run: |
