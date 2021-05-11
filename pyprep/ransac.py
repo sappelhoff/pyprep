@@ -5,8 +5,12 @@ from mne.channels.interpolation import _make_interpolation_matrix
 from mne.utils import check_random_state
 
 from pyprep.utils import (
-    _get_random_subset, _mat_round, _correlate_arrays, print_progress,
-    split_list, verify_free_ram
+    _correlate_arrays,
+    _get_random_subset,
+    _mat_round,
+    print_progress,
+    split_list,
+    verify_free_ram,
 )
 
 
@@ -378,7 +382,7 @@ def _predict_median_signals(window, interpolation_mats, matlab_strict=False):
 
     predictions_per_sample = np.reshape(
         np.matmul(merged_mats, window),
-        (ransac_samples, window.shape[0], window.shape[1])
+        (ransac_samples, window.shape[0], window.shape[1]),
     )
 
     if matlab_strict:
@@ -455,7 +459,7 @@ def _ransac_by_channel(
     data_window = data_window.swapaxes(1, 0)
 
     # For the ransac predicted eeg
-    pred_window = predicted_chans[: chunk_size, : win_size * win_count]
+    pred_window = predicted_chans[:chunk_size, : win_size * win_count]
     pred_window = pred_window.reshape(chunk_size, win_count, win_size)
     pred_window = pred_window.swapaxes(1, 0)
 

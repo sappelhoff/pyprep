@@ -74,7 +74,7 @@ class Reference:
         channel_wise=False,
         max_chunk_size=None,
         random_state=None,
-        matlab_strict=False
+        matlab_strict=False,
     ):
         """Initialize the class."""
         self.raw = raw.copy()
@@ -86,9 +86,9 @@ class Reference:
         self.rereferenced_channels = params["reref_chs"]
         self.sfreq = self.raw.info["sfreq"]
         self.ransac_settings = {
-            'ransac': ransac,
-            'channel_wise': channel_wise,
-            'max_chunk_size': max_chunk_size
+            "ransac": ransac,
+            "channel_wise": channel_wise,
+            "max_chunk_size": max_chunk_size,
         }
         self.random_state = check_random_state(random_state)
         self._extra_info = {}
@@ -146,7 +146,7 @@ class Reference:
             "bad_by_ransac": noisy_detector.bad_by_ransac,
             "bad_all": noisy_detector.get_bads(),
         }
-        self._extra_info['interpolated'] = noisy_detector._extra_info
+        self._extra_info["interpolated"] = noisy_detector._extra_info
 
         bad_channels = _union(self.bad_before_interpolation, self.unusable_channels)
         self.raw.info["bads"] = bad_channels
@@ -182,7 +182,7 @@ class Reference:
             "bad_by_ransac": noisy_detector.bad_by_ransac,
             "bad_all": noisy_detector.get_bads(),
         }
-        self._extra_info['remaining_bad'] = noisy_detector._extra_info
+        self._extra_info["remaining_bad"] = noisy_detector._extra_info
 
         return self
 
@@ -211,7 +211,7 @@ class Reference:
             raw,
             do_detrend=False,
             random_state=self.random_state,
-            matlab_strict=self.matlab_strict
+            matlab_strict=self.matlab_strict,
         )
         noisy_detector.find_all_bads(**self.ransac_settings)
         self.noisy_channels_original = {
@@ -225,13 +225,13 @@ class Reference:
             "bad_by_ransac": noisy_detector.bad_by_ransac,
             "bad_all": noisy_detector.get_bads(),
         }
-        self._extra_info['initial_bad'] = noisy_detector._extra_info
+        self._extra_info["initial_bad"] = noisy_detector._extra_info
         logger.info("Bad channels: {}".format(self.noisy_channels_original))
 
         # Determine channels to use/exclude from initial reference estimation
         self.unusable_channels = _union(
             noisy_detector.bad_by_nan + noisy_detector.bad_by_flat,
-            noisy_detector.bad_by_SNR
+            noisy_detector.bad_by_SNR,
         )
         self.reference_channels = _set_diff(
             self.reference_channels, self.unusable_channels
@@ -274,7 +274,7 @@ class Reference:
                 raw_tmp,
                 do_detrend=False,
                 random_state=self.random_state,
-                matlab_strict=self.matlab_strict
+                matlab_strict=self.matlab_strict,
             )
             # Detrend applied at the beginning of the function.
             noisy_detector.find_all_bads(**self.ransac_settings)

@@ -7,7 +7,7 @@ from statsmodels import robust
 
 from pyprep.ransac import find_bad_by_ransac
 from pyprep.removeTrend import removeTrend
-from pyprep.utils import filter_design, _mat_quantile, _mat_iqr
+from pyprep.utils import _mat_iqr, _mat_quantile, filter_design
 
 
 class NoisyChannels:
@@ -59,11 +59,11 @@ class NoisyChannels:
 
         # Extra data for debugging
         self._extra_info = {
-            'bad_by_deviation': {},
-            'bad_by_hf_noise': {},
-            'bad_by_correlation': {},
-            'bad_by_dropout': {},
-            'bad_by_ransac': {}
+            "bad_by_deviation": {},
+            "bad_by_hf_noise": {},
+            "bad_by_correlation": {},
+            "bad_by_dropout": {},
+            "bad_by_ransac": {},
         }
 
         # random_state
@@ -188,8 +188,7 @@ class NoisyChannels:
         self.find_bad_by_SNR()
         if ransac:
             self.find_bad_by_ransac(
-                channel_wise=channel_wise,
-                max_chunk_size=max_chunk_size
+                channel_wise=channel_wise, max_chunk_size=max_chunk_size
             )
 
     def find_bad_by_nan_flat(self):
@@ -239,11 +238,13 @@ class NoisyChannels:
             ) > deviation_threshold or np.isnan(robust_channel_deviation[i])
         deviation_channels = self.ch_names_original[deviation_channel_mask]
         self.bad_by_deviation = deviation_channels.tolist()
-        self._extra_info['bad_by_deviation'].update({
-            'median_channel_deviation': channel_deviationMedian,
-            'channel_deviation_sd': channel_deviationSD,
-            'robust_channel_deviations': robust_channel_deviation
-        })
+        self._extra_info["bad_by_deviation"].update(
+            {
+                "median_channel_deviation": channel_deviationMedian,
+                "channel_deviation_sd": channel_deviationSD,
+                "robust_channel_deviations": robust_channel_deviation,
+            }
+        )
 
     def find_bad_by_hfnoise(self, HF_zscore_threshold=5.0):
         """Determine noise of channel through high frequency ratio.
@@ -294,11 +295,13 @@ class NoisyChannels:
         self.EEGData_beforeFilt = data_tmp
         self.EEGData = np.transpose(EEG_filt)
         self.bad_by_hf_noise = HFNoise_channels.tolist()
-        self._extra_info['bad_by_hf_noise'].update({
-            'median_channel_noisiness': noisiness_median,
-            'channel_noisiness_sd': noiseSD,
-            'hf_noise_zscores': zscore_HFNoise
-        })
+        self._extra_info["bad_by_hf_noise"].update(
+            {
+                "median_channel_noisiness": noisiness_median,
+                "channel_noisiness_sd": noiseSD,
+                "hf_noise_zscores": zscore_HFNoise,
+            }
+        )
 
     def find_bad_by_correlation(
         self, correlation_secs=1.0, correlation_threshold=0.4, frac_bad=0.01
@@ -356,13 +359,13 @@ class NoisyChannels:
         for k in range(0, w_correlation):
             eeg_portion = np.transpose(np.squeeze(EEG_new_win[:, :, k]))
             data_portion = np.transpose(np.squeeze(data_win[:, :, k]))
-            with np.errstate(invalid='ignore'):  # suppress divide-by-zero warnings
+            with np.errstate(invalid="ignore"):  # suppress divide-by-zero warnings
                 window_correlation = np.corrcoef(np.transpose(eeg_portion))
             abs_corr = np.abs(
                 np.subtract(window_correlation, np.diag(np.diag(window_correlation)))
             )
             channel_correlation[k, usable_idx] = _mat_quantile(abs_corr, 0.98, axis=0)
-            with np.errstate(invalid='ignore'):  # suppress divide-by-zero warnings
+            with np.errstate(invalid="ignore"):  # suppress divide-by-zero warnings
                 noiselevels[k, usable_idx] = np.divide(
                     robust.mad(np.subtract(data_portion, eeg_portion), c=1),
                     robust.mad(eeg_portion, c=1),
@@ -393,17 +396,17 @@ class NoisyChannels:
         dropout_channels = self.ch_names_original[dropout_mask]
         self.bad_by_dropout = dropout_channels.tolist()
 
-        self._extra_info['bad_by_correlation'] = {
-            'max_correlations': maximum_correlations,
-            'median_max_correlations': np.median(maximum_correlations, axis=1),
-            'bad_window_fractions': fraction_BadCorrelationWindows
+        self._extra_info["bad_by_correlation"] = {
+            "max_correlations": maximum_correlations,
+            "median_max_correlations": np.median(maximum_correlations, axis=1),
+            "bad_window_fractions": fraction_BadCorrelationWindows,
         }
-        self._extra_info['bad_by_dropout'] = {
-            'dropouts': drop_out,
-            'bad_window_fractions': fraction_BadDropOutWindows
+        self._extra_info["bad_by_dropout"] = {
+            "dropouts": drop_out,
+            "bad_window_fractions": fraction_BadDropOutWindows,
         }
-        self._extra_info['bad_by_deviation']['channel_deviations'] = channel_deviations
-        self._extra_info['bad_by_hf_noise']['noise_levels'] = noiselevels
+        self._extra_info["bad_by_deviation"]["channel_deviations"] = channel_deviations
+        self._extra_info["bad_by_hf_noise"]["noise_levels"] = noiselevels
 
     def find_bad_by_SNR(self):
         """Determine the channels that fail both by correlation and HF noise."""
@@ -486,9 +489,7 @@ class NoisyChannels:
 
         """
         exclude_from_ransac = (
-            self.bad_by_correlation +
-            self.bad_by_deviation +
-            self.bad_by_dropout
+            self.bad_by_correlation + self.bad_by_deviation + self.bad_by_dropout
         )
         self.bad_by_ransac, ch_correlations_usable = find_bad_by_ransac(
             self.EEGData,
@@ -512,7 +513,7 @@ class NoisyChannels:
         ch_correlations = np.ones((n_ransac_windows, self.n_chans_original))
         ch_correlations[:, self.usable_idx] = ch_correlations_usable
 
-        self._extra_info['bad_by_ransac'] = {
-            'ransac_correlations': ch_correlations,
-            'bad_window_fractions': np.mean(ch_correlations < corr_thresh, axis=0)
+        self._extra_info["bad_by_ransac"] = {
+            "ransac_correlations": ch_correlations,
+            "bad_window_fractions": np.mean(ch_correlations < corr_thresh, axis=0),
         }
