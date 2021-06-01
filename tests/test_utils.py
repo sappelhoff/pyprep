@@ -1,5 +1,6 @@
 """Test various helper functions."""
 import numpy as np
+import pytest
 from numpy.random import RandomState
 
 from pyprep.utils import (
@@ -80,6 +81,11 @@ def test_mat_quantile_iqr():
     # Test quantile behaviour in special cases
     assert _mat_quantile([0.3], 0.98) == 0.3
     assert np.isnan(_mat_quantile([], 0.98))
+
+    # Test error with 3 or more dimensional input
+    tst_3d = tst.reshape(3, 5, -1)
+    with pytest.raises(ValueError):
+        _mat_quantile(tst_3d, 0.98, axis=0)
 
 
 def test_get_random_subset():
