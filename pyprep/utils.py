@@ -46,12 +46,11 @@ def _mat_round(x):
 def _mat_quantile(arr, q, axis=None):
     """Calculate the numeric value at quantile (`q`) for a given distribution.
 
-    Currently only supports 1-D or 2-D arrays.
-
     Parameters
     ----------
     arr : np.ndarray
-        Input array containing samples from the distribution to summarize.
+        Input array containing samples from the distribution to summarize. Must
+        be either a 1-D or 2-D array.
     q : float
         The quantile to calculate for the input data. Must be between 0 and 1,
         inclusive.
@@ -77,9 +76,14 @@ def _mat_quantile(arr, q, axis=None):
     """
     # Sort the array in ascending order along the given axis (any NaNs go to the end)
     # Return NaN if array is empty.
-    arr_sorted = np.sort(arr, axis=axis)
-    if arr_sorted.size == 0:
+    if len(arr) == 0:
         return np.NaN
+    arr_sorted = np.sort(arr, axis=axis)
+
+    # Ensure array is either 1D or 2D
+    if arr_sorted.ndim > 2:
+        e = "Only 1D and 2D arrays are supported (input has {0} dimensions)"
+        raise ValueError(e.format(arr_sorted.ndim))
 
     # Reshape data into a 2D array with the shape (num_axes, data_per_axis)
     if axis is None:
