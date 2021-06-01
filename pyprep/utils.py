@@ -46,6 +46,8 @@ def _mat_round(x):
 def _mat_quantile(arr, q, axis=None):
     """Calculate the numeric value at quantile (`q`) for a given distribution.
 
+    Currently only supports 1-D or 2-D arrays.
+
     Parameters
     ----------
     arr : np.ndarray
@@ -73,28 +75,44 @@ def _mat_quantile(arr, q, axis=None):
     This function mimics MATLAB's logic to produce identical results.
 
     """
+    # Sort the array in ascending order along the given axis (any NaNs go to the end)
+    # Return NaN if array is empty.
+    arr_sorted = np.sort(arr, axis=axis)
+    if arr_sorted.size == 0:
+        return np.NaN
 
-    def _mat_quantile_1d(arr, q):
-        arr = arr[~np.isnan(arr)]
-        n = len(arr)
-        if n == 0:
-            return np.NaN
-        elif n == 1:
-            return arr[0]
-        else:
-            q_adj = ((q - 0.5) * n / (n - 1)) + 0.5
-            return np.quantile(arr, np.clip(q_adj, 0, 1))
-
-    # Make sure inputs are both Numpy arrays
-    arr = np.asarray(arr)
-    q = np.asarray(q, dtype=np.float64)
-
-    if axis is not None and len(arr.shape) > 1:
-        # If an axis is specified, calculate quantiles along it
-        return np.apply_along_axis(_mat_quantile_1d, axis, arr, q)
+    # Reshape data into a 2D array with the shape (num_axes, data_per_axis)
+    if axis is None:
+        arr_sorted = arr_sorted.reshape(-1, 1)
     else:
-        # Otherwise, calculate the quantile for the full sample
-        return _mat_quantile_1d(arr, q)
+        arr_sorted = np.moveaxis(arr_sorted, axis, 0)
+
+    # Initialize quantile array with values for non-usable (n < 2) axes.
+    # Sets quantile to only non-NaN value if n == 1, or NaN if n == 0
+    quantiles = arr_sorted[0, :]
+
+    # Get counts of non-NaN values for each axis and determine which have n > 1
+    n = np.sum(np.isfinite(arr_sorted), axis=0)
+    n_usable = n[n > 1]
+
+    if np.any(n > 1):
+        # Calculate MATLAB-style sample-adjusted quantile values
+        q = np.asarray(q, dtype=np.float64)
+        q_adj = ((q - 0.5) * n_usable / (n_usable - 1)) + 0.5
+
+        # Get the exact (float) index position of the quantile for each usable axis, as
+        # well as the indices of the values below and above it (if not a whole number)
+        exact_idx = (n_usable - 1) * np.clip(q_adj, 0, 1)
+        pre_idx = np.floor(exact_idx).astype(np.int32)
+        post_idx = np.ceil(exact_idx).astype(np.int32)
+
+        # Interpolate exact quantile values for each usable axis
+        axis_idx = np.arange(len(n))[n > 1]
+        pre = arr_sorted[pre_idx, axis_idx]
+        post = arr_sorted[post_idx, axis_idx]
+        quantiles[n > 1] = pre + (post - pre) * (exact_idx - pre_idx)
+
+    return quantiles[0] if quantiles.size == 1 else quantiles
 
 
 def _mat_iqr(arr, axis=None):
