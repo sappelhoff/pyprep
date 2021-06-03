@@ -16,14 +16,16 @@ graft tests
 global-exclude *.py[co]
 global-exclude __pycache__
 
-recursive-exclude .github *
 recursive-exclude docs/generated *
 recursive-exclude docs/auto_examples *
 recursive-exclude docs/_build *
-recursive-exclude matprep_artifacts *
+
+prune .github
+prune matprep_artifacts
 
 exclude pyproject.toml
 exclude .codecov.yml
+exclude .gitattributes
 exclude .gitignore
 exclude .gitmodules
 exclude .mailmap
