@@ -9,10 +9,10 @@ repos:
     -   id: check-yaml
     -   id: check-added-large-files
 -   repo: https://github.com/pycqa/isort
-    rev: 5.3.0
+    rev: 5.8.0
     hooks:
     -   id: isort
 -   repo: https://github.com/psf/black
-    rev: 20.8b1
+    rev: 21.5b2
     hooks:
     -   id: black

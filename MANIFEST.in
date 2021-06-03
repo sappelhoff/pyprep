@@ -22,6 +22,7 @@ recursive-exclude docs/auto_examples *
 recursive-exclude docs/_build *
 recursive-exclude matprep_artifacts *
 
+exclude pyproject.toml
 exclude .codecov.yml
 exclude .gitignore
 exclude .gitmodules

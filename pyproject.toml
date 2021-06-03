@@ -1,0 +1,2 @@
+[tool.black]
+exclude = "matprep_artifacts"
