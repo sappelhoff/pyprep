@@ -20,9 +20,11 @@ recursive-exclude .github *
 recursive-exclude docs/generated *
 recursive-exclude docs/auto_examples *
 recursive-exclude docs/_build *
+recursive-exclude matprep_artifacts *
 
 exclude .codecov.yml
 exclude .gitignore
+exclude .gitmodules
 exclude .mailmap
 exclude .coveragerc
 exclude .readthedocs.yml
