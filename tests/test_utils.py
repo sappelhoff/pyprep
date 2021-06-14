@@ -10,6 +10,7 @@ from pyprep.utils import (
     _mat_iqr,
     _mat_quantile,
     _mat_round,
+    madmed,
     print_progress,
 )
 
@@ -138,19 +139,35 @@ def test_eeglab_create_highpass():
     NOTE: EEGLAB values were obtained using breakpoints in ``pop_eegfiltnew``,
     since filter creation and data filtering are both done in the same function.
     Values here are first 4 values of the array ``b`` which contains the FIR
-    filter coefficents used by the function.
+    filter coefficients used by the function.
 
     """
-    # Compare initial FIR filter coefficents with EEGLAB
+    # Compare initial FIR filter coefficients with EEGLAB
     expected_vals = [5.3691e-5, 5.4165e-5, 5.4651e-5, 5.5149e-5]
     actual_vals = _eeglab_create_highpass(cutoff=1.0, srate=256)[:4]
     assert all(np.isclose(expected_vals, actual_vals, atol=0.001))
 
-    # Compare middle FIR filter coefficent with EEGLAB
+    # Compare middle FIR filter coefficient with EEGLAB
     vals = _eeglab_create_highpass(cutoff=1.0, srate=256)
     expected_val = 0.9961
     actual_val = vals[len(vals) // 2]
     assert np.isclose(expected_val, actual_val, atol=0.001)
+
+
+def test_madmed():
+    """Test the median absolute deviation from the median (MAD) function."""
+    # Generate test data
+    tst = np.array([
+        [1, 2, 3, 4, 8],
+        [80, 10, 20, 30, 40],
+        [100, 200, 800, 300, 400]
+    ])
+    expected = np.asarray([1, 10, 100])
+
+    # Compare output to expected results
+    assert all(np.equal(madmed(tst, axis=1), expected))
+    assert all(np.equal(madmed(tst.T, axis=0), expected))
+    assert madmed(tst) == 28  # Matches robust.mad from statsmodels
 
 
 def test_print_progress(capsys):
