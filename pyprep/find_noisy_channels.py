@@ -11,10 +11,33 @@ from pyprep.utils import _mat_iqr, _mat_quantile, filter_design
 
 
 class NoisyChannels:
-    """Implements the functionality of the `findNoisyChannels` function.
+    """Detect bad channels in an EEG recording using a range of methods.
 
-    It is a part of the PREP (preprocessing pipeline) for EEG data recorded using
-    10-20 montage style described in [1]_.
+    This class provides a number of methods for detecting bad channels across a
+    full-session EEG recording. Specifically, this class implements all of the
+    noisy channel detection methods used in the PREP pipeline, as described in [1]_.
+
+    At present, only EEG channels are supported and any non-EEG channels in the
+    provided data will be ignored.
+
+    Parameters
+    ----------
+    raw : mne.io.Raw
+        An MNE Raw object to check for bad EEG channels.
+    do_detrend : bool, optional
+        Whether or not low-frequency (<1.0 Hz) trends should be removed from the
+        EEG signal prior to bad channel detection. This should always be set to
+        ``True`` unless the signal has already had low-frequency trends removed.
+        Defaults to ``True``.
+    random_state : {int, None, np.random.RandomState}, optional
+        The seed to use for random number generation within RANSAC. This can be
+        ``None``, an integer, or a :class:`~numpy.random.RandomState` object.
+        If ``None``, a random seed will be obtained from the operating system.
+        Defaults to ``None``.
+    matlab_strict : bool, optional
+        Whether or not PyPREP should strictly follow MATLAB PREP's internal
+        math, ignoring any improvements made in PyPREP over the original code
+        (see :ref:`matlab-diffs` for more details). Defaults to ``False``.
 
     References
     ----------
@@ -25,26 +48,6 @@ class NoisyChannels:
     """
 
     def __init__(self, raw, do_detrend=True, random_state=None, matlab_strict=False):
-        """Initialize the class.
-
-        Parameters
-        ----------
-        raw : mne.io.Raw
-            The MNE raw object.
-        do_detrend : bool, optional
-            Whether or not to remove a trend from the data upon initializing the
-            `NoisyChannels` object. Defaults to ``True``.
-        random_state : {int, None, np.random.RandomState}, optional
-            The random seed at which to initialize the class. If random_state
-            is an int, it will be used as a seed for RandomState.
-            If ``None``, the seed will be obtained from the operating system
-            (see RandomState for details). Default is ``None``.
-        matlab_strict : bool, optional
-            Whether or not PyPREP should strictly follow MATLAB PREP's internal
-            math, ignoring any improvements made in PyPREP over the original code
-            (see :ref:`matlab-diffs` for more details). Defaults to ``False``.
-
-        """
         # Make sure that we got an MNE object
         assert isinstance(raw, mne.io.BaseRaw)
 
@@ -120,15 +123,13 @@ class NoisyChannels:
         return EEG_filt
 
     def get_bads(self, verbose=False):
-        """Get a list of all bad channels.
-
-        This function makes a list of all the bad channels and prints them if verbose
-        is True.
+        """Get a list of all channels currently flagged as bad.
 
         Parameters
         ----------
         verbose : bool
-            If verbose, print a summary of bad channels.
+            If ``True``, a summary of the channels currently flagged as by bad per
+            category is printed. Defaults to ``False``.
 
         """
         bads = (
@@ -214,7 +215,16 @@ class NoisyChannels:
             )
 
     def find_bad_by_nan_flat(self):
-        """Detect channels that appear flat or have NaN values."""
+        """Detect channels than contain NaN values or have near-flat signals.
+
+        A channel is considered flat if its standard deviation or its median
+        absolute deviation from the median (MAD) are below 1e-9 microvolts.
+
+        This method is run automatically when a ``NoisyChannels`` object is
+        initialized, preventing flat or NaN-containing channels from interfering
+        with the detection of other types of bad channels.
+
+        """
         # Get all EEG channels from original copy of data
         EEGData = self.raw_mne.get_data()
 
@@ -234,14 +244,23 @@ class NoisyChannels:
         self.bad_by_flat = flat_channels.tolist()
 
     def find_bad_by_deviation(self, deviation_threshold=5.0):
-        """Robust z-score of the robust standard deviation for each channel is calculated.
+        """Detect channels with abnormally high or low overall amplitudes.
 
-        Channels having a z-score greater than 5 are detected as bad.
+        A channel is considered "bad-by-deviation" if its amplitude deviates
+        considerably from the median channel amplitude, as calculated using a
+        robust Z-scoring method and the given deviation threshold.
+
+        Amplitude Z-scores are calculated using the formula
+        ``(channel_amplitude - median_amplitude) / amplitude_sd``, where
+        channel amplitudes are calculated using a robust outlier-resistant estimate
+        of the signals' standard deviations (IQR scaled to units of SD), and the
+        amplitude SD is the IQR-based SD of those amplitudes.
 
         Parameters
         ----------
-        deviation_threshold : float
-            z-score threshold above which channels will be labelled bad.
+        deviation_threshold : float, optional
+            The minimum absolute z-score of a channel for it to be considered
+            bad-by-deviation. Defaults to 5.0.
 
         """
         IQR_TO_SD = 0.7413  # Scales units of IQR to units of SD, assuming normality
@@ -271,18 +290,22 @@ class NoisyChannels:
         )
 
     def find_bad_by_hfnoise(self, HF_zscore_threshold=5.0):
-        """Determine noise of channel through high frequency ratio.
+        """Detect channels with abnormally high amounts of high-frequency noise.
 
-        Noisiness of the channel is determined by finding the ratio of the median
-        absolute deviation of high frequency to low frequency components.
+        The noisiness of a channel is defined as the amplitude of its
+        high-frequency (>50 Hz) components divided by its overall amplitude.
+        A channel is considered "bad-by-high-frequency-noise" if its noisiness
+        is considerably higher than the median channel noisiness, as determined
+        by a robust Z-scoring method and the given Z-score threshold.
 
-        Low pass 50 Hz filter is used to separate the frequency components.
-        A robust z-score is then calculated relative to all the channels.
+        Due to the Nyquist theorem, this method will only attempt bad channel
+        detection if the sample rate of the given signal is above 100 Hz.
 
         Parameters
         ----------
-        HF_zscore_threshold : float
-            z-score threshold above which channels would be labelled as bad.
+        HF_zscore_threshold : float, optional
+            The minimum noisiness z-score of a channel for it to be considered
+            bad-by-high-frequency-noise. Defaults to 5.0.
 
         """
         MAD_TO_SD = 1.4826  # Scales units of MAD to units of SD, assuming normality
@@ -322,28 +345,37 @@ class NoisyChannels:
     def find_bad_by_correlation(
         self, correlation_secs=1.0, correlation_threshold=0.4, frac_bad=0.01
     ):
-        """Find correlation between the low frequency components of the EEG below 50 Hz.
+        """Detect channels that sometimes don't correlate with any other channels.
 
-        Correlation is done using a sliding non-overlapping time window.
-        The maximum absolute correlation is as the 98th percentile of the absolute
-        values of the correlations with the other channels
-        If the maximum correlation is less than 0.4 then the channel is designated as
-        bad by correlation.
+        Channel correlations are calculated by splitting the recording into
+        non-overlapping windows of time (default: 1 second), getting the absolute
+        correlations of each usable channel with every other usable channel for
+        each window, and then finding the highest correlation each channel has
+        with another channel for each window (by taking the 98th percentile of
+        the absolute correlations).
+
+        A correlation window is considered "bad" for a channel if its maximum
+        correlation with another channel is below the provided correlation
+        threshold (default: ``0.4``). A channel is considered "bad-by-correlation"
+        if its fraction of bad correlation windows is above the bad fraction
+        threshold (default: ``0.01``).
+
+        This method also detects channels with intermittent dropouts (i.e.,
+        regions of flat signal). A channel is considered "bad-by-dropout" if
+        its fraction of correlation windows with a completely flat signal is
+        above the bad fraction threshold (default: ``0.01``).
 
         Parameters
         ----------
-        correlation_secs : float
-            length of the correlation time window (default: 1 secs).
-        correlation_threshold : float
-            correlation threshold below which channel is marked bad.
-        frac_bad : float
-            percentage of data windows in which the correlation threshold was
-            not surpassed and if a channel gets a value of greater than 1%, it
-            is designated bad. Notice that if `correlation_secs` is high, and
-            thus the number of windows is low, the default `frac_bad` may
-            be too extreme. For example if only 60 windows are available
-            for a dataset, only a single bad window would be needed to
-            classify as bad.
+        correlation_secs : float, optional
+            The length (in seconds) of each correlation window. Defaults to ``1.0``.
+        correlation_threshold : float, optional
+            The lowest maximum inter-channel correlation for a channel to be
+            considered "bad" within a given window. Defaults to ``0.4``.
+        frac_bad : float, optional
+            The minimum proportion of bad windows for a channel to be considered
+            "bad-by-correlation" or "bad-by-dropout". Defaults to ``0.01`` (1% of
+            all windows).
 
         """
         IQR_TO_SD = 0.7413  # Scales units of IQR to units of SD, assuming normality
@@ -419,7 +451,12 @@ class NoisyChannels:
         self._extra_info["bad_by_hf_noise"]["noise_levels"] = noiselevels
 
     def find_bad_by_SNR(self):
-        """Determine the channels that fail both by correlation and HF noise."""
+        """Detect channels that have a low signal-to-noise ratio.
+
+        Channels are considered "bad-by-SNR" if they are bad by both high-frequency
+        noise and bad by low correlation.
+
+        """
         # Get names of bad-by-HF-noise and bad-by-correlation channels
         if not len(self._extra_info["bad_by_hf_noise"]) > 1:
             self.find_bad_by_hfnoise()
@@ -441,20 +478,29 @@ class NoisyChannels:
         channel_wise=False,
         max_chunk_size=None,
     ):
-        """Detect channels that are not predicted well by other channels.
+        """Detect channels that are predicted poorly by other channels.
 
-        This method is a wrapper for the :func:`ransac.find_bad_by_ransac`
+        This method uses a random sample consensus approach (RANSAC, see [1]_,
+        and a short discussion in [2]_) to try and predict what the signal should
+        be for each channel based on the signals and spatial locations of other
+        currently-good channels. RANSAC correlations are calculated by splitting
+        the recording into non-overlapping windows of time (default: 5 seconds)
+        and correlating each channel's RANSAC-predicted signal with its actual
+        signal within each window.
+
+        A RANSAC window is considered "bad" for a channel if its predicted signal
+        vs. actual signal correlation falls below the given correlation threshold
+        (default: ``0.75``). A channel is considered "bad-by-RANSAC" if its fraction
+        of bad RANSAC windows is above the given threshold (default: ``0.4``).
+
+        Due to its random sampling component, the channels identified as
+        "bad-by-RANSAC" may vary slightly between calls of this method.
+        Additionally, bad channels may vary between different montages given that
+        RANSAC's signal predictions are based on the spatial coordinates of each
+        electrode.
+
+        This method is a wrapper for the :func:`~ransac.find_bad_by_ransac`
         function.
-
-        Here, a ransac approach (see [1]_, and a short discussion in [2]_) is
-        adopted to predict a "clean EEG" dataset. After identifying clean EEG
-        channels through the other methods, the clean EEG dataset is
-        constructed by repeatedly sampling a small subset of clean EEG channels
-        and interpolation the complete data. The median of all those
-        repetitions forms the clean EEG dataset. In a second step, the original
-        and the ransac predicted data are correlated and channels, which do not
-        correlate well with themselves across the two datasets are considered
-        `bad_by_ransac`.
 
         Parameters
         ----------
@@ -495,7 +541,7 @@ class NoisyChannels:
 
         References
         ----------
-        .. [1] Fischler, M.A., Bolles, R.C. (1981). Random rample consensus: A
+        .. [1] Fischler, M.A., Bolles, R.C. (1981). Random sample consensus: A
             Paradigm for Model Fitting with Applications to Image Analysis and
             Automated Cartography. Communications of the ACM, 24, 381-395
         .. [2] Jas, M., Engemann, D.A., Bekhti, Y., Raimondo, F., Gramfort, A.
