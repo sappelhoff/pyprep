@@ -132,47 +132,28 @@ class NoisyChannels:
             category is printed. Defaults to ``False``.
 
         """
-        bads = (
-            self.bad_by_nan
-            + self.bad_by_flat
-            + self.bad_by_deviation
-            + self.bad_by_hf_noise
-            + self.bad_by_SNR
-            + self.bad_by_correlation
-            + self.bad_by_dropout
-            + self.bad_by_ransac
-        )
-        bads = list(set(bads))
+        bads = {
+            "n/a": self.bad_by_nan,
+            "flat": self.bad_by_flat,
+            "deviation": self.bad_by_deviation,
+            "hf noise": self.bad_by_hf_noise,
+            "correl": self.bad_by_correlation,
+            "SNR": self.bad_by_SNR,
+            "dropout": self.bad_by_dropout,
+            "RANSAC": self.bad_by_ransac
+        }
+
+        all_bads = set()
+        for bad_chs in bads.values():
+            all_bads.update(bad_chs)
 
         if verbose:
-            print("Found {} uniquely bad channels.".format(len(bads)))
-            print("\n{} by n/a: {}".format(len(self.bad_by_nan), self.bad_by_nan))
-            print("\n{} by flat: {}".format(len(self.bad_by_flat), self.bad_by_flat))
-            print(
-                "\n{} by deviation: {}".format(
-                    len(self.bad_by_deviation), self.bad_by_deviation
-                )
-            )
-            print(
-                "\n{} by hf noise: {}".format(
-                    len(self.bad_by_hf_noise), self.bad_by_hf_noise
-                )
-            )
-            print(
-                "\n{} by correl: {}".format(
-                    len(self.bad_by_correlation), self.bad_by_correlation
-                )
-            )
-            print("\n{} by SNR {}".format(len(self.bad_by_SNR), self.bad_by_SNR))
-            print(
-                "\n{} by dropout: {}".format(
-                    len(self.bad_by_dropout), self.bad_by_dropout
-                )
-            )
-            print(
-                "\n{} by ransac: {}".format(len(self.bad_by_ransac), self.bad_by_ransac)
-            )
-        return bads
+            out = "Found {} uniquely bad channels:\n".format(len(all_bads))
+            for bad_type, bad_chs in bads.items():
+                out += "\n{} by {}: {}\n".format(len(bad_chs), bad_type, bad_chs)
+            print(out)
+
+        return list(all_bads)
 
     def find_all_bads(self, ransac=True, channel_wise=False, max_chunk_size=None):
         """Call all the functions to detect bad channels.
