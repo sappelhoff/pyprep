@@ -301,7 +301,7 @@ def _correlate_arrays(a, b, matlab_strict=False):
     Notes
     -----
     In MATLAB PREP, RANSAC channel predictions are correlated with actual data
-    using a non-standard method: essentialy, it uses the standard Pearson
+    using a non-standard method: essentially, it uses the standard Pearson
     correlation formula but without subtracting the channel means from each channel
     before calculating sums of squares, i.e.,::
 
@@ -323,6 +323,31 @@ def _correlate_arrays(a, b, matlab_strict=False):
     else:
         n_chan = a.shape[0]
         return np.diag(np.corrcoef(a, b)[:n_chan, n_chan:])
+
+
+def madmed(x, axis=None):
+    """Calculate median absolute deviations from the median (MAD) for an array.
+
+    Parameters
+    ----------
+    x : np.ndarray
+        Input array containing the values to summarize.
+    axis : {int, tuple of int, None}, optional
+        Axis along which MADs should be calculated. If ``None``, the MAD will
+        be calculated for the full input array. Defaults to ``None``.
+
+    Returns
+    -------
+    mad : scalar or np.ndarray
+        If no axis is specified, returns the MAD for the full input array as a
+        single numeric value. Otherwise, returns an ``np.ndarray`` containing
+        the MAD for each index along the specified axis.
+
+    """
+    med = np.median(x, axis=axis)
+    if axis == 1:
+        med = med.reshape(-1, 1)  # Transposes array to allow subtraction below
+    return np.median(np.abs(x - med), axis=axis)
 
 
 def filter_design(N_order, amp, freq):
