@@ -120,7 +120,7 @@ only few changes, this is often a practical solution.
 
 # Info about versioning
 
-The versioning of `pyprep` is done with [versioneer](github.com/python-versioneer/python-versioneer).
+The versioning of `pyprep` is done with [versioneer](https://github.com/python-versioneer/python-versioneer).
 
 The following files are controlled by `versioneer` and should not be modified manually:
 
@@ -149,8 +149,7 @@ Admin credentials are needed to access the setup.
 # How to make a release
 
 - needs admin rights
-- we are using [semver](https://semver.org/)
-- we are using [Versioneer](https://github.com/warner/python-versioneer)
+- we are using [semver](https://semver.org/) (see section on versioning)
 - we are using [GitHub Actions to deploy](./workflows/python_publish.yml)
 - PyPi credentials are stored as GitHub secrets
 
@@ -174,5 +173,5 @@ Follow this workflow:
 Then the release is done and master has to be prepared for development of the
 next release:
 
-1. add a "current" headline to docs/whats_new.rst
-1. commit the changes and git push to master (or make a pull request)
+1. add a "current" headline to `docs/whats_new.rst`
+1. commit the changes and `git push` to master (or make a pull request)
