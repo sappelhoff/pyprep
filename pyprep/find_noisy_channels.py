@@ -250,27 +250,27 @@ class NoisyChannels:
         """
         IQR_TO_SD = 0.7413  # Scales units of IQR to units of SD, assuming normality
 
-        # Get robust SD for each channel, plus the robust SD & median of those SDs
-        channel_devs = _mat_iqr(self.EEGData, axis=1) * IQR_TO_SD
-        dev_sd = _mat_iqr(channel_devs) * IQR_TO_SD
-        dev_median = np.nanmedian(channel_devs)
+        # Get channel amplitudes and the median / robust SD of those amplitudes
+        chan_amplitudes = _mat_iqr(self.EEGData, axis=1) * IQR_TO_SD
+        amp_sd = _mat_iqr(chan_amplitudes) * IQR_TO_SD
+        amp_median = np.nanmedian(chan_amplitudes)
 
-        # Calculate robust Z-scores for the robust channel SDs
-        deviation_zscore = np.zeros(self.n_chans_original)
-        deviation_zscore[self.usable_idx] = (channel_devs - dev_median) / dev_sd
+        # Calculate robust Z-scores for the channel amplitudes
+        amplitude_zscore = np.zeros(self.n_chans_original)
+        amplitude_zscore[self.usable_idx] = (chan_amplitudes - amp_median) / amp_sd
 
         # Flag channels with variance that deviates excessively from the median
-        abnormal_deviation = np.abs(deviation_zscore) > deviation_threshold
-        deviation_channel_mask = np.isnan(deviation_zscore) | abnormal_deviation
+        abnormal_amplitude = np.abs(amplitude_zscore) > deviation_threshold
+        deviation_channel_mask = np.isnan(amplitude_zscore) | abnormal_amplitude
 
         # Update names of bad channels by excessive deviation & save additional info
         deviation_channels = self.ch_names_original[deviation_channel_mask]
         self.bad_by_deviation = deviation_channels.tolist()
         self._extra_info["bad_by_deviation"].update(
             {
-                "median_channel_deviation": dev_median,
-                "channel_deviation_sd": dev_sd,
-                "robust_channel_deviations": deviation_zscore
+                "median_channel_amplitude": amp_median,
+                "channel_amplitude_sd": amp_sd,
+                "robust_channel_deviations": amplitude_zscore
             }
         )
 
@@ -377,7 +377,7 @@ class NoisyChannels:
         max_correlations = np.ones((win_count, self.n_chans_original))
         dropout = np.zeros((win_count, self.n_chans_original), dtype=bool)
         noiselevels = np.zeros((win_count, self.n_chans_original))
-        channel_deviations = np.zeros((win_count, self.n_chans_original))
+        channel_amplitudes = np.zeros((win_count, self.n_chans_original))
 
         for w in range(win_count):
             # Get both filtered and unfiltered data for the current window
@@ -387,7 +387,7 @@ class NoisyChannels:
 
             # Get channel amplitude info for the window
             usable = self.usable_idx.copy()
-            channel_deviations[w, usable] = _mat_iqr(eeg_raw, axis=1) * IQR_TO_SD
+            channel_amplitudes[w, usable] = _mat_iqr(eeg_raw, axis=1) * IQR_TO_SD
 
             # Check for any channel dropouts (flat signal) within the window
             eeg_amplitude = madmed(eeg_filtered, axis=1)
@@ -432,7 +432,7 @@ class NoisyChannels:
             "dropouts": np.transpose(dropout.astype(np.int8)),
             "bad_window_fractions": fraction_dropout_windows,
         }
-        self._extra_info["bad_by_deviation"]["channel_deviations"] = channel_deviations
+        self._extra_info["bad_by_deviation"]["channel_amplitudes"] = channel_amplitudes
         self._extra_info["bad_by_hf_noise"]["noise_levels"] = noiselevels
 
     def find_bad_by_SNR(self):
