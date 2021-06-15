@@ -10,7 +10,7 @@ pre-commit
 pytest-cov
 pytest-sugar
 pytest
-sphinx
+sphinx>3
 sphinx_bootstrap_theme
 sphinx_gallery
 sphinx-copybutton
