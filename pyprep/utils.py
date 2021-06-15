@@ -17,10 +17,6 @@ def _set_diff(list1, list2):
     return list(set(list1) - set(list2))
 
 
-def _intersect(list1, list2):
-    return list(set(list1).intersection(set(list2)))
-
-
 def _mat_round(x):
     """Round a number to the nearest whole number.
 
