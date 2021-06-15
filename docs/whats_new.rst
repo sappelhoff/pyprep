@@ -3,15 +3,15 @@
 Authors
 =======
 
-People who contributed to this software across releases (in **alphabetical order**)
+People who contributed to this software across releases (in **alphabetical order (last name)**)
 
+* `Stefan Appelhoff`_
+* `Austin Hurst`_
 * `Aamna Lawrence`_
 * `Adam Li`_
-* `Austin Hurst`_
-* `Christian Oreilly`_
-* `Stefan Appelhoff`_
-* `Victor Xiang`_
 * `Yorguin Mantilla`_
+* `Christian O'Reilly`_
+* `Victor Xiang`_
 
 .. _whats_new:
 
@@ -157,7 +157,7 @@ Changelog
 .. _Stefan Appelhoff: http://stefanappelhoff.com/
 .. _Aamna Lawrence: https://github.com/AamnaLawrence
 .. _Adam Li: https://github.com/adam2392/
-.. _Christian Oreilly: https://github.com/christian-oreilly
+.. _Christian O'Reilly: https://github.com/christian-oreilly
 .. _Victor Xiang: https://github.com/Nick3151
 .. _Yorguin Mantilla: https://github.com/yjmantilla
 .. _Austin Hurst: https://github.com/a-hurst

@@ -1,0 +1,55 @@
+{
+    "title": "PyPREP: A Python implementation of the preprocessing pipeline (PREP) for EEG data.",
+    "description": "PyPrep is a Python library to facilitate preprocessing of EEG data. More information can be found at <a href=\"https://pyprep.readthedocs.io\">pyprep.readthedocs.io</a>.",
+    "creators": [
+      {
+        "affiliation": "Center for Adaptive Rationality, Max Planck Institute for Human Development, Berlin, Germany",
+        "name": "Appelhoff, Stefan",
+        "orcid": "0000-0001-8002-0877"
+      },
+      {
+        "affiliation": "",
+         "name":"Hurst, Austin",
+         "orcid": ""
+       },
+      {
+       "affiliation": "",
+        "name": "Lawrence, Aamna",
+        "orcid": ""
+      },
+      {
+        "affiliation": "Institute for Computational Medicine, Johns Hopkins University, Baltimore, MD, USA",
+        "name": "Li, Adam",
+        "orcid": "0000-0001-8421-365X"
+      },
+      {
+        "affiliation": "",
+         "name": "Mantilla, Yorguin",
+         "orcid": ""
+       },
+      {
+       "affiliation": "",
+        "name": "O'Reilly, Christian",
+        "orcid": ""
+      },
+      {
+       "affiliation": "",
+        "name": "Xiang, Victor",
+        "orcid": ""
+      }
+    ],
+    "keywords": [
+      "EEG",
+      "artifact",
+      "preprocessing",
+      "data",
+      "neuroscience",
+      "neuroimaging",
+      "mne",
+      "python",
+      "electroencephalography",
+      "eeg"
+    ],
+    "license": "MIT",
+    "upload_type": "software"
+  }
