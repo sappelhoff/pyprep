@@ -171,26 +171,26 @@ class TestCompareNoisyChannels(object):
         # Gather PyPREP deviation info and MATLAB equivalents
         mat = matprep_noisy
         matprep_info = {
-            "median_channel_deviation": mat["channelDeviationMedian"],
-            "channel_deviation_sd": mat["channelDeviationSD"],
+            "median_channel_amplitude": mat["channelDeviationMedian"],
+            "channel_amplitude_sd": mat["channelDeviationSD"],
             "robust_channel_deviations": mat["robustChannelDeviation"],
-            "channel_deviations": mat["channelDeviations"],
+            "channel_amplitudes": mat["channelDeviations"],
         }
         pyprep_info = pyprep_noisy._extra_info["bad_by_deviation"]
 
-        # Compare overall medians and SDs for channel deviations
-        median_dev = "median_channel_deviation"
-        dev_sd = "channel_deviation_sd"
-        assert np.isclose(pyprep_info[median_dev] * 1e6, matprep_info[median_dev])
-        assert np.isclose(pyprep_info[dev_sd] * 1e6, matprep_info[dev_sd])
+        # Compare overall medians and SDs for channel amplitudes
+        median_amp = "median_channel_amplitude"
+        amp_sd = "channel_amplitude_sd"
+        assert np.isclose(pyprep_info[median_amp] * 1e6, matprep_info[median_amp])
+        assert np.isclose(pyprep_info[amp_sd] * 1e6, matprep_info[amp_sd])
 
-        # Compare robust deviations across channels
+        # Compare robust amplitude deviations across channels
         dev_by_chan = "robust_channel_deviations"
         assert np.allclose(pyprep_info[dev_by_chan], matprep_info[dev_by_chan])
 
-        # Compare windows of channel deviations across recording
-        chan_devs = "channel_deviations"
-        assert np.allclose(pyprep_info[chan_devs] * 1e6, matprep_info[chan_devs].T)
+        # Compare windows of channel amplitudes across recording
+        chan_amps = "channel_amplitudes"
+        assert np.allclose(pyprep_info[chan_amps] * 1e6, matprep_info[chan_amps].T)
 
         # Compare names of bad-by-deviation channels
         assert pyprep_noisy.bad_by_deviation == matprep_noisy["bads"]["by_deviation"]
