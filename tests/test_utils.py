@@ -157,11 +157,7 @@ def test_eeglab_create_highpass():
 def test_madmed():
     """Test the median absolute deviation from the median (MAD) function."""
     # Generate test data
-    tst = np.array([
-        [1, 2, 3, 4, 8],
-        [80, 10, 20, 30, 40],
-        [100, 200, 800, 300, 400]
-    ])
+    tst = np.array([[1, 2, 3, 4, 8], [80, 10, 20, 30, 40], [100, 200, 800, 300, 400]])
     expected = np.asarray([1, 10, 100])
 
     # Compare output to expected results

@@ -135,6 +135,11 @@ class NoisyChannels:
             If ``True``, a summary of the channels currently flagged as by bad per
             category is printed. Defaults to ``False``.
 
+        Returns
+        -------
+        bads : list
+            THe names of all bad channels detected by any method so far.
+
         """
         bads = {
             "n/a": self.bad_by_nan,
@@ -144,7 +149,7 @@ class NoisyChannels:
             "correl": self.bad_by_correlation,
             "SNR": self.bad_by_SNR,
             "dropout": self.bad_by_dropout,
-            "RANSAC": self.bad_by_ransac
+            "RANSAC": self.bad_by_ransac,
         }
 
         all_bads = set()
@@ -270,7 +275,7 @@ class NoisyChannels:
             {
                 "median_channel_amplitude": amp_median,
                 "channel_amplitude_sd": amp_sd,
-                "robust_channel_deviations": amplitude_zscore
+                "robust_channel_deviations": amplitude_zscore,
             }
         )
 
@@ -306,7 +311,7 @@ class NoisyChannels:
         # < 50 Hz amplitude for each channel and get robust z-scores of values
         if self.sample_rate > 100:
             noisiness = np.divide(
-                madmed(self.EEGData - self.EEGFiltered,  axis=1),
+                madmed(self.EEGData - self.EEGFiltered, axis=1),
                 madmed(self.EEGFiltered, axis=1),
             )
             noise_median = np.nanmedian(noisiness)
