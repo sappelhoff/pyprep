@@ -6,7 +6,7 @@ from scipy import signal
 
 from pyprep.ransac import find_bad_by_ransac
 from pyprep.removeTrend import removeTrend
-from pyprep.utils import _mat_iqr, _mat_quantile, madmed, filter_design
+from pyprep.utils import _mat_iqr, _mat_quantile, filter_design, madmed
 
 
 class NoisyChannels:
@@ -264,7 +264,7 @@ class NoisyChannels:
         amplitude_zscore = np.zeros(self.n_chans_original)
         amplitude_zscore[self.usable_idx] = (chan_amplitudes - amp_median) / amp_sd
 
-        # Flag channels with variance that deviates excessively from the median
+        # Flag channels with amplitudes that deviate excessively from the median
         abnormal_amplitude = np.abs(amplitude_zscore) > deviation_threshold
         deviation_channel_mask = np.isnan(amplitude_zscore) | abnormal_amplitude
 
