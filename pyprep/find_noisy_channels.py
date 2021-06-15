@@ -15,6 +15,8 @@ class NoisyChannels:
     This class provides a number of methods for detecting bad channels across a
     full-session EEG recording. Specifically, this class implements all of the
     noisy channel detection methods used in the PREP pipeline, as described in [1]_.
+    The detection methods in this class can be run independently, or can be run
+    all at once using the :meth:`~.find_all_bads` method.
 
     At present, only EEG channels are supported and any non-EEG channels in the
     provided data will be ignored.
@@ -123,6 +125,9 @@ class NoisyChannels:
 
     def get_bads(self, verbose=False):
         """Get a list of all channels currently flagged as bad.
+
+        Note that this method does not perform any bad channel detection itself,
+        and only reports channels already detected as bad by other methods.
 
         Parameters
         ----------
