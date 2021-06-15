@@ -29,7 +29,7 @@ The :class:`~pyprep.Reference` class
    :toctree: generated/
 
    Reference
-   
+
 The :class:`~pyprep.PrepPipeline` class
 ---------------------------------------
 

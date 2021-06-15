@@ -40,6 +40,7 @@ jobs:
         check-manifest .
         black . --check
         isort . --check
+        pre-commit run --all-files || ( git status --short ; git diff ; exit 1 )
 
     - name: Test with pytest
       run: |
