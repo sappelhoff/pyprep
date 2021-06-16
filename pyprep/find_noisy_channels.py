@@ -462,9 +462,9 @@ class NoisyChannels:
     def find_bad_by_ransac(
         self,
         n_samples=50,
-        fraction_good=0.25,
+        sample_prop=0.25,
         corr_thresh=0.75,
-        fraction_bad=0.4,
+        frac_bad=0.4,
         corr_window_secs=5.0,
         channel_wise=False,
         max_chunk_size=None,
@@ -508,7 +508,7 @@ class NoisyChannels:
             The minimum predicted vs. actual signal correlation for a channel to
             be considered good within a given RANSAC window. Defaults
             to ``0.75``.
-        fraction_bad : float, optional
+        frac_bad : float, optional
             The minimum fraction of bad (i.e., below-threshold) RANSAC windows
             for a channel to be considered bad-by-RANSAC. Defaults to ``0.4``.
         corr_window_secs : float, optional
@@ -553,9 +553,9 @@ class NoisyChannels:
             self.raw_mne._get_channel_positions()[self.usable_idx, :],
             exclude_from_ransac,
             n_samples,
-            fraction_good,
+            sample_prop,
             corr_thresh,
-            fraction_bad,
+            frac_bad,
             corr_window_secs,
             channel_wise,
             max_chunk_size,
