@@ -255,6 +255,7 @@ class NoisyChannels:
 
         """
         IQR_TO_SD = 0.7413  # Scales units of IQR to units of SD, assuming normality
+        # Reference: https://stat.ethz.ch/R-manual/R-devel/library/stats/html/IQR.html
 
         # Get channel amplitudes and the median / robust SD of those amplitudes
         chan_amplitudes = _mat_iqr(self.EEGData, axis=1) * IQR_TO_SD
@@ -300,6 +301,7 @@ class NoisyChannels:
 
         """
         MAD_TO_SD = 1.4826  # Scales units of MAD to units of SD, assuming normality
+        # Reference: https://stat.ethz.ch/R-manual/R-devel/library/stats/html/mad.html
 
         if self.EEGFiltered is None:
             self.EEGFiltered = self._get_filtered_data()
@@ -370,6 +372,7 @@ class NoisyChannels:
 
         """
         IQR_TO_SD = 0.7413  # Scales units of IQR to units of SD, assuming normality
+        # Reference: https://stat.ethz.ch/R-manual/R-devel/library/stats/html/IQR.html
 
         if self.EEGFiltered is None:
             self.EEGFiltered = self._get_filtered_data()
