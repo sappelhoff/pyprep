@@ -165,6 +165,11 @@ def test_mad():
     assert all(np.equal(_mad(tst.T, axis=0), expected))
     assert _mad(tst) == 28  # Matches robust.mad from statsmodels
 
+    # Test exception with > 2-D arrays
+    tst = np.random.rand(3, 3, 3)
+    with pytest.raises(ValueError):
+        _mad(tst, axis=0)
+
 
 def test_print_progress(capsys):
     """Test the function for printing progress updates within a loop."""
