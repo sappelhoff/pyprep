@@ -245,7 +245,7 @@ def _get_random_subset(x, size, rand_state):
     size : int
         The number of items to sample. Must be less than the number of input
         items.
-    rand_state : np.random.RandState
+    rand_state : np.random.RandomState
         A random state object to use for random number generation.
 
     Returns

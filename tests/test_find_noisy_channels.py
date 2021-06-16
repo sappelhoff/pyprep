@@ -245,6 +245,13 @@ def test_find_bad_by_ransac(raw_tmp):
     # Make sure strict and non-strict matrices differ
     assert not np.allclose(corr["by_window"], corr["by_window_strict"])
 
+    # Ensure that RANSAC doesn't change random state if in MATLAB-strict mode
+    rng = RandomState(RANSAC_RNG)
+    init_state = rng.get_state()[2]
+    nd = NoisyChannels(raw_tmp, do_detrend=False, random_state=rng, matlab_strict=True)
+    nd.find_bad_by_ransac()
+    assert rng.get_state()[2] == init_state
+
 
 def test_find_bad_by_ransac_err(raw_tmp):
     """Test error handling in the `find_bad_by_ransac` method."""
