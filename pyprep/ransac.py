@@ -21,9 +21,9 @@ def find_bad_by_ransac(
     chn_pos,
     exclude,
     n_samples=50,
-    fraction_good=0.25,
+    sample_prop=0.25,
     corr_thresh=0.75,
-    fraction_bad=0.4,
+    frac_bad=0.4,
     corr_window_secs=5.0,
     channel_wise=False,
     max_chunk_size=None,
@@ -69,7 +69,7 @@ def find_bad_by_ransac(
     corr_thresh : float, optional
         The minimum predicted vs. actual signal correlation for a channel to
         be considered good within a given RANSAC window. Defaults to ``0.75``.
-    fraction_bad : float, optional
+    frac_bad : float, optional
         The minimum fraction of bad (i.e., below-threshold) RANSAC windows for a
         channel to be considered bad-by-RANSAC. Defaults to ``0.4``.
     corr_window_secs : float, optional
@@ -133,13 +133,13 @@ def find_bad_by_ransac(
     # Check if we have enough remaining channels
     # after exclusion of bad channels
     n_chans = data.shape[0]
-    n_pred_chns = int(np.around(fraction_good * n_chans))
+    n_pred_chns = int(np.around(sample_prop * n_chans))
 
     if n_pred_chns <= 3:
-        sample_pct = int(fraction_good * 100)
+        sample_pct = int(sample_prop * 100)
         e = "Too few channels in the original data to reliably perform RANSAC "
         e += "(minimum {0} for a sample size of {1}%)."
-        raise IOError(e.format(int(np.floor(4.0 / fraction_good)), sample_pct))
+        raise IOError(e.format(int(np.floor(4.0 / sample_prop)), sample_pct))
     elif n_chans_good < (n_pred_chns + 1):
         e = "Too many noisy channels in the data to reliably perform RANSAC "
         e += "(only {0} good channels remaining, need at least {1})."
@@ -247,7 +247,7 @@ def find_bad_by_ransac(
     frac_bad_corr_windows = np.mean(thresholded_correlations, axis=0)
 
     # find the corresponding channel names and return
-    bad_ransac_channels_idx = np.argwhere(frac_bad_corr_windows > fraction_bad)
+    bad_ransac_channels_idx = np.argwhere(frac_bad_corr_windows > frac_bad)
     bad_ransac_channels_name = complete_chn_labs[bad_ransac_channels_idx.astype(int)]
     bad_by_ransac = [i[0] for i in bad_ransac_channels_name]
     print("\nRANSAC done!")
