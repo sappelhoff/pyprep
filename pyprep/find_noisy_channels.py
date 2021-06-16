@@ -157,9 +157,9 @@ class NoisyChannels:
             all_bads.update(bad_chs)
 
         if verbose:
-            out = "Found {} uniquely bad channels:\n".format(len(all_bads))
+            out = f"Found {len(all_bads)} uniquely bad channels:\n"
             for bad_type, bad_chs in bads.items():
-                out += "\n{} by {}: {}\n".format(len(bad_chs), bad_type, bad_chs)
+                out += f"\n{len(bad_chs)} by {bad_type}: {bad_chs}\n"
             print(out)
 
         return list(all_bads)
@@ -195,6 +195,7 @@ class NoisyChannels:
             effect. Defaults to ``None``.
 
         """
+        # NOTE: Bad-by-NaN/flat is already run during init, no need to re-run here
         self.find_bad_by_deviation()
         self.find_bad_by_hfnoise()
         self.find_bad_by_correlation()
@@ -250,7 +251,7 @@ class NoisyChannels:
         ----------
         deviation_threshold : float, optional
             The minimum absolute z-score of a channel for it to be considered
-            bad-by-deviation. Defaults to 5.0.
+            bad-by-deviation. Defaults to ``5.0``.
 
         """
         IQR_TO_SD = 0.7413  # Scales units of IQR to units of SD, assuming normality
@@ -295,7 +296,7 @@ class NoisyChannels:
         ----------
         HF_zscore_threshold : float, optional
             The minimum noisiness z-score of a channel for it to be considered
-            bad-by-high-frequency-noise. Defaults to 5.0.
+            bad-by-high-frequency-noise. Defaults to ``5.0``.
 
         """
         MAD_TO_SD = 1.4826  # Scales units of MAD to units of SD, assuming normality
