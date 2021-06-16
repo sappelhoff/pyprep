@@ -6,7 +6,8 @@ import pytest
 import scipy.io as sio
 
 from pyprep.prep_pipeline import PrepPipeline
-from pyprep.utils import make_random_mne_object
+
+from .conftest import make_random_mne_object
 
 
 @pytest.mark.usefixtures("raw", "montage")
