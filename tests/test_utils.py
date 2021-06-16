@@ -7,11 +7,11 @@ from pyprep.utils import (
     _correlate_arrays,
     _eeglab_create_highpass,
     _get_random_subset,
+    _mad,
     _mat_iqr,
     _mat_quantile,
     _mat_round,
-    madmed,
-    print_progress,
+    _print_progress,
 )
 
 
@@ -154,36 +154,36 @@ def test_eeglab_create_highpass():
     assert np.isclose(expected_val, actual_val, atol=0.001)
 
 
-def test_madmed():
+def test_mad():
     """Test the median absolute deviation from the median (MAD) function."""
     # Generate test data
     tst = np.array([[1, 2, 3, 4, 8], [80, 10, 20, 30, 40], [100, 200, 800, 300, 400]])
     expected = np.asarray([1, 10, 100])
 
     # Compare output to expected results
-    assert all(np.equal(madmed(tst, axis=1), expected))
-    assert all(np.equal(madmed(tst.T, axis=0), expected))
-    assert madmed(tst) == 28  # Matches robust.mad from statsmodels
+    assert all(np.equal(_mad(tst, axis=1), expected))
+    assert all(np.equal(_mad(tst.T, axis=0), expected))
+    assert _mad(tst) == 28  # Matches robust.mad from statsmodels
 
 
 def test_print_progress(capsys):
     """Test the function for printing progress updates within a loop."""
     # Test printing start value
-    print_progress(1, 20)
+    _print_progress(1, 20)
     captured = capsys.readouterr()
     assert captured.out == "Progress: "
 
     # Test printing end values
     iterations = 27
     for i in range(iterations):
-        print_progress(i + 1, iterations, every=0.2)
+        _print_progress(i + 1, iterations, every=0.2)
     captured = capsys.readouterr()
     assert captured.out == "Progress: 20%... 40%... 60%... 80%... 100%\n"
 
     # Test printing of updates at right times
     iterations = 176
     for i in range(iterations):
-        print_progress(i + 1, iterations)
+        _print_progress(i + 1, iterations)
         if (i + 1) == 17:
             captured = capsys.readouterr()
             assert captured.out == "Progress: "
@@ -196,7 +196,7 @@ def test_print_progress(capsys):
     iterations = 25
     start = 5
     for i in range(start, iterations + 1):
-        print_progress(i, iterations, start=start)
+        _print_progress(i, iterations, start=start)
         if i == 6:
             captured = capsys.readouterr()
             assert captured.out == "Progress: "

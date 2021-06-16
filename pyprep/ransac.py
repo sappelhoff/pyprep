@@ -8,9 +8,9 @@ from pyprep.utils import (
     _correlate_arrays,
     _get_random_subset,
     _mat_round,
-    print_progress,
-    split_list,
-    verify_free_ram,
+    _print_progress,
+    _split_list,
+    _verify_free_ram,
 )
 
 
@@ -110,7 +110,7 @@ def find_bad_by_ransac(
 
     References
     ----------
-    .. [1] Fischler, M.A., Bolles, R.C. (1981). Random rample consensus: A
+    .. [1] Fischler, M.A., Bolles, R.C. (1981). Random sample consensus: A
         Paradigm for Model Fitting with Applications to Image Analysis and
         Automated Cartography. Communications of the ACM, 24, 381-395
     .. [2] Jas, M., Engemann, D.A., Bekhti, Y., Raimondo, F., Gramfort, A.
@@ -148,10 +148,10 @@ def find_bad_by_ransac(
     # Before running, make sure we have enough memory when using the
     # smallest possible chunk size
     if channel_wise:
-        verify_free_ram(data, n_samples, 1)
+        _verify_free_ram(data, n_samples, 1)
     else:
         window_size = int(sample_rate * corr_window_secs)
-        verify_free_ram(data[:, :window_size], n_samples, n_chans_good)
+        _verify_free_ram(data[:, :window_size], n_samples, n_chans_good)
 
     # Generate random channel picks for each RANSAC sample
     random_ch_picks = []
@@ -207,7 +207,7 @@ def find_bad_by_ransac(
     # If not using window-wise RANSAC, do channel-wise RANSAC
     while mem_error and channel_wise:
         try:
-            channel_chunks = split_list(job, chunk_size)
+            channel_chunks = _split_list(job, chunk_size)
             total_chunks = len(channel_chunks)
             current = 1
             for chunk in channel_chunks:
@@ -332,7 +332,7 @@ def _ransac_by_window(data, interpolation_mats, win_size, win_count, matlab_stri
     for window in range(win_count):
 
         # Print RANSAC progress in 10% increments
-        print_progress(window + 1, win_count, every=0.1)
+        _print_progress(window + 1, win_count, every=0.1)
 
         # Get the current window of EEG data
         start = window * win_size
@@ -509,7 +509,7 @@ def _predict_median_signals_channelwise(
     n_timepts = data.shape[1]
 
     # Before running, make sure we have enough memory
-    verify_free_ram(data, ransac_samples, chunk_size)
+    _verify_free_ram(data, ransac_samples, chunk_size)
 
     # Memory seems to be fine ...
     # Make the predictions
