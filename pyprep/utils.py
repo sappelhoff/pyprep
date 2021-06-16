@@ -327,7 +327,7 @@ def _mad(x, axis=None):
     Parameters
     ----------
     x : np.ndarray
-        Input array containing the values to summarize.
+        A 1-D or 2-D numeric array to summarize.
     axis : {int, tuple of int, None}, optional
         Axis along which MADs should be calculated. If ``None``, the MAD will
         be calculated for the full input array. Defaults to ``None``.
@@ -340,10 +340,18 @@ def _mad(x, axis=None):
         the MAD for each index along the specified axis.
 
     """
+    # Ensure array is either 1D or 2D
+    x = np.asarray(x)
+    if x.ndim > 2:
+        e = "Only 1D and 2D arrays are supported (input has {0} dimensions)"
+        raise ValueError(e.format(x.ndim))
+
+    # Calculate the median absolute deviation from the median
     med = np.median(x, axis=axis)
     if axis == 1:
         med = med.reshape(-1, 1)  # Transposes array to allow subtraction below
     mad = np.median(np.abs(x - med), axis=axis)
+
     return mad
 
 
