@@ -493,6 +493,12 @@ class NoisyChannels:
         This method is a wrapper for the :func:`~ransac.find_bad_by_ransac`
         function.
 
+        .. warning:: For optimal performance, RANSAC requires that channels bad by
+                     deviation, correlation, and/or dropout have already been
+                     flagged. Otherwise RANSAC will attempt to use those channels
+                     when making signal predictions, decreasing accuracy and thus
+                     increasing the likelihood of false positives.
+
         Parameters
         ----------
         n_samples : int, optional
