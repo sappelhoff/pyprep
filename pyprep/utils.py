@@ -2,7 +2,6 @@
 import math
 from cmath import sqrt
 
-import mne
 import numpy as np
 import scipy.interpolate
 from psutil import virtual_memory
