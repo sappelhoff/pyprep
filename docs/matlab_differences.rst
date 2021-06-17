@@ -5,7 +5,7 @@
 Deliberate Differences from MATLAB PREP
 =======================================
 
-Although PyPREP aims to be a faithful reimplementaion of the original MATLAB
+Although PyPREP aims to be a faithful reimplementation of the original MATLAB
 version of PREP, there are a few places where PyPREP has deliberately chosen
 to use different defaults than the MATLAB PREP.
 
@@ -38,7 +38,7 @@ values also differ slightly (on the order of ~0.002) for RANSAC correlations.
 Because the practical differences are small and MNE's filtering is fast and
 well-tested, PyPREP defaults to using :func:`mne.filter.filter_data` for
 high-pass trend removal. However, for exact numerical compatibility, PyPREP
-has a basic re-implementaion of EEGLAB's ``pop_eegfiltnew`` in Python that
+has a basic re-implementation of EEGLAB's ``pop_eegfiltnew`` in Python that
 produces identical results to MATLAB PREP's ``removeTrend`` when
 ``matlab_strict`` is set to ``True``.
 
@@ -47,7 +47,7 @@ Differences in RANSAC
 ---------------------
 
 During the "find-bad-by-RANSAC" step of noisy channel detection (see
-:func:`~pyprep.ransac.find_bad_by_ransac`), PREP does the follwing steps to
+:func:`~pyprep.ransac.find_bad_by_ransac`), PREP does the following steps to
 identify channels that aren't well-predicted by the signals of other channels:
 
 1) Generates a bunch of random subsets of currently-good channels from the data
@@ -75,6 +75,26 @@ identify channels that aren't well-predicted by the signals of other channels:
 
 With that in mind, here are the areas where PyPREP's defaults deliberately
 differ from the original PREP implementation:
+
+
+Use of random seeds
+^^^^^^^^^^^^^^^^^^^
+
+In MATLAB PREP, the random seed used for RANSAC is always ``435656``, which is
+set just before random channel sampling occurs. This means that every run of
+RANSAC will result in identical random samples of channels given the same
+input, and will produce similar random samples of channels if a channel or two
+are removed between iterations.
+
+Conversely, PyPREP defaults to setting an initial random state for the whole
+pipeline, meaning that RANSAC's random channel picks will differ between
+consecutive runs during robust re-referencing or bad channel detection. This
+approach has the benefit of better randomness, but may also lead to more
+variability in PREP results between different seed values. More testing is
+required to determine which approach produces better results.
+
+Note that to match MATLAB PREP exactly when ``matlab_strict`` is ``True``, the
+random seed ``435656`` must be used.
 
 
 Calculation of median estimated signal
@@ -107,7 +127,7 @@ Correlation of predicted vs. actual signals
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 In MATLAB PREP, RANSAC channel predictions are correlated with actual data
-in step 4 using a non-standard method: essentialy, it uses the standard Pearson
+in step 4 using a non-standard method: essentially, it uses the standard Pearson
 correlation formula but without subtracting the channel means from each channel
 before calculating sums of squares. This is done in the last line of the
 ``calculateRansacWindow`` function reproduced above:
@@ -116,7 +136,7 @@ before calculating sums of squares. This is done in the last line of the
 
    rX = sum(XX.*YY)./(sqrt(sum(XX.^2)).*sqrt(sum(YY.^2)));
 
-For readablility, here's the same formula written in Python code::
+For readability, here's the same formula written in Python code::
 
    SSxx = np.sum(xx ** 2)
    SSyy = np.sum(yy ** 2)
@@ -126,5 +146,5 @@ Because the EEG data will have already been filtered to remove slow drifts in
 baseline before RANSAC, the signals correlated by this method will already be
 roughly mean-centered. and will thus produce similar values to normal Pearson
 correlation. However, to avoid making any assumptions about the signal for any
-given channel / window, PyPREP defaults to normal earson correlation unless
+given channel / window, PyPREP defaults to normal Pearson correlation unless
 strict MATLAB equivalence is requested.

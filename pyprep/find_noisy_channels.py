@@ -1,4 +1,6 @@
 """finds bad channels."""
+from copy import copy
+
 import mne
 import numpy as np
 from mne.utils import check_random_state
@@ -555,6 +557,7 @@ class NoisyChannels:
         exclude_from_ransac = (
             self.bad_by_correlation + self.bad_by_deviation + self.bad_by_dropout
         )
+        rng = copy(self.random_state) if self.matlab_strict else self.random_state
         self.bad_by_ransac, ch_correlations_usable = find_bad_by_ransac(
             self.EEGFiltered,
             self.sample_rate,
@@ -568,7 +571,7 @@ class NoisyChannels:
             corr_window_secs,
             channel_wise,
             max_chunk_size,
-            self.random_state,
+            rng,
             self.matlab_strict,
         )
 
