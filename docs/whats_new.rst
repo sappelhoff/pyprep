@@ -59,6 +59,7 @@ Bug
 - Fixed RANSAC to avoid making unnecessary signal predictions for known-bad channels, matching MATLAB behaviour and reducing RAM requirements, by `Austin Hurst`_ (:gh:`72`)
 - Fixed a bug in :meth:`NoisyChannels.find_bad_by_correlation` that prevented it from being able to handle channels with dropouts (intermittent flat regions), by `Austin Hurst`_ (:gh:`81`).
 - Fixed :class:`~pyprep.NoisyChannels` so that it always runs "bad channel by NaN" and "bad channel by flat" detection, preventing these channels from causing problems with other :class:`~pyprep.NoisyChannels` methods, by `Austin Hurst`_ (:gh:`79`)
+- Fixed :class:`~pyprep.Reference` so that channels are no longer excluded from final average reference calculation if they were originally bad by NaN, flat, or low SNR, by `Austin Hurst`_ (:gh:`92`)
 
 API
 ~~~
