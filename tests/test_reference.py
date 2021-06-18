@@ -26,6 +26,9 @@ def test_basic_input(raw, montage):
     assert type(reference.still_noisy_channels) == list
     assert type(reference.raw) == mne.io.edf.edf.RawEDF
 
+    # Make sure the set of reference channels weren't modified by re-referencing
+    assert params["ref_chs"] == reference.reference_channels
+
 
 @pytest.mark.usefixtures("raw", "montage")
 def test_all_bad_input(raw, montage):
