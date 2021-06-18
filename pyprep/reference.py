@@ -232,9 +232,7 @@ class Reference:
             noisy_detector.bad_by_nan + noisy_detector.bad_by_flat,
             noisy_detector.bad_by_SNR,
         )
-        reference_channels = _set_diff(
-            self.reference_channels, self.unusable_channels
-        )
+        reference_channels = _set_diff(self.reference_channels, self.unusable_channels)
 
         # Initialize channels to permanently flag as bad during referencing
         self.noisy_channels = {
@@ -254,9 +252,7 @@ class Reference:
         self.reference_signal = (
             np.nanmedian(raw.get_data(picks=reference_channels), axis=0) * 1e6
         )
-        reference_index = [
-            self.ch_names_eeg.index(ch) for ch in reference_channels
-        ]
+        reference_index = [self.ch_names_eeg.index(ch) for ch in reference_channels]
         signal_tmp = self.remove_reference(
             signal, self.reference_signal, reference_index
         )
@@ -326,8 +322,7 @@ class Reference:
             else:
                 signal_tmp = signal
             self.reference_signal = (
-                np.nanmean(raw_tmp.get_data(picks=reference_channels), axis=0)
-                * 1e6
+                np.nanmean(raw_tmp.get_data(picks=reference_channels), axis=0) * 1e6
             )
 
             signal_tmp = self.remove_reference(
