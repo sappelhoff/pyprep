@@ -1,18 +1,25 @@
 """
-=================
-RANSAC COMPARE
-=================
+===============================================
+RANSAC comparison between pyprep and autoreject
+===============================================
 
+Next to the RANSAC implementation in ``pyprep``,
+there is another implementation that makes use of MNE-Python.
+That alternative RANSAC implementation can be found in the
+`"autoreject" package <https://github.com/autoreject/autoreject/>`_.
 
-In this example we compare the RANSAC implementations of pyprep and autoreject.
+In this example, we make a basic comparison between the two implementations.
+
+#. by running them on the same simulated data
+#. by running them on the same "real" data
+
 
 .. currentmodule:: pyprep
-"""  # noqa: D205 D400
+"""
 
 # Authors: Yorguin Mantilla <yjmantilla@gmail.com>
 #
 # License: MIT
-# Based On: run_ransac.py and run_full_prep.py
 
 # %%
 # First we import what we need for this example.
@@ -20,9 +27,7 @@ import numpy as np
 import mne
 from scipy import signal as signal
 from time import perf_counter
-from autoreject import Ransac  # noqa
-from autoreject.utils import interpolate_bads  # noqa
-from mne.utils import check_random_state
+from autoreject import Ransac
 import pyprep.ransac as ransac_pyprep
 
 
@@ -31,24 +36,20 @@ import pyprep.ransac as ransac_pyprep
 # We will think of good channels as sine waves and bad channels correlated with
 # each other as sawtooths. The RANSAC will be biased towards sines in its
 # prediction (they are the majority) so it will identify the sawtooths as bad.
-# We will need to set a montage because the RANSAC needs to interpolate.
 
-random_state = 435656
-rng = check_random_state(random_state)
+# Set a random seed to make this example reproducible
+rng = np.random.RandomState(435656)
+
+# start defining some key aspects for our simulated data
 sfreq = 1000.0
-
-# We need a montage, because RANSAC uses spherical splines for interpolation
 montage = mne.channels.make_standard_montage("standard_1020")
-
 ch_names = montage.ch_names
-
 n_chans = len(ch_names)
-
 info = mne.create_info(ch_names=ch_names, sfreq=sfreq, ch_types=["eeg"] * n_chans)
-
 time = np.arange(0, 30, 1.0 / sfreq)  # 30 seconds of recording
-n_bad_chans = 3
 
+# randomly pick some "bad" channels (sawtooths)
+n_bad_chans = 3
 bad_channels = rng.choice(np.arange(n_chans), n_bad_chans, replace=False)
 bad_channels = [int(i) for i in bad_channels]
 bad_ch_names = [ch_names[i] for i in bad_channels]
@@ -57,20 +58,23 @@ bad_ch_names = [ch_names[i] for i in bad_channels]
 freq_good = 20
 freq_bad = 20
 
-# Generate the data
+# Generate the data: sinewaves for "good", sawtooths for "bad" channels
 X = [
     signal.sawtooth(2 * np.pi * freq_bad * time)
     if i in bad_channels
     else np.sin(2 * np.pi * freq_good * time)
     for i in range(n_chans)
 ]
+
 # Scale the signal amplitude and add noise.
 X = 2e-5 * np.array(X) + 1e-5 * np.random.random((n_chans, time.shape[0]))
 
+# Finally, put it all together as an mne "Raw" object.
 raw = mne.io.RawArray(X, info)
-
 raw.set_montage(montage, verbose=False)
 
+# Print, which channels are simulated as "bad"
+print(bad_ch_names)
 
 # %%
 # Configure RANSAC parameters
@@ -89,8 +93,7 @@ ransac_ar = Ransac(
     min_corr=corr_thresh,
     unbroken_time=fraction_bad,
     n_jobs=1,
-    random_state=random_state,
-    verbose="tqdm",
+    random_state=rng,
 )
 epochs = mne.make_fixed_length_epochs(
     raw,
@@ -127,7 +130,7 @@ bad_by_ransac_pyprep, corr_pyprep = ransac_pyprep.find_bad_by_ransac(
     frac_bad=fraction_bad,
     corr_window_secs=corr_window_secs,
     channel_wise=False,
-    random_state=random_state,
+    random_state=rng,
 )
 print("--- %s seconds ---" % (perf_counter() - start_time))
 
@@ -136,14 +139,13 @@ print("pyprep bad chs:", bad_by_ransac_pyprep)
 assert set(bad_ch_names) == set(bad_by_ransac_pyprep)
 
 # %%
-# Now we test the algorithms in a real EEG
-# Let's download some data for testing. Picking the 1st run of subject 4 here.
+# Now we test the algorithms on real EEG data.
+# Let's download some data for testing.
 data_paths = mne.datasets.eegbci.load_data(subject=4, runs=1, update_path=True)
 fname_test_file = data_paths[0]
 
 # %%
 # Load data and prepare it
-# ------------------------
 
 raw = mne.io.read_raw_edf(fname_test_file, preload=True)
 
@@ -165,8 +167,7 @@ ransac_ar = Ransac(
     min_corr=corr_thresh,
     unbroken_time=fraction_bad,
     n_jobs=1,
-    random_state=random_state,
-    verbose="tqdm",
+    random_state=rng,
 )
 epochs = mne.make_fixed_length_epochs(
     raw,
@@ -203,7 +204,7 @@ bad_by_ransac_pyprep, corr_pyprep = ransac_pyprep.find_bad_by_ransac(
     frac_bad=fraction_bad,
     corr_window_secs=corr_window_secs,
     channel_wise=False,
-    random_state=random_state,
+    random_state=rng,
 )
 print("--- %s seconds ---" % (perf_counter() - start_time))
 
