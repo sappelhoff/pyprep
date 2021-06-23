@@ -125,46 +125,61 @@ class NoisyChannels:
 
         return EEG_filt
 
-    def get_bads(self, verbose=False):
-        """Get a list of all channels currently flagged as bad.
+    def get_bads(self, verbose=False, as_dict=False):
+        """Get the names of all channels currently flagged as bad.
 
         Note that this method does not perform any bad channel detection itself,
         and only reports channels already detected as bad by other methods.
 
         Parameters
         ----------
-        verbose : bool
+        verbose : bool, optional
             If ``True``, a summary of the channels currently flagged as by bad per
             category is printed. Defaults to ``False``.
+        as_dict: bool, optional
+            If ``True``, this method will return a dict of the channels currently
+            flagged as bad by each individual bad channel type. If ``False``, this
+            method will return a list of all unique bad channels detected so far.
+            Defaults to ``False``.
 
         Returns
         -------
-        bads : list
-            THe names of all bad channels detected by any method so far.
+        bads : list or dict
+            The names of all bad channels detected so far, either as a combined
+            list or a dict indicating the channels flagged bad by each type.
 
         """
         bads = {
-            "n/a": self.bad_by_nan,
-            "flat": self.bad_by_flat,
-            "deviation": self.bad_by_deviation,
-            "hf noise": self.bad_by_hf_noise,
-            "correl": self.bad_by_correlation,
-            "SNR": self.bad_by_SNR,
-            "dropout": self.bad_by_dropout,
-            "RANSAC": self.bad_by_ransac,
+            "bad_by_nan": self.bad_by_nan,
+            "bad_by_flat": self.bad_by_flat,
+            "bad_by_deviation": self.bad_by_deviation,
+            "bad_by_hf_noise": self.bad_by_hf_noise,
+            "bad_by_correlation": self.bad_by_correlation,
+            "bad_by_SNR": self.bad_by_SNR,
+            "bad_by_dropout": self.bad_by_dropout,
+            "bad_by_ransac": self.bad_by_ransac,
         }
 
         all_bads = set()
         for bad_chs in bads.values():
             all_bads.update(bad_chs)
 
+        name_map = {"nan": "NaN", "hf_noise": "HF noise", "ransac": "RANSAC"}
         if verbose:
             out = f"Found {len(all_bads)} uniquely bad channels:\n"
             for bad_type, bad_chs in bads.items():
+                bad_type = bad_type.replace("bad_by_", "")
+                if bad_type in name_map.keys():
+                    bad_type = name_map[bad_type]
                 out += f"\n{len(bad_chs)} by {bad_type}: {bad_chs}\n"
             print(out)
 
-        return list(all_bads)
+        if as_dict:
+            bads["bad_all"] = list(all_bads)
+        else:
+            bads = list(all_bads)
+
+        return bads
 
     def find_all_bads(self, ransac=True, channel_wise=False, max_chunk_size=None):
         """Call all the functions to detect bad channels.
