@@ -38,8 +38,7 @@ import pyprep.ransac as ransac_pyprep
 # prediction (they are the majority) so it will identify the sawtooths as bad.
 
 # Set a random seed to make this example reproducible
-random_state = 435656
-rng = np.random.RandomState(random_state)
+rng = np.random.RandomState(435656)
 
 # start defining some key aspects for our simulated data
 sfreq = 1000.0
@@ -94,7 +93,7 @@ ransac_ar = Ransac(
     min_corr=corr_thresh,
     unbroken_time=fraction_bad,
     n_jobs=1,
-    random_state=random_state,
+    random_state=rng,
 )
 epochs = mne.make_fixed_length_epochs(
     raw,
@@ -168,7 +167,7 @@ ransac_ar = Ransac(
     min_corr=corr_thresh,
     unbroken_time=fraction_bad,
     n_jobs=1,
-    random_state=random_state,
+    random_state=rng,
 )
 epochs = mne.make_fixed_length_epochs(
     raw,
