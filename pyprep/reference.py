@@ -4,7 +4,6 @@ import logging
 import numpy as np
 from mne.utils import check_random_state
 
-# from pyprep.noisy import Noisydata
 from pyprep.find_noisy_channels import NoisyChannels
 from pyprep.removeTrend import removeTrend
 from pyprep.utils import _set_diff, _union
@@ -29,13 +28,34 @@ class Reference:
         Parameters of PREP which include at least the following keys:
         - ``ref_chs``
         - ``reref_chs``
-    ransac : bool
-        Whether or not to use ransac.
-    random_state : int | None | np.random.RandomState
+    ransac : bool, optional
+        Whether or not to use RANSAC for noisy channel detection in addition to
+        the other methods in :class:`~pyprep.NoisyChannels`. Defaults to True.
+    channel_wise : bool, optional
+        Whether RANSAC should predict signals for chunks of channels over the
+        entire signal length ("channel-wise RANSAC", see `max_chunk_size`
+        parameter). If ``False``, RANSAC will instead predict signals for all
+        channels at once but over a number of smaller time windows instead of
+        over the entire signal length ("window-wise RANSAC"). Channel-wise
+        RANSAC generally has higher RAM demands than window-wise RANSAC
+        (especially if `max_chunk_size` is ``None``), but can be faster on
+        systems with lots of RAM to spare. Has no effect if not using RANSAC.
+        Defaults to ``False``.
+    max_chunk_size : {int, None}, optional
+        The maximum number of channels to predict at once during channel-wise
+        RANSAC. If ``None``, RANSAC will use the largest chunk size that will
+        fit into the available RAM, which may slow down other programs on the
+        host system. If using window-wise RANSAC (the default) or not using
+        RANSAC at all, this parameter has no effect. Defaults to ``None``.
+    random_state : {int, None, np.random.RandomState}, optional
         The random seed at which to initialize the class. If random_state is
         an int, it will be used as a seed for RandomState.
         If None, the seed will be obtained from the operating system
         (see RandomState for details). Default is None.
+    matlab_strict : bool, optional
+        Whether or not PyPREP should strictly follow MATLAB PREP's internal
+        math, ignoring any improvements made in PyPREP over the original code.
+        Defaults to False.
 
     References
     ----------
@@ -45,7 +65,16 @@ class Reference:
 
     """
 
-    def __init__(self, raw, params, ransac=True, random_state=None):
+    def __init__(
+        self,
+        raw,
+        params,
+        ransac=True,
+        channel_wise=False,
+        max_chunk_size=None,
+        random_state=None,
+        matlab_strict=False,
+    ):
         """Initialize the class."""
         self.raw = raw.copy()
         self.ch_names = self.raw.ch_names
@@ -55,8 +84,14 @@ class Reference:
         self.reference_channels = params["ref_chs"]
         self.rereferenced_channels = params["reref_chs"]
         self.sfreq = self.raw.info["sfreq"]
-        self.ransac = ransac
+        self.ransac_settings = {
+            "ransac": ransac,
+            "channel_wise": channel_wise,
+            "max_chunk_size": max_chunk_size,
+        }
         self.random_state = check_random_state(random_state)
+        self._extra_info = {}
+        self.matlab_strict = matlab_strict
 
     def perform_reference(self):
         """Estimate the true signal mean and interpolate bad channels.
@@ -91,8 +126,10 @@ class Reference:
 
         # Phase 2: Find the bad channels and interpolate
         self.raw._data = self.EEG * 1e-6
-        noisy_detector = NoisyChannels(self.raw, random_state=self.random_state)
-        noisy_detector.find_all_bads(ransac=self.ransac)
+        noisy_detector = NoisyChannels(
+            self.raw, random_state=self.random_state, matlab_strict=self.matlab_strict
+        )
+        noisy_detector.find_all_bads(**self.ransac_settings)
 
         # Record Noisy channels and EEG before interpolation
         self.bad_before_interpolation = noisy_detector.get_bads(verbose=True)
@@ -108,6 +145,7 @@ class Reference:
             "bad_by_ransac": noisy_detector.bad_by_ransac,
             "bad_all": noisy_detector.get_bads(),
         }
+        self._extra_info["interpolated"] = noisy_detector._extra_info
 
         bad_channels = _union(self.bad_before_interpolation, self.unusable_channels)
         self.raw.info["bads"] = bad_channels
@@ -126,8 +164,10 @@ class Reference:
 
         # Still noisy channels after interpolation
         self.interpolated_channels = bad_channels
-        noisy_detector = NoisyChannels(self.raw, random_state=self.random_state)
-        noisy_detector.find_all_bads(ransac=self.ransac)
+        noisy_detector = NoisyChannels(
+            self.raw, random_state=self.random_state, matlab_strict=self.matlab_strict
+        )
+        noisy_detector.find_all_bads(**self.ransac_settings)
         self.still_noisy_channels = noisy_detector.get_bads()
         self.raw.info["bads"] = self.still_noisy_channels
         self.noisy_channels_after_interpolation = {
@@ -141,6 +181,7 @@ class Reference:
             "bad_by_ransac": noisy_detector.bad_by_ransac,
             "bad_all": noisy_detector.get_bads(),
         }
+        self._extra_info["remaining_bad"] = noisy_detector._extra_info
 
         return self
 
@@ -149,11 +190,6 @@ class Reference:
 
         This function implements the functionality of the `robustReference` function
         as part of the PREP pipeline on mne raw object.
-
-        Parameters
-        ----------
-        ransac : bool
-            Whether or not to use ransac
 
         Returns
         -------
@@ -165,13 +201,18 @@ class Reference:
 
         """
         raw = self.raw.copy()
-        raw._data = removeTrend(raw.get_data(), sample_rate=self.sfreq)
+        raw._data = removeTrend(
+            raw.get_data(), self.sfreq, matlab_strict=self.matlab_strict
+        )
 
         # Determine unusable channels and remove them from the reference channels
         noisy_detector = NoisyChannels(
-            raw, do_detrend=False, random_state=self.random_state
+            raw,
+            do_detrend=False,
+            random_state=self.random_state,
+            matlab_strict=self.matlab_strict,
         )
-        noisy_detector.find_all_bads(ransac=self.ransac)
+        noisy_detector.find_all_bads(**self.ransac_settings)
         self.noisy_channels_original = {
             "bad_by_nan": noisy_detector.bad_by_nan,
             "bad_by_flat": noisy_detector.bad_by_flat,
@@ -183,31 +224,35 @@ class Reference:
             "bad_by_ransac": noisy_detector.bad_by_ransac,
             "bad_all": noisy_detector.get_bads(),
         }
+        self._extra_info["initial_bad"] = noisy_detector._extra_info
+        logger.info("Bad channels: {}".format(self.noisy_channels_original))
 
-        self.noisy_channels = self.noisy_channels_original.copy()
-        logger.info("Bad channels: {}".format(self.noisy_channels))
-
+        # Determine channels to use/exclude from initial reference estimation
         self.unusable_channels = _union(
-            noisy_detector.bad_by_nan, noisy_detector.bad_by_flat
+            noisy_detector.bad_by_nan + noisy_detector.bad_by_flat,
+            noisy_detector.bad_by_SNR,
         )
+        reference_channels = _set_diff(self.reference_channels, self.unusable_channels)
 
-        # According to the Matlab Implementation (see robustReference.m)
-        # self.unusable_channels = _union(self.unusable_channels,
-        # noisy_detector.bad_by_SNR)
-        # but maybe this makes no difference...
-
-        self.reference_channels = _set_diff(
-            self.reference_channels, self.unusable_channels
-        )
+        # Initialize channels to permanently flag as bad during referencing
+        self.noisy_channels = {
+            "bad_by_nan": noisy_detector.bad_by_nan,
+            "bad_by_flat": noisy_detector.bad_by_flat,
+            "bad_by_deviation": [],
+            "bad_by_hf_noise": [],
+            "bad_by_correlation": [],
+            "bad_by_SNR": noisy_detector.bad_by_SNR,
+            "bad_by_dropout": [],
+            "bad_by_ransac": [],
+            "bad_all": self.unusable_channels,
+        }
 
         # Get initial estimate of the reference by the specified method
         signal = raw.get_data() * 1e6
         self.reference_signal = (
-            np.nanmedian(raw.get_data(picks=self.reference_channels), axis=0) * 1e6
+            np.nanmedian(raw.get_data(picks=reference_channels), axis=0) * 1e6
         )
-        reference_index = [
-            self.ch_names_eeg.index(ch) for ch in self.reference_channels
-        ]
+        reference_index = [self.ch_names_eeg.index(ch) for ch in reference_channels]
         signal_tmp = self.remove_reference(
             signal, self.reference_signal, reference_index
         )
@@ -221,10 +266,13 @@ class Reference:
         while True:
             raw_tmp._data = signal_tmp * 1e-6
             noisy_detector = NoisyChannels(
-                raw_tmp, do_detrend=False, random_state=self.random_state
+                raw_tmp,
+                do_detrend=False,
+                random_state=self.random_state,
+                matlab_strict=self.matlab_strict,
             )
             # Detrend applied at the beginning of the function.
-            noisy_detector.find_all_bads(ransac=self.ransac)
+            noisy_detector.find_all_bads(**self.ransac_settings)
             self.noisy_channels["bad_by_nan"] = _union(
                 self.noisy_channels["bad_by_nan"], noisy_detector.bad_by_nan
             )
@@ -274,8 +322,7 @@ class Reference:
             else:
                 signal_tmp = signal
             self.reference_signal = (
-                np.nanmean(raw_tmp.get_data(picks=self.reference_channels), axis=0)
-                * 1e6
+                np.nanmean(raw_tmp.get_data(picks=reference_channels), axis=0) * 1e6
             )
 
             signal_tmp = self.remove_reference(
@@ -300,8 +347,9 @@ class Reference:
             The original EEG signal.
         reference : np.ndarray, shape(times,)
             The reference signal.
-        index : list | None
-            A list channel index from which the signal was removed.
+        index : {list, None}, optional
+            A list of channel indices from which the reference signal should be
+            subtracted. Defaults to all channels in `signal`.
 
         Returns
         -------

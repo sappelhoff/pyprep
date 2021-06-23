@@ -4,6 +4,7 @@ include LICENSE
 include requirements-dev.txt
 include versioneer.py
 include pyprep/_version.py
+include .zenodo.json
 
 graft docs
 graft examples
@@ -16,14 +17,23 @@ graft tests
 global-exclude *.py[co]
 global-exclude __pycache__
 
-recursive-exclude .github *
 recursive-exclude docs/generated *
 recursive-exclude docs/auto_examples *
 recursive-exclude docs/_build *
 
+prune .github
+
+exclude pyproject.toml
 exclude .codecov.yml
+exclude .gitattributes
 exclude .gitignore
+exclude .gitmodules
 exclude .mailmap
 exclude .coveragerc
 exclude .readthedocs.yml
 exclude .pre-commit-config.yaml
+
+# NOTE: need to "prune" AND "exclude" matprep_artifacts, because it is a git-submodule
+#       that may not be initiated/updated
+prune matprep_artifacts
+exclude matprep_artifacts

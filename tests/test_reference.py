@@ -8,12 +8,13 @@ import pytest
 from pyprep.reference import Reference
 
 
-@pytest.mark.usefixtures("raw")
-def test_basic_input(raw):
+@pytest.mark.usefixtures("raw", "montage")
+def test_basic_input(raw, montage):
     """Test Reference output data type."""
     ch_names = raw.info["ch_names"]
 
     raw_tmp = raw.copy()
+    raw_tmp.set_montage(montage)
     params = {"ref_chs": ch_names, "reref_chs": ch_names}
     reference = Reference(raw_tmp, params, ransac=False)
     reference.perform_reference()
@@ -25,13 +26,17 @@ def test_basic_input(raw):
     assert type(reference.still_noisy_channels) == list
     assert type(reference.raw) == mne.io.edf.edf.RawEDF
 
+    # Make sure the set of reference channels weren't modified by re-referencing
+    assert params["ref_chs"] == reference.reference_channels
 
-@pytest.mark.usefixtures("raw")
-def test_all_bad_input(raw):
+
+@pytest.mark.usefixtures("raw", "montage")
+def test_all_bad_input(raw, montage):
     """Test robust reference when all reference channels are bad."""
     ch_names = raw.info["ch_names"]
 
     raw_tmp = raw.copy()
+    raw_tmp.set_montage(montage)
     m, n = raw_tmp.get_data().shape
 
     # Randomly set some channels as bad

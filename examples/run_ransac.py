@@ -74,14 +74,15 @@ nd = NoisyChannels(raw)
 nd2 = NoisyChannels(raw)
 
 ###############################################################################
-# Find all bad channels and print a summary
+# Find all bad channels using channel-wise RANSAC and print a summary
 start_time = perf_counter()
-nd.find_bad_by_ransac()
+nd.find_bad_by_ransac(channel_wise=True)
 print("--- %s seconds ---" % (perf_counter() - start_time))
 
-# Repeat RANSAC in a channel wise manner. This is slower but needs less memory.
+# Repeat channel-wise RANSAC using a single channel at a time. This is slower
+# but needs less memory.
 start_time = perf_counter()
-nd2.find_bad_by_ransac(channel_wise=True)
+nd2.find_bad_by_ransac(channel_wise=True, max_chunk_size=1)
 print("--- %s seconds ---" % (perf_counter() - start_time))
 
 ###############################################################################

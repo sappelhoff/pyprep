@@ -8,8 +8,8 @@ API Documentation
 
 Here we list the Application Programming Interface (API) for pyprep.
 
-The :class:`NoisyChannels` class
---------------------------------
+The :class:`~pyprep.NoisyChannels` class
+----------------------------------------
 
 .. automodule:: pyprep
    :no-members:
@@ -22,16 +22,24 @@ The :class:`NoisyChannels` class
 
    NoisyChannels
 
-The :class:`PrepPipeline` class
--------------------------------
+The :class:`~pyprep.Reference` class
+------------------------------------
+
+.. autosummary::
+   :toctree: generated/
+
+   Reference
+
+The :class:`~pyprep.PrepPipeline` class
+---------------------------------------
 
 .. autosummary::
    :toctree: generated/
 
    PrepPipeline
 
-The :mod:`ransac` module
-===============================
+The :mod:`~pyprep.ransac` module
+================================
 
 .. automodule:: pyprep.ransac
    :no-members:

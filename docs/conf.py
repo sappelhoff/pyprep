@@ -17,7 +17,8 @@ sys.path.append(os.path.abspath(os.path.join(curdir, "sphinxext")))
 
 # -- Project information -----------------------------------------------------
 project = "pyprep"
-copyright = "2018-{}, pyprep developers".format(date.today().year)
+_today = date.today()
+copyright = f"2018-{_today.year}, pyprep developers. Last updated {_today.isoformat()}"
 author = "pyprep developers"
 
 # The short X.Y version
@@ -91,6 +92,7 @@ html_theme_options = {
         ("Examples", "auto_examples/index"),
         ("API", "api"),
         ("What's new", "whats_new"),
+        ("Differences from PREP", "matlab_differences"),
         ("GitHub", "https://github.com/sappelhoff/pyprep", True),
     ],
 }
@@ -100,7 +102,7 @@ html_theme_options = {
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
     "mne": ("https://mne.tools/dev", None),
-    "numpy": ("https://www.numpy.org/devdocs", None),
+    "numpy": ("https://numpy.org/devdocs", None),
     "scipy": ("https://scipy.github.io/devdocs", None),
     "matplotlib": ("https://matplotlib.org", None),
 }

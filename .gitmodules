@@ -1,0 +1,3 @@
+[submodule "matprep_artifacts"]
+	path = matprep_artifacts
+	url = https://github.com/a-hurst/matprep_artifacts

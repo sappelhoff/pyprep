@@ -1,5 +1,10 @@
 
 
+.. image:: https://github.com/sappelhoff/pyprep/workflows/Python%20build/badge.svg
+   :target: https://github.com/sappelhoff/pyprep/actions?query=workflow%3A%22Python+build%22
+   :alt: Python build
+
+
 .. image:: https://github.com/sappelhoff/pyprep/workflows/Python%20tests/badge.svg
    :target: https://github.com/sappelhoff/pyprep/actions?query=workflow%3A%22Python+tests%22
    :alt: Python tests
@@ -29,10 +34,9 @@ For documentation, see the:
 
 .. docs_readme_include_label
 
-``pyprep`` is a python implementation of the
-`Preprocessing Pipeline (PREP) <https://doi.org/10.3389/fninf.2015.00016>`_ for
-EEG data, working with `MNE-Python <https://mne.tools>`_
-for EEG data processing and analysis.
+``pyprep`` is a Python implementation of the
+`Preprocessing Pipeline (PREP) <https://doi.org/10.3389/fninf.2015.00016>`_
+for EEG data, working with `MNE-Python <https://mne.tools>`_.
 
 **ALPHA SOFTWARE.**
 **This package is currently in its early stages of iteration.**
@@ -43,24 +47,29 @@ for EEG data processing and analysis.
 Installation
 ============
 
-``pyprep`` requires Python version ``3.6`` or higher to run properly.
+``pyprep`` requires Python version ``3.7`` or higher to run properly.
 We recommend to run ``pyprep`` in a dedicated virtual environment
-(using e.g., `conda <https://docs.conda.io/en/latest/miniconda.html>`_).
+(for example using `conda <https://docs.conda.io/en/latest/miniconda.html>`_).
 
-For installing the **stable** version of ``pyprep``, simply call
-``pip install pyprep``.
-This should install dependencies automatically, which are defined in the
-``setup.cfg`` file in the ``options.install_requires`` section.
-
-For installation of the **development** version use:
+For installing the **stable** version of ``pyprep``, call:
 
 .. code-block:: Text
 
-   git clone https://github.com/sappelhoff/pyprep
-   cd pyprep
-   pip install -r requirements-dev.txt
-   pre-commit install
-   pip install -e .
+   pip install pyprep
+
+**We currently recommend that you install the latest development version**
+
+For installing the **latest (development)** version of ``pyprep``, call:
+
+.. code-block:: Text
+
+   pip install git+https://github.com/sappelhoff/pyprep.git@master
+
+
+Both the *stable* and the *latest* installation will additionally install
+all required dependencies automatically.
+The dependencies are defined in the ``setup.cfg`` file under the
+``options.install_requires`` section.
 
 Contributions
 =============
@@ -72,6 +81,20 @@ a GitHub issue, or submitting a pull request.
 
 See also our `CONTRIBUTING.md <https://github.com/sappelhoff/pyprep/blob/master/.github/CONTRIBUTING.md>`_
 file for help with submitting a pull request.
+
+Potential contributors should install ``pyprep`` in the following way:
+
+#. First they should fork ``pyprep`` to their own GitHub account.
+#. Then they should run the following commands,
+   adequately replacing ``<gh-username>`` with their GitHub username.
+
+.. code-block:: Text
+
+   git clone https://github.com/<gh-username>/pyprep
+   cd pyprep
+   pip install -r requirements-dev.txt
+   pre-commit install
+   pip install -e .
 
 References
 ==========

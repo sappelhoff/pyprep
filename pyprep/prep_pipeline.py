@@ -22,32 +22,53 @@ class PrepPipeline:
     prep_params : dict
         Parameters of PREP which include at least the following keys:
 
-        - ref_chs : list | 'eeg'
+        - ref_chs : {list, 'eeg'}
             - A list of channel names to be used for rereferencing.
               Can be a str 'eeg' to use all EEG channels.
-        - reref_chs : list | 'eeg'
+        - reref_chs : {list, 'eeg'}
             - A list of channel names to be used for line-noise removed,
               and referenced. Can be a str 'eeg' to use all EEG channels.
-        - line_freqs : np.ndarray | list
+        - line_freqs : {np.ndarray, list}
             - list of floats indicating frequencies to be removed.
               For example, for 60Hz you may specify
               ``np.arange(60, sfreq / 2, 60)``. Specify an empty list to
               skip the line noise removal step.
     montage : mne.channels.DigMontage
         Digital montage of EEG data.
-    ransac : bool
-        Whether or not to use ransac.
-    random_state : int | None | np.random.RandomState
+    ransac : bool, optional
+        Whether or not to use RANSAC for noisy channel detection in addition to
+        the other methods in :class:`~pyprep.NoisyChannels`. Defaults to True.
+    channel_wise : bool, optional
+        Whether RANSAC should predict signals for chunks of channels over the
+        entire signal length ("channel-wise RANSAC", see `max_chunk_size`
+        parameter). If ``False``, RANSAC will instead predict signals for all
+        channels at once but over a number of smaller time windows instead of
+        over the entire signal length ("window-wise RANSAC"). Channel-wise
+        RANSAC generally has higher RAM demands than window-wise RANSAC
+        (especially if `max_chunk_size` is ``None``), but can be faster on
+        systems with lots of RAM to spare. Has no effect if not using RANSAC.
+        Defaults to ``False``.
+    max_chunk_size : {int, None}, optional
+        The maximum number of channels to predict at once during channel-wise
+        RANSAC. If ``None``, RANSAC will use the largest chunk size that will
+        fit into the available RAM, which may slow down other programs on the
+        host system. If using window-wise RANSAC (the default) or not using
+        RANSAC at all, this parameter has no effect. Defaults to ``None``.
+    random_state : {int, None, np.random.RandomState}, optional
         The random seed at which to initialize the class. If random_state is
         an int, it will be used as a seed for RandomState.
         If None, the seed will be obtained from the operating system
         (see RandomState for details). Default is None.
-    filter_kwargs : dict | None
+    filter_kwargs : {dict, None}, optional
         Optional keywords arguments to be passed on to mne.filter.notch_filter.
         Do not set the "x", Fs", and "freqs" arguments via the filter_kwargs
         parameter, but use the "raw" and "prep_params" parameters instead.
         If None is passed, the pyprep default settings for filtering are used
         instead.
+    matlab_strict : bool, optional
+        Whether or not PyPREP should strictly follow MATLAB PREP's internal
+        math, ignoring any improvements made in PyPREP over the original code
+        (see :ref:`matlab-diffs` for more details). Defaults to False.
 
     Attributes
     ----------
@@ -58,7 +79,7 @@ class PrepPipeline:
     raw_eeg : mne.io.Raw
         The only-eeg part of the data. It is unprocessed if accessed before
         the fit method, processed if accessed after a succesful fit method.
-    raw_non_eeg : mne.io.Raw | None
+    raw_non_eeg : {mne.io.Raw, None}
         The non-eeg part of the data. It is not processed when calling
         the fit method. If the input was only EEG it will be None.
     noisy_channels_original : dict
@@ -94,8 +115,11 @@ class PrepPipeline:
         prep_params,
         montage,
         ransac=True,
+        channel_wise=False,
+        max_chunk_size=None,
         random_state=None,
         filter_kwargs=None,
+        matlab_strict=False,
     ):
         """Initialize PREP class."""
         self.raw_eeg = raw.copy()
@@ -127,9 +151,14 @@ class PrepPipeline:
         if self.prep_params["reref_chs"] == "eeg":
             self.prep_params["reref_chs"] = self.ch_names_eeg
         self.sfreq = self.raw_eeg.info["sfreq"]
-        self.ransac = ransac
+        self.ransac_settings = {
+            "ransac": ransac,
+            "channel_wise": channel_wise,
+            "max_chunk_size": max_chunk_size,
+        }
         self.random_state = check_random_state(random_state)
         self.filter_kwargs = filter_kwargs
+        self.matlab_strict = matlab_strict
 
     @property
     def raw(self):
@@ -150,7 +179,9 @@ class PrepPipeline:
         # reference_channels = _set_diff(self.prep_params["ref_chs"], unusable_channels)
         # Step 1: 1Hz high pass filtering
         if len(self.prep_params["line_freqs"]) != 0:
-            self.EEG_new = removeTrend(self.EEG_raw, sample_rate=self.sfreq)
+            self.EEG_new = removeTrend(
+                self.EEG_raw, self.sfreq, matlab_strict=self.matlab_strict
+            )
 
             # Step 2: Removing line noise
             linenoise = self.prep_params["line_freqs"]
@@ -180,8 +211,9 @@ class PrepPipeline:
         reference = Reference(
             self.raw_eeg,
             self.prep_params,
-            ransac=self.ransac,
             random_state=self.random_state,
+            matlab_strict=self.matlab_strict,
+            **self.ransac_settings,
         )
         reference.perform_reference()
         self.raw_eeg = reference.raw

@@ -4,51 +4,76 @@ import logging
 import mne
 import numpy as np
 
+from pyprep.utils import _eeglab_create_highpass, _eeglab_fir_filter
+
 
 def removeTrend(
     EEG,
-    detrendType="High pass",
-    sample_rate=160.0,
+    sample_rate,
+    detrendType="high pass",
     detrendCutoff=1.0,
     detrendChannels=None,
+    matlab_strict=False,
 ):
-    """Perform high pass filtering or detrending.
+    """Remove trends (i.e., slow drifts in baseline) from an array of EEG data.
 
     Parameters
     ----------
     EEG : np.ndarray
-        The input EEG data.
-    detrendType : str
-        Type of detrending to be performed: high pass, high pass sinc, or local
-        detrending.
+        A 2-D array of EEG data to detrend.
     sample_rate : float
-        Rate at which the EEG data was sampled.
-    detrendCutoff : float
-        High pass cut-off frequency.
-    detrendChannels : list | None
-        List of all the channels that require detrending/filtering. If None,
-        all channels are used (default).
+        The sample rate (in Hz) of the input EEG data.
+    detrendType : str, optional
+        Type of detrending to be performed: must be one of 'high pass',
+        'high pass sinc, or 'local detrend'. Defaults to 'high pass'.
+    detrendCutoff : float, optional
+        The high-pass cutoff frequency (in Hz) to use for detrending. Defaults
+        to 1.0 Hz.
+    detrendChannels : {list, None}, optional
+        List of the indices of all channels that require detrending/filtering.
+        If ``None``, all channels are used (default).
+    matlab_strict : bool, optional
+        Whether or not detrending should strictly follow MATLAB PREP's internal
+        math, ignoring any improvements made in PyPREP over the original code
+        (see :ref:`matlab-diffs` for more details). Defaults to ``False``.
 
     Returns
     -------
     EEG : np.ndarray
-        Filtered/detrended EEG data.
+        A 2-D array containing the filtered/detrended EEG data.
 
     Notes
     -----
-    Filtering is implemented using the MNE filter function mne.filter.filter_data.
-    Local detrending is the python implementation of the chronux_2 runline command.
+    High-pass filtering is implemented using the MNE filter function
+    :func:``mne.filter.filter_data`` unless `matlab_strict` is ``True``, in
+    which case it is performed using a minimal re-implementation of EEGLAB's
+    ``pop_eegfiltnew``. Local detrending is performed using a Python
+    re-implementation of the ``runline`` function from the Chronux package for
+    MATLAB [1]_.
+
+    References
+    ----------
+    .. [1] http://chronux.org/
 
     """
     if len(EEG.shape) == 1:
         EEG = np.reshape(EEG, (1, EEG.shape[0]))
 
-    if detrendType == "High pass":
-        EEG = mne.filter.filter_data(
-            EEG, sfreq=sample_rate, l_freq=1, h_freq=None, picks=detrendChannels
-        )
+    if detrendType.lower() == "high pass":
+        if matlab_strict:
+            picks = detrendChannels if detrendChannels else range(EEG.shape[0])
+            filt = _eeglab_create_highpass(detrendCutoff, sample_rate)
+            EEG[picks, :] = _eeglab_fir_filter(EEG[picks, :], filt)
+        else:
+            EEG = mne.filter.filter_data(
+                EEG,
+                sfreq=sample_rate,
+                l_freq=detrendCutoff,
+                h_freq=None,
+                picks=detrendChannels,
+            )
 
-    elif detrendType == "High pass sinc":
+    elif detrendType.lower() == "high pass sinc":
         fOrder = np.round(14080 * sample_rate / 512)
         fOrder = np.int(fOrder + fOrder % 2)
         EEG = mne.filter.filter_data(
@@ -60,7 +85,8 @@ def removeTrend(
             filter_length=fOrder,
             fir_window="blackman",
         )
-    elif detrendType == "Local detrend":
+
+    elif detrendType.lower() == "local detrend":
         if detrendChannels is None:
             detrendChannels = np.arange(0, EEG.shape[0])
         windowSize = 1.5 / detrendCutoff
@@ -82,29 +108,38 @@ def removeTrend(
             for ch in detrendChannels:
                 EEG[:, ch] = runline(EEG[:, ch], np.int(n), np.int(dn))
         EEG = np.transpose(EEG)
+
     else:
         logging.warning(
             "No filtering/detreding performed since the detrend type did not match"
         )
+
     return EEG
 
 
 def runline(y, n, dn):
-    """Implement chronux_2 runline command for performing local linear regression.
+    """Perform local linear regression on a channel of EEG data.
+
+    A re-implementation of the ``runline`` function from the Chronux package
+    for MATLAB [1]_.
 
     Parameters
     ----------
     y : np.ndarray
-        Input from one EEG channel.
+        A 1-D array of data from a single EEG channel.
     n : int
-        length of the detrending window.
+        Length of the detrending window.
     dn : int
-        length of the window step size.
+        Length of the window step size.
 
     Returns
     -------
     y: np.ndarray
-       Detrended EEG signal for one channel.
+       The detrended signal for the given EEG channel.
+
+    References
+    ----------
+    .. [1] http://chronux.org/
 
     """
     nt = y.shape[0]

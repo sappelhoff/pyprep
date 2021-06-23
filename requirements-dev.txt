@@ -13,7 +13,7 @@ pre-commit
 pytest-cov
 pytest-sugar
 pytest
-sphinx>=2.4
+sphinx>3
 sphinx_bootstrap_theme
-sphinx_gallery>=0.6
+sphinx_gallery
 sphinx-copybutton
