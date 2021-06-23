@@ -244,7 +244,6 @@ class Reference:
             "bad_by_SNR": [],
             "bad_by_dropout": [],
             "bad_by_ransac": [],
-            "bad_all": _union(noisy_detector.bad_by_nan, noisy_detector.bad_by_flat),
         }
 
         # Get initial estimate of the reference by the specified method
@@ -272,29 +271,26 @@ class Reference:
                 matlab_strict=self.matlab_strict,
             )
             # Detrend applied at the beginning of the function.
+
+            # Detect all currently bad channels
             noisy_detector.find_all_bads(**self.ransac_settings)
-            self.noisy_channels["bad_by_nan"] = _union(
-                self.noisy_channels["bad_by_nan"], noisy_detector.bad_by_nan
-            )
-            self.noisy_channels["bad_by_flat"] = _union(
-                self.noisy_channels["bad_by_flat"], noisy_detector.bad_by_flat
-            )
-            self.noisy_channels["bad_by_deviation"] = _union(
-                self.noisy_channels["bad_by_deviation"], noisy_detector.bad_by_deviation
-            )
-            self.noisy_channels["bad_by_hf_noise"] = _union(
-                self.noisy_channels["bad_by_hf_noise"], noisy_detector.bad_by_hf_noise
-            )
-            self.noisy_channels["bad_by_correlation"] = _union(
-                self.noisy_channels["bad_by_correlation"],
-                noisy_detector.bad_by_correlation,
-            )
-            self.noisy_channels["bad_by_ransac"] = _union(
-                self.noisy_channels["bad_by_ransac"], noisy_detector.bad_by_ransac
-            )
-            self.noisy_channels["bad_all"] = _union(
-                self.noisy_channels["bad_all"], noisy_detector.get_bads()
-            )
+            noisy_new = noisy_detector.get_bads(as_dict=True)
+
+            # Specify bad channel types to ignore when updating noisy channels
+            # NOTE: MATLAB PREP ignores dropout channels, possibly by mistake?
+            ignore = ["bad_by_SNR", "bad_all"]
+            if self.matlab_strict:
+                ignore += ["bad_by_dropout"]
+
+            # Update set of all noisy channels detected so far with any new ones
+            all_bads = []
+            for bad_type in noisy_new.keys():
+                if bad_type not in ignore:
+                    self.noisy_channels[bad_type] = _union(
+                        self.noisy_channels[bad_type], noisy_new[bad_type]
+                    )
+                    all_bads += self.noisy_channels[bad_type]
+            self.noisy_channels["bad_all"] = list(set(all_bads))
             logger.info("Bad channels: {}".format(self.noisy_channels))
 
             if (
