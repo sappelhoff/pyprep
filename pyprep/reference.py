@@ -241,10 +241,10 @@ class Reference:
             "bad_by_deviation": [],
             "bad_by_hf_noise": [],
             "bad_by_correlation": [],
-            "bad_by_SNR": noisy_detector.bad_by_SNR,
+            "bad_by_SNR": [],
             "bad_by_dropout": [],
             "bad_by_ransac": [],
-            "bad_all": self.unusable_channels,
+            "bad_all": _union(noisy_detector.bad_by_nan, noisy_detector.bad_by_flat),
         }
 
         # Get initial estimate of the reference by the specified method
