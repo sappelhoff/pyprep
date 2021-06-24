@@ -255,8 +255,8 @@ class Reference:
             # Update set of all noisy channels detected so far with any new ones
             bad_chans = set()
             for bad_type in noisy_new.keys():
+                noisy[bad_type] = _union(noisy[bad_type], noisy_new[bad_type])
                 if bad_type not in ignore:
-                    noisy[bad_type] = _union(noisy[bad_type], noisy_new[bad_type])
                     bad_chans.update(noisy[bad_type])
             noisy["bad_all"] = list(bad_chans)
             logger.info("Bad channels: {}".format(noisy))
