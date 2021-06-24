@@ -235,7 +235,7 @@ class Reference:
         reference_channels = _set_diff(self.reference_channels, self.unusable_channels)
 
         # Initialize channels to permanently flag as bad during referencing
-        self.noisy_channels = {
+        noisy = {
             "bad_by_nan": noisy_detector.bad_by_nan,
             "bad_by_flat": noisy_detector.bad_by_flat,
             "bad_by_deviation": [],
@@ -259,7 +259,7 @@ class Reference:
         # Remove reference from signal, iteratively interpolating bad channels
         raw_tmp = raw.copy()
         iterations = 0
-        noisy_channels_old = []
+        previous_bads = set()
         max_iteration_num = 4
 
         while True:
@@ -283,36 +283,31 @@ class Reference:
                 ignore += ["bad_by_dropout"]
 
             # Update set of all noisy channels detected so far with any new ones
-            all_bads = []
+            bad_chans = set()
             for bad_type in noisy_new.keys():
                 if bad_type not in ignore:
-                    self.noisy_channels[bad_type] = _union(
-                        self.noisy_channels[bad_type], noisy_new[bad_type]
-                    )
-                    all_bads += self.noisy_channels[bad_type]
-            self.noisy_channels["bad_all"] = list(set(all_bads))
-            logger.info("Bad channels: {}".format(self.noisy_channels))
+                    noisy[bad_type] = _union(noisy[bad_type], noisy_new[bad_type])
+                    bad_chans.update(noisy[bad_type])
+            noisy["bad_all"] = list(bad_chans)
+            logger.info("Bad channels: {}".format(noisy))
 
             if (
                 iterations > 1
-                and (
-                    not self.noisy_channels["bad_all"]
-                    or set(self.noisy_channels["bad_all"]) == set(noisy_channels_old)
-                )
+                and (len(bad_chans) == 0 or bad_chans == previous_bads)
                 or iterations > max_iteration_num
             ):
                 break
-            noisy_channels_old = self.noisy_channels["bad_all"].copy()
+            previous_bads = bad_chans.copy()
 
-            if raw_tmp.info["nchan"] - len(self.noisy_channels["bad_all"]) < 2:
+            if raw_tmp.info["nchan"] - len(bad_chans) < 2:
                 raise ValueError(
                     "RobustReference:TooManyBad "
                     "Could not perform a robust reference -- not enough good channels"
                 )
 
-            if self.noisy_channels["bad_all"]:
+            if len(bad_chans) > 0:
                 raw_tmp._data = signal * 1e-6
-                raw_tmp.info["bads"] = self.noisy_channels["bad_all"]
+                raw_tmp.info["bads"] = list(bad_chans)
                 raw_tmp.interpolate_bads()
                 signal_tmp = raw_tmp.get_data() * 1e6
             else:
@@ -328,6 +323,7 @@ class Reference:
             logger.info("Iterations: {}".format(iterations))
 
         logger.info("Robust reference done")
+        self.noisy_channels = noisy
         return self.noisy_channels, self.reference_signal
 
     @staticmethod
