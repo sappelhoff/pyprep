@@ -214,6 +214,7 @@ class Reference:
             "bad_by_SNR": [],
             "bad_by_dropout": [],
             "bad_by_ransac": [],
+            "bad_all": [],
         }
 
         # Get initial estimate of the reference by the specified method
