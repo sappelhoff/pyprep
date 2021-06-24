@@ -24,6 +24,10 @@
    :target: https://badge.fury.io/py/pyprep
    :alt: PyPI version
 
+.. image:: https://img.shields.io/conda/vn/conda-forge/pyprep.svg
+   :target: https://anaconda.org/conda-forge/pyprep
+   :alt: Conda version
+
 pyprep
 ======
 
@@ -56,6 +60,12 @@ For installing the **stable** version of ``pyprep``, call:
 .. code-block:: Text
 
    pip install pyprep
+
+or, as an alternative to ``pip``, call:
+
+.. code-block:: Text
+
+   conda install -c conda-forge pyprep
 
 **We currently recommend that you install the latest development version**
 
