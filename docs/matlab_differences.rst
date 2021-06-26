@@ -148,3 +148,43 @@ roughly mean-centered. and will thus produce similar values to normal Pearson
 correlation. However, to avoid making any assumptions about the signal for any
 given channel / window, PyPREP defaults to normal Pearson correlation unless
 strict MATLAB equivalence is requested.
+
+
+Differences in Robust Referencing
+---------------------------------
+
+During the robust referencing part of the pipeline, PREP tries to estimate a
+"clean" average reference signal for the dataset, excluding any channels
+flagged as noisy from contaminating the reference. The robust referencing
+process is performed using the following logic:
+
+1) First, an initial pass of noisy channel detection is performed to identify
+   channels bad by NaN values, flat signal, or low SNR: the data is then
+   average-referenced excluding these channels. These channels are subsequently
+   marked as "unusable" and are excluded from any future average referencing.
+
+2) Noisy channel detection is performed on a copy of the re-referenced signal,
+   and any newly detected bad channels are added to the full set of channels
+   to be excluded from the reference signal.
+
+3) After noisy channel detection, all bad channels detected so far are
+   interpolated, and a new estimate of the robust average reference is
+   calculated using the mean signal of all good channels and all interpolated
+   bad channels (except those flagged as "unusable" during the first step).
+
+4) A fresh copy of the re-referenced signal from Step 1 is re-referenced using
+   the new reference signal calculated in Step 3.
+
+5) Steps 2 through 4 are repeated until either two iterations have passed and
+   no new noisy channels have been detected since the previous iteration, or
+   the maximum number of reference iterations has been exceeded (default: 5).
+
+
+Exclusion of dropout channels
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+In MATLAB PREP, dropout channels (i.e., channels that have intermittent periods
+of flat signal) are detected on each iteration of the reference loop, but are
+currently not factored into the full set of "bad" channels to be interpolated.
+By contrast, PyPREP will detect and interpolate any bad-by-dropout channels
+detected during robust referencing.
