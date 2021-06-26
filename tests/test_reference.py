@@ -44,8 +44,8 @@ def test_clean_input(raw_clean):
         reference.robust_reference()
 
     assert len(reference.unusable_channels) == 0
-    assert len(reference.noisy_channels_original['bad_all']) == 0
-    assert len(reference.noisy_channels['bad_all']) == 0
+    assert len(reference.noisy_channels_original["bad_all"]) == 0
+    assert len(reference.noisy_channels["bad_all"]) == 0
 
 
 @pytest.mark.usefixtures("raw", "montage")
