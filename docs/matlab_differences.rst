@@ -177,7 +177,7 @@ process is performed using the following logic:
 
 5) Steps 2 through 4 are repeated until either two iterations have passed and
    no new noisy channels have been detected since the previous iteration, or
-   the maximum number of reference iterations has been exceeded (default: 5).
+   the maximum number of reference iterations has been exceeded (default: 4).
 
 
 Exclusion of dropout channels
