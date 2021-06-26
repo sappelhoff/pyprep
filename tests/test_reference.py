@@ -48,31 +48,22 @@ def test_clean_input(raw_clean):
     assert len(reference.noisy_channels["bad_all"]) == 0
 
 
-@pytest.mark.usefixtures("raw", "montage")
-def test_all_bad_input(raw, montage):
+@pytest.mark.usefixtures("raw_clean")
+def test_all_bad_input(raw_clean):
     """Test robust reference when all reference channels are bad."""
-    ch_names = raw.info["ch_names"]
+    ch_names = raw_clean.info["ch_names"]
+    params = {"ref_chs": ch_names, "reref_chs": ch_names}
 
-    raw_tmp = raw.copy()
-    raw_tmp.set_montage(montage)
-    m, n = raw_tmp.get_data().shape
+    # Define a mock function to make all channels bad by deviation
+    def _bad_by_dev(self):
+        self.bad_by_deviation = self.ch_names_original.tolist()
 
-    # Randomly set some channels as bad
-    [nan_chn_idx, flat_chn_idx] = random.sample(set(np.arange(0, m)), 2)
-
-    # Insert a nan value for a random channel
-    # nan_chn_lab = raw_tmp.ch_names[nan_chn_idx]
-    raw_tmp._data[nan_chn_idx, n - 1] = np.nan
-
-    # Insert one random flat channel
-    # flat_chn_lab = raw_tmp.ch_names[flat_chn_idx]
-    raw_tmp._data[flat_chn_idx, :] = np.ones_like(raw_tmp._data[1, :]) * 1e-6
-
-    reference_channels = [ch_names[nan_chn_idx], ch_names[flat_chn_idx]]
-    params = {"ref_chs": reference_channels, "reref_chs": reference_channels}
-    reference = Reference(raw_tmp, params, ransac=False)
-    with pytest.raises(ValueError):
-        reference.robust_reference()
+    # Here we monkey-patch Reference to make all channels bad by deviation, allowing
+    # us to test the 'too-few-good-channels' exception
+    with mock.patch("pyprep.NoisyChannels.find_bad_by_deviation", new=_bad_by_dev):
+        reference = Reference(raw_clean, params, ransac=False)
+        with pytest.raises(ValueError):
+            reference.robust_reference()
 
 
 def test_remove_reference():

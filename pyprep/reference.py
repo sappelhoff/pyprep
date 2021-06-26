@@ -279,6 +279,8 @@ class Reference:
                 and (len(bad_chans) == 0 or bad_chans == previous_bads)
                 or iterations > max_iterations
             ):
+                logger.info("Robust reference done")
+                self.noisy_channels = noisy
                 break
             previous_bads = bad_chans.copy()
 
@@ -305,8 +307,6 @@ class Reference:
             iterations = iterations + 1
             logger.info("Iterations: {}".format(iterations))
 
-        logger.info("Robust reference done")
-        self.noisy_channels = noisy
         return self.noisy_channels, self.reference_signal
 
     @staticmethod
