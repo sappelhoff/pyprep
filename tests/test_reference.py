@@ -1,5 +1,6 @@
 """Test Robust Reference."""
 import random
+from unittest import mock
 
 import mne
 import numpy as np
@@ -28,6 +29,23 @@ def test_basic_input(raw, montage):
 
     # Make sure the set of reference channels weren't modified by re-referencing
     assert params["ref_chs"] == reference.reference_channels
+
+
+@pytest.mark.usefixtures("raw_clean")
+def test_clean_input(raw_clean):
+    """Test robust referencing with a clean input signal."""
+    ch_names = raw_clean.info["ch_names"]
+    params = {"ref_chs": ch_names, "reref_chs": ch_names}
+
+    # Here we monkey-patch Reference to skip bad channel detection, ensuring
+    # a run with all clean channels is tested
+    with mock.patch("pyprep.NoisyChannels.find_all_bads", return_value=True):
+        reference = Reference(raw_clean, params, ransac=False)
+        reference.robust_reference()
+
+    assert len(reference.unusable_channels) == 0
+    assert len(reference.noisy_channels_original['bad_all']) == 0
+    assert len(reference.noisy_channels['bad_all']) == 0
 
 
 @pytest.mark.usefixtures("raw", "montage")
