@@ -93,8 +93,14 @@ class Reference:
         self._extra_info = {}
         self.matlab_strict = matlab_strict
 
-    def perform_reference(self):
+    def perform_reference(self, max_iterations=4):
         """Estimate the true signal mean and interpolate bad channels.
+
+        Parameters
+        ----------
+        max_iterations : int, optional
+            The maximum number of iterations of noisy channel removal to perform
+            during robust referencing. Defaults to ``4``.
 
         This function implements the functionality of the `performReference` function
         as part of the PREP pipeline on mne raw object.
@@ -107,7 +113,7 @@ class Reference:
 
         """
         # Phase 1: Estimate the true signal mean with robust referencing
-        self.robust_reference()
+        self.robust_reference(max_iterations)
         # If we interpolate the raw here we would be interpolating
         # more than what we later actually account for (in interpolated channels).
         dummy = self.raw.copy()
@@ -165,11 +171,17 @@ class Reference:
 
         return self
 
-    def robust_reference(self):
+    def robust_reference(self, max_iterations=4):
         """Detect bad channels and estimate the robust reference signal.
 
         This function implements the functionality of the `robustReference` function
         as part of the PREP pipeline on mne raw object.
+
+        Parameters
+        ----------
+        max_iterations : int, optional
+            The maximum number of iterations of noisy channel removal to perform
+            during robust referencing. Defaults to ``4``.
 
         Returns
         -------
@@ -231,7 +243,6 @@ class Reference:
         raw_tmp = raw.copy()
         iterations = 0
         previous_bads = set()
-        max_iteration_num = 4
 
         while True:
             raw_tmp._data = signal_tmp * 1e-6
@@ -249,6 +260,7 @@ class Reference:
 
             # Specify bad channel types to ignore when updating noisy channels
             # NOTE: MATLAB PREP ignores dropout channels, possibly by mistake?
+            # see: https://github.com/VisLab/EEG-Clean-Tools/issues/28
             ignore = ["bad_by_SNR", "bad_all"]
             if self.matlab_strict:
                 ignore += ["bad_by_dropout"]
@@ -265,7 +277,7 @@ class Reference:
             if (
                 iterations > 1
                 and (len(bad_chans) == 0 or bad_chans == previous_bads)
-                or iterations > max_iteration_num
+                or iterations > max_iterations
             ):
                 break
             previous_bads = bad_chans.copy()
