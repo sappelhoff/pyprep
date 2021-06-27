@@ -6,7 +6,7 @@ from mne.utils import check_random_state
 
 from pyprep.find_noisy_channels import NoisyChannels
 from pyprep.removeTrend import removeTrend
-from pyprep.utils import _set_diff, _union
+from pyprep.utils import _eeglab_interpolate_bads, _set_diff, _union
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -118,7 +118,10 @@ class Reference:
         # more than what we later actually account for (in interpolated channels).
         dummy = self.raw.copy()
         dummy.info["bads"] = self.noisy_channels["bad_all"]
-        dummy.interpolate_bads()
+        if self.matlab_strict:
+            _eeglab_interpolate_bads(dummy)
+        else:
+            dummy.interpolate_bads()
         self.reference_signal = (
             np.nanmean(dummy.get_data(picks=self.reference_channels), axis=0) * 1e6
         )
@@ -145,7 +148,10 @@ class Reference:
 
         bad_channels = _union(self.bad_before_interpolation, self.unusable_channels)
         self.raw.info["bads"] = bad_channels
-        self.raw.interpolate_bads()
+        if self.matlab_strict:
+            _eeglab_interpolate_bads(self.raw)
+        else:
+            self.raw.interpolate_bads()
         reference_correct = (
             np.nanmean(self.raw.get_data(picks=self.reference_channels), axis=0) * 1e6
         )
@@ -293,7 +299,10 @@ class Reference:
             if len(bad_chans) > 0:
                 raw_tmp._data = signal * 1e-6
                 raw_tmp.info["bads"] = list(bad_chans)
-                raw_tmp.interpolate_bads()
+                if self.matlab_strict:
+                    _eeglab_interpolate_bads(raw_tmp)
+                else:
+                    raw_tmp.interpolate_bads()
                 signal_tmp = raw_tmp.get_data() * 1e6
             else:
                 signal_tmp = signal

@@ -2,9 +2,13 @@
 import math
 from cmath import sqrt
 
+import mne
 import numpy as np
 import scipy.interpolate
+from mne.surface import _normalize_vectors
+from numpy.polynomial.legendre import legval
 from psutil import virtual_memory
+from scipy import linalg
 from scipy.signal import firwin, lfilter, lfilter_zi
 
 
@@ -233,6 +237,139 @@ def _eeglab_fir_filter(data, filt):
     out[:, (n_samples - pad_len) :] = end[:, (group_delay - pad_len) :]
 
     return out
+
+
+def _eeglab_calc_g(pos_from, pos_to, stiffness=4, num_lterms=7):
+    """Calculate spherical spline g function between points on a sphere.
+
+    Parameters
+    ----------
+    pos_from : np.ndarray of float, shape(n_good_sensors, 3)
+        The electrode positions to interpoloate from.
+    pos_to : np.ndarray of float, shape(n_bad_sensors, 3)
+        The electrode positions to interpoloate.
+    stiffness : float
+        Stiffness of the spline.
+    num_lterms : int
+        Number of Legendre terms to evaluate.
+
+    Returns
+    -------
+    G : np.ndarray of float, shape(n_channels, n_channels)
+        The G matrix.
+
+    Notes
+    -----
+    Produces identical output to the private ``computeg`` function in EEGLAB's
+    ``eeg_interp.m``.
+
+    """
+    n_to = pos_to.shape[0]
+    n_from = pos_from.shape[0]
+
+    # Calculate the Euclidian distances between the 'to' and 'from' electrodes
+    dxyz = []
+    for i in range(0, 3):
+        d1 = np.repeat(pos_to[:, i], n_from).reshape((n_to, n_from))
+        d2 = np.repeat(pos_from[:, i], n_to).reshape((n_from, n_to)).T
+        dxyz.append((d1 - d2) ** 2)
+    elec_dists = np.sqrt(sum(dxyz))
+
+    # Subtract all the Euclidian electrode distances from 1 (why?)
+    EI = np.ones([n_to, n_from]) - elec_dists
+
+    # Calculate Legendre coefficients for the given degree and stiffness
+    factors = [0]
+    for n in range(1, num_lterms + 1):
+        f = (2 * n + 1) / (n ** stiffness * (n + 1) ** stiffness * 4 * np.pi)
+        factors.append(f)
+
+    return legval(EI, factors)
+
+
+def _eeglab_interpolate(data, pos_from, pos_to):
+    """Interpolate bad channels using EEGLAB's custom method.
+
+    Parameters
+    ----------
+    data : np.ndarray
+        A 2-D array containing signals from currently-good EEG channels with
+        which to interpolate signals for bad channels.
+    pos_from : np.ndarray of float, shape(n_good_sensors, 3)
+        The electrode positions to interpoloate from.
+    pos_to : np.ndarray of float, shape(n_bad_sensors, 3)
+        The electrode positions to interpoloate.
+
+    Returns
+    -------
+    interpolated : np.ndarray
+        The interpolated signals for all bad channels.
+
+    Notes
+    -----
+    Produces identical output to the private ``spheric_spline`` function in
+    EEGLAB's ``eeg_interp.m`` (with minor rounding errors).
+
+    """
+    # Calculate G for distances between good electrodes + between goods & bads
+    G_from = _eeglab_calc_g(pos_from, pos_from)
+    G_to_from = _eeglab_calc_g(pos_from, pos_to)
+
+    # Get average reference signal for all good channels and subtract from data
+    avg_ref = np.mean(data, axis=0)
+    data_tmp = data - avg_ref
+
+    # Calculate interpolation matrix from electrode locations
+    pad_ones = np.ones((1, pos_from.shape[0]))
+    C_inv = linalg.pinv(np.vstack([G_from, pad_ones]))
+    interp_mat = np.matmul(G_to_from, C_inv[:, :-1])
+
+    # Interpolate bad channels and add average good reference to them
+    interpolated = np.matmul(interp_mat, data_tmp) + avg_ref
+
+    return interpolated
+
+
+def _eeglab_interpolate_bads(raw):
+    """Interpolate bad channels using EEGLAB's custom method.
+
+    This method modifies the provided Raw object in place.
+
+    Parameters
+    ----------
+    raw : mne.io.Raw
+        An MNE Raw object for which channels marked as "bad" should be
+        interpolated.
+
+    Notes
+    -----
+    Produces identical results as EEGLAB's ``eeg_interp`` function when using
+    the default spheric spline method (with minor rounding errors). This method
+    appears to be loosely based on the same general Perrin et al. (1989) method
+    as MNE's interpolation, but there are several quirks with the implementation
+    that cause it to produce fairly different numbers.
+
+    """
+    # Get the indices of good and bad EEG channels
+    eeg_chans = mne.pick_types(raw.info, eeg=True, exclude=[])
+    good_idx = mne.pick_types(raw.info, eeg=True, exclude="bads")
+    bad_idx = sorted(_set_diff(eeg_chans, good_idx))
+
+    # Get the spatial coordinates of the good and bad electrodes
+    elec_pos = raw._get_channel_positions(picks=eeg_chans)
+    pos_good = elec_pos[good_idx, :].copy()
+    pos_bad = elec_pos[bad_idx, :].copy()
+    _normalize_vectors(pos_good)
+    _normalize_vectors(pos_bad)
+
+    # Interpolate bad channels
+    interp = _eeglab_interpolate(raw._data[good_idx, :], pos_good, pos_bad)
+    raw._data[bad_idx, :] = interp
+
+    # Clear all bad EEG channels
+    eeg_bad_names = [raw.info["ch_names"][i] for i in bad_idx]
+    bads_non_eeg = _set_diff(raw.info["bads"], eeg_bad_names)
+    raw.info["bads"] = bads_non_eeg
 
 
 def _get_random_subset(x, size, rand_state):
