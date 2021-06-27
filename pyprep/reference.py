@@ -93,8 +93,14 @@ class Reference:
         self._extra_info = {}
         self.matlab_strict = matlab_strict
 
-    def perform_reference(self):
+    def perform_reference(self, max_iterations=4):
         """Estimate the true signal mean and interpolate bad channels.
+
+        Parameters
+        ----------
+        max_iterations : int, optional
+            The maximum number of iterations of noisy channel removal to perform
+            during robust referencing. Defaults to ``4``.
 
         This function implements the functionality of the `performReference` function
         as part of the PREP pipeline on mne raw object.
@@ -107,7 +113,7 @@ class Reference:
 
         """
         # Phase 1: Estimate the true signal mean with robust referencing
-        self.robust_reference()
+        self.robust_reference(max_iterations)
         # If we interpolate the raw here we would be interpolating
         # more than what we later actually account for (in interpolated channels).
         dummy = self.raw.copy()
@@ -134,17 +140,7 @@ class Reference:
         # Record Noisy channels and EEG before interpolation
         self.bad_before_interpolation = noisy_detector.get_bads(verbose=True)
         self.EEG_before_interpolation = self.EEG.copy()
-        self.noisy_channels_before_interpolation = {
-            "bad_by_nan": noisy_detector.bad_by_nan,
-            "bad_by_flat": noisy_detector.bad_by_flat,
-            "bad_by_deviation": noisy_detector.bad_by_deviation,
-            "bad_by_hf_noise": noisy_detector.bad_by_hf_noise,
-            "bad_by_correlation": noisy_detector.bad_by_correlation,
-            "bad_by_SNR": noisy_detector.bad_by_SNR,
-            "bad_by_dropout": noisy_detector.bad_by_dropout,
-            "bad_by_ransac": noisy_detector.bad_by_ransac,
-            "bad_all": noisy_detector.get_bads(),
-        }
+        self.noisy_channels_before_interpolation = noisy_detector.get_bads(as_dict=True)
         self._extra_info["interpolated"] = noisy_detector._extra_info
 
         bad_channels = _union(self.bad_before_interpolation, self.unusable_channels)
@@ -170,26 +166,22 @@ class Reference:
         noisy_detector.find_all_bads(**self.ransac_settings)
         self.still_noisy_channels = noisy_detector.get_bads()
         self.raw.info["bads"] = self.still_noisy_channels
-        self.noisy_channels_after_interpolation = {
-            "bad_by_nan": noisy_detector.bad_by_nan,
-            "bad_by_flat": noisy_detector.bad_by_flat,
-            "bad_by_deviation": noisy_detector.bad_by_deviation,
-            "bad_by_hf_noise": noisy_detector.bad_by_hf_noise,
-            "bad_by_correlation": noisy_detector.bad_by_correlation,
-            "bad_by_SNR": noisy_detector.bad_by_SNR,
-            "bad_by_dropout": noisy_detector.bad_by_dropout,
-            "bad_by_ransac": noisy_detector.bad_by_ransac,
-            "bad_all": noisy_detector.get_bads(),
-        }
+        self.noisy_channels_after_interpolation = noisy_detector.get_bads(as_dict=True)
         self._extra_info["remaining_bad"] = noisy_detector._extra_info
 
         return self
 
-    def robust_reference(self):
+    def robust_reference(self, max_iterations=4):
         """Detect bad channels and estimate the robust reference signal.
 
         This function implements the functionality of the `robustReference` function
         as part of the PREP pipeline on mne raw object.
+
+        Parameters
+        ----------
+        max_iterations : int, optional
+            The maximum number of iterations of noisy channel removal to perform
+            during robust referencing. Defaults to ``4``.
 
         Returns
         -------
@@ -213,17 +205,7 @@ class Reference:
             matlab_strict=self.matlab_strict,
         )
         noisy_detector.find_all_bads(**self.ransac_settings)
-        self.noisy_channels_original = {
-            "bad_by_nan": noisy_detector.bad_by_nan,
-            "bad_by_flat": noisy_detector.bad_by_flat,
-            "bad_by_deviation": noisy_detector.bad_by_deviation,
-            "bad_by_hf_noise": noisy_detector.bad_by_hf_noise,
-            "bad_by_correlation": noisy_detector.bad_by_correlation,
-            "bad_by_SNR": noisy_detector.bad_by_SNR,
-            "bad_by_dropout": noisy_detector.bad_by_dropout,
-            "bad_by_ransac": noisy_detector.bad_by_ransac,
-            "bad_all": noisy_detector.get_bads(),
-        }
+        self.noisy_channels_original = noisy_detector.get_bads(as_dict=True)
         self._extra_info["initial_bad"] = noisy_detector._extra_info
         logger.info("Bad channels: {}".format(self.noisy_channels_original))
 
@@ -235,16 +217,16 @@ class Reference:
         reference_channels = _set_diff(self.reference_channels, self.unusable_channels)
 
         # Initialize channels to permanently flag as bad during referencing
-        self.noisy_channels = {
+        noisy = {
             "bad_by_nan": noisy_detector.bad_by_nan,
             "bad_by_flat": noisy_detector.bad_by_flat,
             "bad_by_deviation": [],
             "bad_by_hf_noise": [],
             "bad_by_correlation": [],
-            "bad_by_SNR": noisy_detector.bad_by_SNR,
+            "bad_by_SNR": [],
             "bad_by_dropout": [],
             "bad_by_ransac": [],
-            "bad_all": self.unusable_channels,
+            "bad_all": [],
         }
 
         # Get initial estimate of the reference by the specified method
@@ -260,8 +242,7 @@ class Reference:
         # Remove reference from signal, iteratively interpolating bad channels
         raw_tmp = raw.copy()
         iterations = 0
-        noisy_channels_old = []
-        max_iteration_num = 4
+        previous_bads = set()
 
         while True:
             raw_tmp._data = signal_tmp * 1e-6
@@ -272,51 +253,46 @@ class Reference:
                 matlab_strict=self.matlab_strict,
             )
             # Detrend applied at the beginning of the function.
+
+            # Detect all currently bad channels
             noisy_detector.find_all_bads(**self.ransac_settings)
-            self.noisy_channels["bad_by_nan"] = _union(
-                self.noisy_channels["bad_by_nan"], noisy_detector.bad_by_nan
-            )
-            self.noisy_channels["bad_by_flat"] = _union(
-                self.noisy_channels["bad_by_flat"], noisy_detector.bad_by_flat
-            )
-            self.noisy_channels["bad_by_deviation"] = _union(
-                self.noisy_channels["bad_by_deviation"], noisy_detector.bad_by_deviation
-            )
-            self.noisy_channels["bad_by_hf_noise"] = _union(
-                self.noisy_channels["bad_by_hf_noise"], noisy_detector.bad_by_hf_noise
-            )
-            self.noisy_channels["bad_by_correlation"] = _union(
-                self.noisy_channels["bad_by_correlation"],
-                noisy_detector.bad_by_correlation,
-            )
-            self.noisy_channels["bad_by_ransac"] = _union(
-                self.noisy_channels["bad_by_ransac"], noisy_detector.bad_by_ransac
-            )
-            self.noisy_channels["bad_all"] = _union(
-                self.noisy_channels["bad_all"], noisy_detector.get_bads()
-            )
-            logger.info("Bad channels: {}".format(self.noisy_channels))
+            noisy_new = noisy_detector.get_bads(as_dict=True)
+
+            # Specify bad channel types to ignore when updating noisy channels
+            # NOTE: MATLAB PREP ignores dropout channels, possibly by mistake?
+            # see: https://github.com/VisLab/EEG-Clean-Tools/issues/28
+            ignore = ["bad_by_SNR", "bad_all"]
+            if self.matlab_strict:
+                ignore += ["bad_by_dropout"]
+
+            # Update set of all noisy channels detected so far with any new ones
+            bad_chans = set()
+            for bad_type in noisy_new.keys():
+                noisy[bad_type] = _union(noisy[bad_type], noisy_new[bad_type])
+                if bad_type not in ignore:
+                    bad_chans.update(noisy[bad_type])
+            noisy["bad_all"] = list(bad_chans)
+            logger.info("Bad channels: {}".format(noisy))
 
             if (
                 iterations > 1
-                and (
-                    not self.noisy_channels["bad_all"]
-                    or set(self.noisy_channels["bad_all"]) == set(noisy_channels_old)
-                )
-                or iterations > max_iteration_num
+                and (len(bad_chans) == 0 or bad_chans == previous_bads)
+                or iterations > max_iterations
             ):
+                logger.info("Robust reference done")
+                self.noisy_channels = noisy
                 break
-            noisy_channels_old = self.noisy_channels["bad_all"].copy()
+            previous_bads = bad_chans.copy()
 
-            if raw_tmp.info["nchan"] - len(self.noisy_channels["bad_all"]) < 2:
+            if raw_tmp.info["nchan"] - len(bad_chans) < 2:
                 raise ValueError(
                     "RobustReference:TooManyBad "
                     "Could not perform a robust reference -- not enough good channels"
                 )
 
-            if self.noisy_channels["bad_all"]:
+            if len(bad_chans) > 0:
                 raw_tmp._data = signal * 1e-6
-                raw_tmp.info["bads"] = self.noisy_channels["bad_all"]
+                raw_tmp.info["bads"] = list(bad_chans)
                 raw_tmp.interpolate_bads()
                 signal_tmp = raw_tmp.get_data() * 1e6
             else:
@@ -331,7 +307,6 @@ class Reference:
             iterations = iterations + 1
             logger.info("Iterations: {}".format(iterations))
 
-        logger.info("Robust reference done")
         return self.noisy_channels, self.reference_signal
 
     @staticmethod
