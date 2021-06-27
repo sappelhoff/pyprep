@@ -245,9 +245,9 @@ def _eeglab_calc_g(pos_from, pos_to, stiffness=4, num_lterms=7):
     Parameters
     ----------
     pos_from : np.ndarray of float, shape(n_good_sensors, 3)
-        The electrode positions to interpoloate from.
+        The electrode positions to interpolate from.
     pos_to : np.ndarray of float, shape(n_bad_sensors, 3)
-        The electrode positions to interpoloate.
+        The electrode positions to interpolate.
     stiffness : float
         Stiffness of the spline.
     num_lterms : int
@@ -296,9 +296,9 @@ def _eeglab_interpolate(data, pos_from, pos_to):
         A 2-D array containing signals from currently-good EEG channels with
         which to interpolate signals for bad channels.
     pos_from : np.ndarray of float, shape(n_good_sensors, 3)
-        The electrode positions to interpoloate from.
+        The electrode positions to interpolate from.
     pos_to : np.ndarray of float, shape(n_bad_sensors, 3)
-        The electrode positions to interpoloate.
+        The electrode positions to interpolate.
 
     Returns
     -------
