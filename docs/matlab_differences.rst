@@ -188,3 +188,31 @@ of flat signal) are detected on each iteration of the reference loop, but are
 currently not factored into the full set of "bad" channels to be interpolated.
 By contrast, PyPREP will detect and interpolate any bad-by-dropout channels
 detected during robust referencing.
+
+
+Bad channel interpolation
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+MATLAB PREP uses EEGLAB's internal ``eeg_interp`` method of spherical spline
+interpolation for interpolating identified bad channels during robust reference
+estimation and (if enabled) immediately after the robust reference signal is
+applied in order to remove any remaining detected bad channels once referencing
+is complete.
+
+However, ``eeg_interp``'s method of spherical interpolations differs quite a bit
+numerically from MNE's implementation as well as the interpolation method used
+by MATLAB PREP for RANSAC predictions, both of which are numerically identical
+and based directly on the formulas in Perrin et al. (1989) _[1]. ``eeg_interp``
+seems to use a modified variation of the Perrin et al. method, but diverges in
+a number of ways that are not clearly documented or cited in the code.
+
+To keep with the more established method of spherical interpolation and stay
+consistent with the interpolation code used in RANSAC, PyPREP defaults to using
+MNE's :meth:`~mne.io.Raw.interpolate_bads` method for interpolation during and
+following robust referencing. However, for full numeric equivalence with
+MATLAB PREP, PyPREP will use a Python reimplementation of ``eeg_interp`` instead
+when ``matlab_strict`` is set to ``True``.
+
+.. [1] Perrin, F., Pernier, J., Bertrand, O. and Echallier, JF. (1989).
+   Spherical splines for scalp potential and current density mapping.
+   Electroencephalography Clinical Neurophysiology, Feb; 72(2):184-7.
