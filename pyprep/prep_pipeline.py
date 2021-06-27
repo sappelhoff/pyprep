@@ -33,6 +33,9 @@ class PrepPipeline:
               For example, for 60Hz you may specify
               ``np.arange(60, sfreq / 2, 60)``. Specify an empty list to
               skip the line noise removal step.
+        - max_iterations : int, optional
+            - The maximum number of iterations of noisy channel removal to
+              perform during robust referencing. Defaults to ``4``.
     montage : mne.channels.DigMontage
         Digital montage of EEG data.
     ransac : bool, optional
@@ -150,6 +153,8 @@ class PrepPipeline:
             self.prep_params["ref_chs"] = self.ch_names_eeg
         if self.prep_params["reref_chs"] == "eeg":
             self.prep_params["reref_chs"] = self.ch_names_eeg
+        if "max_iterations" not in prep_params.keys():
+            self.prep_params["max_iterations"] = 4
         self.sfreq = self.raw_eeg.info["sfreq"]
         self.ransac_settings = {
             "ransac": ransac,
@@ -215,7 +220,7 @@ class PrepPipeline:
             matlab_strict=self.matlab_strict,
             **self.ransac_settings,
         )
-        reference.perform_reference()
+        reference.perform_reference(self.prep_params["max_iterations"])
         self.raw_eeg = reference.raw
         self.noisy_channels_original = reference.noisy_channels_original
         self.noisy_channels_before_interpolation = (
