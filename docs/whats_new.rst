@@ -51,6 +51,7 @@ Changelog
 - Added a new argument `max_iterations` for :meth:`~pyprep.Reference.perform_reference` and :meth:`~pyprep.Reference.robust_reference`, allowing the maximum number of referencing iterations to be user-configurable, by `Austin Hurst`_ (:gh:`93`)
 - Changed :meth:`~pyprep.Reference.robust_reference` to ignore bad-by-dropout channels during referencing if ``matlab_strict`` is ``True``, matching MATLAB PREP behaviour, by `Austin Hurst`_ (:gh:`93`)
 - Changed :meth:`~pyprep.Reference.robust_reference` to allow initial bad-by-SNR channels to be used for rereferencing interpolation if no longer bad following initial average reference, matching MATLAB PREP behaviour, by `Austin Hurst`_ (:gh:`93`)
+- Added a ``matlab_strict`` method for bad channel interpolation, allowing for full numeric equivalence with MATLAB PREP's robust referencing, by `Austin Hurst`_ (:gh:`96`)
 
 .. _matprep_artifacts: https://github.com/a-hurst/matprep_artifacts
 
