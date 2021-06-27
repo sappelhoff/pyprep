@@ -10,7 +10,6 @@ from pyprep.find_noisy_channels import NoisyChannels
 from pyprep.reference import Reference
 from pyprep.removeTrend import removeTrend
 
-
 # Define some fixtures for things that will be used across multiple tests
 
 
