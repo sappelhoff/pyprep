@@ -264,6 +264,8 @@ def _eeglab_calc_g(pos_from, pos_to, stiffness=4, num_lterms=7):
     ``eeg_interp.m``.
 
     """
+    # https://github.com/sccn/eeglab/blob/167dfc8/functions/popfunc/eeg_interp.m#L347
+
     n_to = pos_to.shape[0]
     n_from = pos_from.shape[0]
 
@@ -311,6 +313,8 @@ def _eeglab_interpolate(data, pos_from, pos_to):
     EEGLAB's ``eeg_interp.m`` (with minor rounding errors).
 
     """
+    # https://github.com/sccn/eeglab/blob/167dfc8/functions/popfunc/eeg_interp.m#L314
+
     # Calculate G for distances between good electrodes + between goods & bads
     G_from = _eeglab_calc_g(pos_from, pos_from)
     G_to_from = _eeglab_calc_g(pos_from, pos_to)
