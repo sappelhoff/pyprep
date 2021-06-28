@@ -7,6 +7,7 @@ import pytest
 import scipy
 
 from pyprep.find_noisy_channels import NoisyChannels
+from pyprep.reference import Reference
 from pyprep.removeTrend import removeTrend
 
 # Define some fixtures for things that will be used across multiple tests
@@ -46,24 +47,23 @@ def matprep_artifacts(tmpdir_factory):
 
 
 @pytest.fixture(scope="session")
-def matprep_noisy(matprep_artifacts):
-    """Import and preprocess artifact containing MATLAB PREP runtime info.
+def matprep_info(matprep_artifacts):
+    """Get the runtime info data from MATLAB PREP for comparison with PyPREP.
 
-    This fixture only parses and retains data from the first pass of noisy
-    channel detection during re-referencing, since it's easiest to compare with
-    PyPREP. It also adds a new key to the imported struct, 'bads', which
-    contains the names of the channels flagged as bad by each detection
-    method (as opposed to just channel indices).
-
+    This fixture helps convert the MATLAB PREP runtime info into a format that's
+    easier to compare with PyPREP, replacing channel indices with channel names
+    and renaming variables for consistency.
     """
     # Read in and parse noisy channel info artifact from MATLAB PREP
     info_path = matprep_artifacts["matprep_info"]
     matprep_info = scipy.io.loadmat(info_path, simplify_cells=True)["prep_info"]
-    matprep_noisy_all = matprep_info["reference"]
-    matprep_noisy = matprep_noisy_all["noisyStatisticsOriginal"]
 
-    # Gather bad channel names from MatPREP, converting numbers to labels
-    ch_names = matprep_info["originalChannelLabels"]
+    # Extract all noisy info from MatPREP, replacing channel numbers with labels
+    noisy_types = {
+        "original": "noisyStatisticsOriginal",
+        "post_ref": "noisyStatisticsBeforeInterpolation",
+        "post_interp": "noisyStatistics",
+    }
     bad_types = {
         "badChannelsFromNaNs": "by_nan",
         "badChannelsFromNoData": "by_flat",
@@ -75,14 +75,37 @@ def matprep_noisy(matprep_artifacts):
         "badChannelsFromRansac": "by_ransac",
         "all": "all",
     }
-    matprep_bads = {}
-    for bad_type, name in bad_types.items():
-        bads_idx = matprep_noisy["noisyChannels"][bad_type]
-        bads_idx = [bads_idx] if isinstance(bads_idx, int) else bads_idx
-        matprep_bads[name] = [ch_names[i - 1] for i in bads_idx]
-    matprep_noisy["bads"] = matprep_bads
+    matprep_noisy_all = {}
+    ch_names = matprep_info["originalChannelLabels"]
+    for type_name, noisy_type in noisy_types.items():
+        matprep_noisy = matprep_info["reference"][noisy_type]
+        matprep_bads = {}
+        for bad_type, name in bad_types.items():
+            bads_idx = matprep_noisy["noisyChannels"][bad_type]
+            bads_idx = [bads_idx] if isinstance(bads_idx, int) else bads_idx
+            matprep_bads[name] = [ch_names[i - 1] for i in bads_idx]
+        matprep_noisy["bads"] = matprep_bads
+        matprep_noisy_all[type_name] = matprep_noisy
 
-    return matprep_noisy
+    out = {
+        "ch_names": ch_names,
+        "noisy": matprep_noisy_all,
+        "ref_signal": matprep_info["reference"]["referenceSignal"],
+        "cleanline": matprep_info["lineNoise"],
+    }
+    return out
+
+
+@pytest.fixture(scope="session")
+def matprep_noisy(matprep_info):
+    """Get MATLAB PREP runtime info regarding initial noisy channel detection.
+
+    This fixture only provides data from the first pass of noisy channel
+    detection during re-referencing, since it's easiest to compare with
+    PyPREP.
+
+    """
+    return matprep_info["noisy"]["original"]
 
 
 @pytest.fixture(scope="session")
@@ -91,7 +114,7 @@ def pyprep_noisy(matprep_artifacts):
 
     This fixture uses an artifact from MATLAB PREP of the CleanLined and
     detrended EEG signal right before MATLAB PREP runs its first iteration of
-    NoisyChannels during re-referncing. As such, any differences in test results
+    NoisyChannels during re-referencing. As such, any differences in test results
     will be due to actual differences in the noisy channel detection code rather
     than differences at an earlier stage of the pipeline.
 
@@ -108,6 +131,41 @@ def pyprep_noisy(matprep_artifacts):
     pyprep_noisy.find_all_bads()
 
     return pyprep_noisy
+
+
+@pytest.fixture(scope="session")
+def matprep_reference(matprep_artifacts, matprep_info):
+    """Get robust re-referenced signal from MATLAB PREP."""
+    # Import post-reference MATLAB PREP data
+    postref_path = matprep_artifacts["5_matprep_post_reference"]
+    matprep_postref = mne.io.read_raw_eeglab(postref_path, preload=True)
+    return matprep_postref
+
+
+@pytest.fixture(scope="session")
+def pyprep_reference(matprep_artifacts):
+    """Get the robust re-referenced signal for comparison with MATLAB PREP.
+
+    This fixture uses an artifact from MATLAB PREP of the CleanLined EEG signal
+    right before MATLAB PREP calls ``performReference``. As such, the results
+    of these tests will not be affected by any differences in the CleanLine
+    implementations of MATLAB PREP and PyPREP.
+
+    """
+    # Import post-CleanLine MATLAB PREP data
+    setfile_path = matprep_artifacts["3_matprep_cleanline"]
+    matprep_set = mne.io.read_raw_eeglab(setfile_path, preload=True)
+    ch_names = matprep_set.info["ch_names"]
+
+    # Run robust referencing on MATLAB data and extract internal noisy info
+    matprep_seed = 435656
+    params = {"ref_chs": ch_names, "reref_chs": ch_names}
+    pyprep_reref = Reference(
+        matprep_set, params, random_state=matprep_seed, matlab_strict=True
+    )
+    pyprep_reref.perform_reference()
+
+    return pyprep_reref
 
 
 # Define MATLAB comparison tests for each main component of PyPREP
@@ -291,3 +349,48 @@ class TestCompareNoisyChannels(object):
         pyprep_bads_all = sorted(pyprep_noisy.get_bads())
         matprep_bads_all = sorted(matprep_noisy["bads"]["all"])
         assert pyprep_bads_all == matprep_bads_all
+
+
+class TestCompareRobustReference(object):
+    """Compare the results of Reference to the equivalent MatPREP code.
+
+    These comparisons use input data that's already had adaptive line noise
+    removal done to the signal, so any differences in results will be due to
+    differences in the robust referencing code itself.
+
+    """
+
+    # TODO: once final interpolation is separated out in PyPREP, add test just
+    # for interpolation code
+
+    def test_pre_interp_bads(self, pyprep_reference, matprep_info):
+        """Compare pre-interpolation bads between PyPREP and MatPREP."""
+        matprep_bads = matprep_info["noisy"]["post_ref"]["bads"]["all"]
+        pyprep_bads = pyprep_reference.bad_before_interpolation
+        assert sorted(pyprep_bads) == sorted(matprep_bads)
+
+    def test_remaining_bads(self, pyprep_reference, matprep_info):
+        """Compare post-interpolation bads between PyPREP and MatPREP."""
+        matprep_bads = matprep_info["noisy"]["post_interp"]["bads"]["all"]
+        pyprep_bads = pyprep_reference.still_noisy_channels
+        assert sorted(pyprep_bads) == sorted(matprep_bads)
+
+    def test_reference_signal(self, pyprep_reference, matprep_info):
+        """Compare the final reference signal between PyPREP and MatPREP."""
+        TOL = 1e-4  # NOTE: Some diffs > 1e-5, maybe rounding error?
+        pyprep_ref = pyprep_reference.reference_signal_new
+        assert np.allclose(pyprep_ref, matprep_info["ref_signal"], atol=TOL)
+
+    def test_full_signal(self, pyprep_reference, matprep_reference):
+        """Compare the full post-reference signal between PyPREP and MatPREP."""
+        win_size = 500  # window of samples to check
+
+        # Compare signals at start of recording
+        pyprep_start = pyprep_reference.raw._data[:, win_size]
+        matprep_start = matprep_reference._data[:, win_size]
+        assert np.allclose(pyprep_start, matprep_start)
+
+        # Compare signals at end of recording
+        pyprep_end = pyprep_reference.raw._data[:, -win_size:]
+        matprep_end = matprep_reference._data[:, -win_size:]
+        assert np.allclose(pyprep_end, matprep_end)
