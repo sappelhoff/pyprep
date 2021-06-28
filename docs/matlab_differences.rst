@@ -202,7 +202,7 @@ is complete.
 However, ``eeg_interp``'s method of spherical interpolations differs quite a bit
 numerically from MNE's implementation as well as the interpolation method used
 by MATLAB PREP for RANSAC predictions, both of which are numerically identical
-and based directly on the formulas in Perrin et al. (1989) _[1]. ``eeg_interp``
+and based directly on the formulas in Perrin et al. (1989) [1]_. ``eeg_interp``
 seems to use a modified variation of the Perrin et al. method, but diverges in
 a number of ways that are not clearly documented or cited in the code.
 
