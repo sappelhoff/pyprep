@@ -9,10 +9,10 @@ Although PyPREP aims to be a faithful reimplementation of the original MATLAB
 version of PREP, there are a few places where PyPREP has deliberately chosen
 to use different defaults than the MATLAB PREP.
 
-To override these differerences, you can set the ``matlab_strict`` argument to
-:class:`~pyprep.PrepPipeline`, :class:`~pyprep.Reference`, or
-:class:`~pyprep.NoisyChannels` as ``True`` to match the original PREP's
-internal math.
+To override these differerences, you can set the ``matlab_strict`` parameter
+for :class:`~pyprep.PrepPipeline`, :class:`~pyprep.Reference`, or
+:class:`~pyprep.NoisyChannels` to ``True`` in order to match the original
+PREP's internal math.
 
 .. contents:: Table of Contents
     :depth: 3
@@ -39,8 +39,8 @@ Because the practical differences are small and MNE's filtering is fast and
 well-tested, PyPREP defaults to using :func:`mne.filter.filter_data` for
 high-pass trend removal. However, for exact numerical compatibility, PyPREP
 has a basic re-implementation of EEGLAB's ``pop_eegfiltnew`` in Python that
-produces identical results to MATLAB PREP's ``removeTrend`` when
-``matlab_strict`` is set to ``True``.
+produces identical results to MATLAB PREP's ``removeTrend`` when the
+``matlab_strict`` parameter is set to ``True``.
 
 
 Differences in RANSAC
@@ -93,8 +93,8 @@ approach has the benefit of better randomness, but may also lead to more
 variability in PREP results between different seed values. More testing is
 required to determine which approach produces better results.
 
-Note that to match MATLAB PREP exactly when ``matlab_strict`` is ``True``, the
-random seed ``435656`` must be used.
+Note that to match MATLAB PREP exactly when the ``matlab_strict`` parameter is
+set to ``True``, the random seed ``435656`` must be used.
 
 
 Calculation of median estimated signal
@@ -211,7 +211,7 @@ consistent with the interpolation code used in RANSAC, PyPREP defaults to using
 MNE's :meth:`~mne.io.Raw.interpolate_bads` method for interpolation during and
 following robust referencing. However, for full numeric equivalence with
 MATLAB PREP, PyPREP will use a Python reimplementation of ``eeg_interp`` instead
-when ``matlab_strict`` is set to ``True``.
+when the ``matlab_strict`` parameter is set to ``True``.
 
 .. [1] Perrin, F., Pernier, J., Bertrand, O. and Echallier, JF. (1989).
    Spherical splines for scalp potential and current density mapping.
