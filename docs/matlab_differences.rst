@@ -213,6 +213,10 @@ following robust referencing. However, for full numeric equivalence with
 MATLAB PREP, PyPREP will use a Python reimplementation of ``eeg_interp`` instead
 when the ``matlab_strict`` parameter is set to ``True``.
 
+
+References
+----------
+
 .. [1] Perrin, F., Pernier, J., Bertrand, O. and Echallier, JF. (1989).
    Spherical splines for scalp potential and current density mapping.
    Electroencephalography Clinical Neurophysiology, Feb; 72(2):184-7.
