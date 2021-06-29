@@ -90,29 +90,41 @@ class Reference:
             "max_chunk_size": max_chunk_size,
         }
         self.random_state = check_random_state(random_state)
-        self._extra_info = {}
         self.matlab_strict = matlab_strict
 
-    def perform_reference(self, max_iterations=4):
+        # Initialize attributes that get filled in during referencing
+        self.bad_before_interpolation = None
+        self.EEG_before_interpolation = None
+        self.noisy_channels_before_interpolation = None
+        self.reference_signal_new = None
+        self.interpolated_channels = None
+        self.still_noisy_channels = None
+        self.noisy_channels_after_interpolation = None
+        self._extra_info = {
+            "initial_bad": None, "interpolated": None, "remaining_bad": None
+        }
+
+    def perform_reference(self, max_iterations=4, interpolate_bads=True):
         """Estimate the true signal mean and interpolate bad channels.
+
+        This function implements the functionality of the `performReference` function
+        as part of the PREP pipeline on mne raw object.
 
         Parameters
         ----------
         max_iterations : int, optional
             The maximum number of iterations of noisy channel removal to perform
             during robust referencing. Defaults to ``4``.
-
-        This function implements the functionality of the `performReference` function
-        as part of the PREP pipeline on mne raw object.
+        interpolate_bads : bool, optional
+            Whether or not any remaining bad channels following robust referencing
+            should be interpolated or left as-is. Defaults to ``True``.
 
         Notes
         -----
         This function calls ``robust_reference`` first.
-        Currently this function only implements the functionality of default
-        settings, i.e., ``doRobustPost``.
 
         """
-        # Phase 1: Estimate the true signal mean with robust referencing
+        # Estimate the true signal mean with robust referencing
         self.robust_reference(max_iterations)
         # If we interpolate the raw here we would be interpolating
         # more than what we later actually account for (in interpolated channels).
@@ -126,6 +138,8 @@ class Reference:
             dummy.get_data(picks=self.reference_channels), axis=0
         )
         del dummy
+
+        # Re-reference the data using the calculated robust average reference
         rereferenced_index = [
             self.ch_names_eeg.index(ch) for ch in self.rereferenced_channels
         ]
@@ -133,38 +147,69 @@ class Reference:
             self.EEG, self.reference_signal, rereferenced_index
         )
 
-        # Phase 2: Find the bad channels and interpolate
+        # Detect which channels are still bad following robust referencing
         self.raw._data = self.EEG
         noisy_detector = NoisyChannels(
             self.raw, random_state=self.random_state, matlab_strict=self.matlab_strict
         )
         noisy_detector.find_all_bads(**self.ransac_settings)
-
-        # Record Noisy channels and EEG before interpolation
         self.bad_before_interpolation = noisy_detector.get_bads(verbose=True)
         self.EEG_before_interpolation = self.EEG.copy()
         self.noisy_channels_before_interpolation = noisy_detector.get_bads(as_dict=True)
         self._extra_info["interpolated"] = noisy_detector._extra_info
 
+        # Update bad channels in MNE raw object
         bad_channels = _union(self.bad_before_interpolation, self.unusable_channels)
         self.raw.info["bads"] = bad_channels
+
+        # If enabled, interpolate all bad channels and detect any remaining bads
+        if interpolate_bads:
+            self.interpolate_bads()
+
+        return self
+
+    def interpolate_bads(self):
+        """Interpolate any remaining bad channels following robust referencing.
+
+        This method can only be called if :meth:`~.perform_reference` has already
+        been run with the ``interpolate_bads`` parameter set to ``False``. It cannot
+        be run more than once per instance of :class:`~pyprep.Reference`.
+
+        """
+        if not self.bad_before_interpolation:
+            raise RuntimeError(
+                "Robust referencing must be performed before remaining bad channels "
+                "can be interpolated."
+            )
+        elif self.interpolated_channels:
+            raise RuntimeError(
+                "Bad channel interpolation cannot be performed more than once - "
+                "interpolating signals using other interpolated signals is likely "
+                "to have poor results."
+            )
+
+        # Interpolate any channels flagged as bad following robust referencing
+        bad_channels = self.raw.info["bads"]
         if self.matlab_strict:
             _eeglab_interpolate_bads(self.raw)
         else:
             self.raw.interpolate_bads()
+
+        # Calculate and remove the new average reference following interpolation
         reference_correct = np.nanmean(
             self.raw.get_data(picks=self.reference_channels), axis=0
         )
+        rereferenced_index = [
+            self.ch_names_eeg.index(ch) for ch in self.rereferenced_channels
+        ]
         self.EEG = self.raw.get_data()
         self.EEG = self.remove_reference(
             self.EEG, reference_correct, rereferenced_index
         )
-        # reference signal after interpolation
         self.reference_signal_new = self.reference_signal + reference_correct
-        # MNE Raw object after interpolation
-        self.raw._data = self.EEG
+        self.raw._data = self.EEG # Update the MNE Raw object
 
-        # Still noisy channels after interpolation
+        # Detect any remaining noisy channels following interpolation
         self.interpolated_channels = bad_channels
         noisy_detector = NoisyChannels(
             self.raw, random_state=self.random_state, matlab_strict=self.matlab_strict
