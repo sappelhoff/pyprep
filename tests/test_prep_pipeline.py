@@ -1,9 +1,7 @@
 """Test the full PREP pipeline."""
-import matplotlib.pyplot as plt
 import mne
 import numpy as np
 import pytest
-import scipy.io as sio
 
 from pyprep.prep_pipeline import PrepPipeline
 
@@ -84,11 +82,11 @@ def test_prep_pipeline_filter_kwargs(raw, montage):
         "line_freqs": np.arange(60, sample_rate / 2, 60),
     }
     filter_kwargs = {
-        "method": "fir",
-        "phase": "zero-double",
+        "mt_bandwidth": 3,
+        "p_value": 0.05,
     }
 
     prep = PrepPipeline(
         raw_copy, prep_params, montage, random_state=42, filter_kwargs=filter_kwargs
     )
-    prep.fit()
+    prep.remove_line_noise(prep_params["line_freqs"])

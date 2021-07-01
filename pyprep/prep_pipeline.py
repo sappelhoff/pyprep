@@ -201,7 +201,6 @@ class PrepPipeline:
         """
         # Define default settings for filter and apply any kwargs overrides
         settings = {
-            "method": "spectrum_fit",
             "mt_bandwidth": 2,
             "p_value": 0.01,
             "filter_length": "10s"
@@ -219,6 +218,7 @@ class PrepPipeline:
             eeg_detrended,
             Fs=self.sfreq,
             freqs=line_freqs,
+            method="spectrum_fit",
             **settings,
         )
         self.EEG_filtered = (self.EEG_raw - eeg_detrended) + eeg_cleaned
