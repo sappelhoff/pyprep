@@ -4,7 +4,6 @@ from mne.utils import check_random_state
 
 from pyprep.reference import Reference
 from pyprep.removeTrend import removeTrend
-from pyprep.utils import _set_diff, _union  # noqa: F401
 
 
 class PrepPipeline:
@@ -164,6 +163,17 @@ class PrepPipeline:
         self.filter_kwargs = filter_kwargs
         self.matlab_strict = matlab_strict
 
+        # Initialize attributes to be filled in later
+        self.noisy_channels_original = None
+        self.noisy_channels_before_interpolation = None
+        self.noisy_channels_after_interpolation = None
+        self.bad_before_interpolation = None
+        self.EEG_before_interpolation = None
+        self.reference_before_interpolation = None
+        self.reference_after_interpolation = None
+        self.interpolated_channels = None
+        self.still_noisy_channels = None
+
     @property
     def raw(self):
         """Return a version of self.raw_eeg that includes the non-eeg channels."""
@@ -173,39 +183,72 @@ class PrepPipeline:
         else:
             return full_raw.add_channels([self.raw_non_eeg])
 
-    def fit(self):
-        """Run the whole PREP pipeline."""
-        # Step 1: 1Hz high pass filtering
-        if len(self.prep_params["line_freqs"]) != 0:
-            self.EEG_new = removeTrend(
-                self.EEG_raw, self.sfreq, matlab_strict=self.matlab_strict
-            )
+    def remove_line_noise(self, line_freqs):
+        """Remove line noise from all EEG channels using multi-taper decomposition.
 
-            # Step 2: Removing line noise
-            linenoise = self.prep_params["line_freqs"]
-            if self.filter_kwargs is None:
-                self.EEG_clean = mne.filter.notch_filter(
-                    self.EEG_new,
-                    Fs=self.sfreq,
-                    freqs=linenoise,
-                    method="spectrum_fit",
-                    mt_bandwidth=2,
-                    p_value=0.01,
-                    filter_length="10s",
-                )
-            else:
-                self.EEG_clean = mne.filter.notch_filter(
-                    self.EEG_new,
-                    Fs=self.sfreq,
-                    freqs=linenoise,
-                    **self.filter_kwargs,
-                )
+        This filtering method attempts to isolate and remove line noise from the
+        signal while preserving unrelated background signal in the same frequency
+        ranges. This is done to minimize distortions in the power-spectral density
+        curves due to line noise removal.
 
-            # Add Trend back
-            self.EEG = self.EEG_raw - self.EEG_new + self.EEG_clean
-            self.raw_eeg._data = self.EEG
+        Parameters
+        ----------
+        line_freqs: {np.ndarray, list}
+            A list of the frequencies (in Hz) at which line noise should be removed
+            (e.g., ``np.arange(60, sfreq / 2, 60)`` for a recording with a powerline
+            noise of 60 Hz).
 
-        # Step 3: Referencing
+        """
+        # Define default settings for filter and apply any kwargs overrides
+        settings = {
+            "method": "spectrum_fit",
+            "mt_bandwidth": 2,
+            "p_value": 0.01,
+            "filter_length": "10s"
+        }
+        if isinstance(self.filter_kwargs, dict):
+            settings.update(self.filter_kwargs)
+
+        # Remove slow drifts from the recording prior to filtering
+        eeg_detrended = removeTrend(
+            self.EEG_raw, self.sfreq, matlab_strict=self.matlab_strict
+        )
+
+        # Remove line noise and add the removed slow drifts back
+        eeg_cleaned = mne.filter.notch_filter(
+            eeg_detrended,
+            Fs=self.sfreq,
+            freqs=line_freqs,
+            **settings,
+        )
+        self.EEG_filtered = (self.EEG_raw - eeg_detrended) + eeg_cleaned
+        self.raw_eeg._data = self.EEG_filtered
+
+    def robust_reference(self, max_iterations=4, interpolate_bads=True):
+        """Perform robust referencing on the EEG signal and detect bad channels.
+
+        This method uses an iterative approach to estimate a robust average
+        reference signal free of contamination from bad channels, as detected
+        automatically using the methods of :class:`~pyprep.NoisyChannels`. Once
+        estimated, the robust average reference is applied to the data and bad
+        channel detection is re-run to flag any noisy or unusable channels
+        post-reference.
+
+        By default, this method will also interpolate the signals of any channels
+        detected as bad following robust referencing, re-reference the data
+        accordingly, and re-detect any remaining bad channels.
+
+        Parameters
+        ----------
+        max_iterations : int, optional
+            The maximum number of iterations of noisy channel removal to perform
+            during robust referencing. Defaults to ``4``.
+        interpolate_bads : bool, optional
+            Whether or not any remaining bad channels following robust referencing
+            should be interpolated. Defaults to ``True``.
+
+        """
+        # Perform robust referencing on the signal
         reference = Reference(
             self.raw_eeg,
             self.prep_params,
@@ -213,7 +256,8 @@ class PrepPipeline:
             matlab_strict=self.matlab_strict,
             **self.ransac_settings,
         )
-        reference.perform_reference(self.prep_params["max_iterations"])
+        reference.perform_reference(max_iterations, interpolate_bads)
+
         self.raw_eeg = reference.raw
         self.noisy_channels_original = reference.noisy_channels_original
         self.noisy_channels_before_interpolation = (
@@ -228,5 +272,14 @@ class PrepPipeline:
         self.reference_after_interpolation = reference.reference_signal_new
         self.interpolated_channels = reference.interpolated_channels
         self.still_noisy_channels = reference.still_noisy_channels
+
+    def fit(self):
+        """Run the whole PREP pipeline."""
+        # Step 1: Adaptive line noise removal
+        if len(self.prep_params["line_freqs"]) != 0:
+            self.remove_line_noise(self.prep_params["line_freqs"])
+
+        # Step 2: Robust Referencing
+        self.robust_reference(self.prep_params["max_iterations"])
 
         return self
