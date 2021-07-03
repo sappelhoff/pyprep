@@ -37,6 +37,7 @@ import scipy.io as sio
 import matplotlib.pyplot as plt
 
 from pyprep.prep_pipeline import PrepPipeline
+from pyprep.removeTrend import removeTrend
 
 ###############################################################################
 # Let's download some data for testing. Picking the 1st run of subject 4 here.
@@ -168,7 +169,7 @@ cb.set_label("\u03BCVolt", fontsize=14)
 
 EEG_new_matlab = sio.loadmat(fname_mat2)
 EEG_new_matlab = EEG_new_matlab["save_data"]
-EEG_new = prep.EEG_new
+EEG_new = removeTrend(prep.EEG_raw, sample_rate=prep.sfreq)
 EEG_new_max = np.max(abs(EEG_new), axis=None)
 EEG_new_diff = EEG_new - EEG_new_matlab
 EEG_new_mse = ((EEG_new_diff / EEG_new_max) ** 2).mean(axis=None)
@@ -201,7 +202,7 @@ axs[1, 1].set_title("High pass filtered EEG", fontsize=14)
 
 EEG_clean_matlab = sio.loadmat(fname_mat3)
 EEG_clean_matlab = EEG_clean_matlab["save_data"]
-EEG_clean = prep.EEG
+EEG_clean = prep.EEG_filtered
 EEG_max = np.max(abs(EEG_clean), axis=None)
 EEG_diff = EEG_clean - EEG_clean_matlab
 EEG_mse = ((EEG_diff / EEG_max) ** 2).mean(axis=None)
