@@ -200,11 +200,7 @@ class PrepPipeline:
 
         """
         # Define default settings for filter and apply any kwargs overrides
-        settings = {
-            "mt_bandwidth": 2,
-            "p_value": 0.01,
-            "filter_length": "10s"
-        }
+        settings = {"mt_bandwidth": 2, "p_value": 0.01, "filter_length": "10s"}
         if isinstance(self.filter_kwargs, dict):
             settings.update(self.filter_kwargs)
 

@@ -101,7 +101,9 @@ class Reference:
         self.still_noisy_channels = None
         self.noisy_channels_after_interpolation = None
         self._extra_info = {
-            "initial_bad": None, "interpolated": None, "remaining_bad": None
+            "initial_bad": None,
+            "interpolated": None,
+            "remaining_bad": None,
         }
 
     def perform_reference(self, max_iterations=4, interpolate_bads=True):
