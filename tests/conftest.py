@@ -46,7 +46,7 @@ def raw_clean(montage):
     This fixture downloads and reads in subject 30, run 2 from the Physionet
     BCI2000 (eegbci) open dataset, which contains no bad channels on an initial
     pass of :class:`pyprep.NoisyChannels`. Intended for use with tests where
-    channels are made artifically bad.
+    channels are made artificially bad.
 
     File attributes:
     - Channels: 64 EEG

@@ -120,7 +120,7 @@ print("Bad channels after interpolation: {}".format(prep.still_noisy_channels))
 #
 # To validate each step of pyprep's results, we compare results after each step
 # with the results from EEGLAB's PREP. To make it easy to compare, we rescale
-# the EEG data to [-1, 1] (devided the data by maximum absolute value) when
+# the EEG data to [-1, 1] (divided the data by maximum absolute value) when
 # making the plot.
 
 EEG_raw = raw_copy.get_data(picks="eeg") * 1e6
@@ -319,7 +319,7 @@ print("Interpolated data MSE: {}".format(EEG_final_mse))
 #
 # It can be seen the results match well on each step except the final step.
 # This is due to the difference of find_noisy_channel functions, since the
-# channels with relatively large error corrsponds to the channels that are only
+# channels with relatively large error corresponds to the channels that are only
 # interpolated in Python or Matlab.
 #
 # We think the differences mainly arise from
