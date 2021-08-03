@@ -147,7 +147,7 @@ class PrepPipeline:
         # raw_non_eeg may not be compatible with the montage
         # so it is not set for that object
 
-        self.EEG_raw = self.raw_eeg.get_data() * 1e6
+        self.EEG_raw = self.raw_eeg.get_data()
         self.prep_params = prep_params
         if self.prep_params["ref_chs"] == "eeg":
             self.prep_params["ref_chs"] = self.ch_names_eeg
@@ -210,7 +210,7 @@ class PrepPipeline:
 
             # Add Trend back
             self.EEG = self.EEG_raw - self.EEG_new + self.EEG_clean
-            self.raw_eeg._data = self.EEG * 1e-6
+            self.raw_eeg._data = self.EEG
 
         # Step 3: Referencing
         reference = Reference(
