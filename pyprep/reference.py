@@ -303,9 +303,7 @@ class Reference:
                     _eeglab_interpolate_bads(raw_tmp)
                 else:
                     raw_tmp.interpolate_bads()
-                signal_tmp = raw_tmp.get_data() * 1e6
-            else:
-                signal_tmp = signal
+
             self.reference_signal = (
                 np.nanmean(raw_tmp.get_data(picks=reference_channels), axis=0) * 1e6
             )
