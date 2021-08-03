@@ -122,8 +122,8 @@ class Reference:
             _eeglab_interpolate_bads(dummy)
         else:
             dummy.interpolate_bads()
-        self.reference_signal = (
-            np.nanmean(dummy.get_data(picks=self.reference_channels), axis=0)
+        self.reference_signal = np.nanmean(
+            dummy.get_data(picks=self.reference_channels), axis=0
         )
         del dummy
         rereferenced_index = [
@@ -152,8 +152,8 @@ class Reference:
             _eeglab_interpolate_bads(self.raw)
         else:
             self.raw.interpolate_bads()
-        reference_correct = (
-            np.nanmean(self.raw.get_data(picks=self.reference_channels), axis=0)
+        reference_correct = np.nanmean(
+            self.raw.get_data(picks=self.reference_channels), axis=0
         )
         self.EEG = self.raw.get_data()
         self.EEG = self.remove_reference(
@@ -237,8 +237,8 @@ class Reference:
 
         # Get initial estimate of the reference by the specified method
         signal = raw.get_data()
-        self.reference_signal = (
-            np.nanmedian(raw.get_data(picks=reference_channels), axis=0)
+        self.reference_signal = np.nanmedian(
+            raw.get_data(picks=reference_channels), axis=0
         )
         reference_index = [self.ch_names_eeg.index(ch) for ch in reference_channels]
         signal_tmp = self.remove_reference(
@@ -304,8 +304,8 @@ class Reference:
                 else:
                     raw_tmp.interpolate_bads()
 
-            self.reference_signal = (
-                np.nanmean(raw_tmp.get_data(picks=reference_channels), axis=0)
+            self.reference_signal = np.nanmean(
+                raw_tmp.get_data(picks=reference_channels), axis=0
             )
 
             signal_tmp = self.remove_reference(
