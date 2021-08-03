@@ -73,7 +73,7 @@ API
 - The permissible parameters for the following methods were removed and/or reordered: `NoisyChannels.ransac_correlations`, `NoisyChannels.run_ransac`, and `NoisyChannels.get_ransac_pred` methods, by `Austin Hurst`_ and `Yorguin Mantilla`_ (:gh:`43`)
 - Changed the meaning of the argument `channel_wise` in :meth:`~pyprep.NoisyChannels.find_bad_by_ransac` to mean 'perform RANSAC across chunks of channels instead of window-wise', from its original meaning of 'perform channel-wise RANSAC one channel at a time', by `Austin Hurst`_ (:gh:`66`)
 - The arguments `fraction_bad` and `fraction_good` were renamed to `frac_bad` and `sample_prop`, respectively, for :meth:`~pyprep.NoisyChannels.find_bad_by_ransac` and :func:`~pyprep.ransac.find_bad_by_ransac`, by `Austin Hurst`_ (:gh:`88`)
-
+- The units of all user-facing EEG data attributes in :obj:`~pyprep.PrepPipeline` and :obj:`~pyprep.Reference` were changed from mV to Volts to better match MNE convention, by `Austin Hurst`_ (:gh:`102`)
 
 .. _changes_0_3_1:
 
