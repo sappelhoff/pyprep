@@ -206,6 +206,57 @@ class PrepPipeline:
         post_interp = self._interpolated_reference_signal
         return post_interp if post_interp else post_ref
 
+    def get_raw(self, stage=None):
+        """Retrieve the full recording data at a given stage of the pipeline.
+
+        Valid pipeline stages include 'unprocessed' (the raw data prior to running
+        the pipeline), 'filtered' (the data following adaptive line noise
+        removal), 'post-reference' (the data after robust referencing, prior to any
+        bad channel interpolation), and 'post-interpolation' (the data after robust
+        referencing and bad channel interpolation).
+
+        Parameters
+        ----------
+        stage : str, optional
+            The stage of the pipeline for which the full data will be retrieved. If
+            not specified, the current state of the data will be retrieved.
+
+        Returns
+        -------
+        full_raw: mne.io.Raw
+            An MNE Raw object containing the EEG data for the given stage of the
+            pipeline, along with any non-EEG channels that were present in the
+            original input data.
+
+        """
+        interpolated = self.interpolated_channels is not None
+        stages = {
+            "unprocessed": self.EEG_raw,
+            "filtered": self.EEG_filtered,
+            "post-reference": self.EEG_post_reference,
+            "post-interpolation": self.raw_eeg._data if interpolated else None,
+        }
+        if stage is not None and stage.lower() not in stages.keys():
+            raise ValueError(
+                "'{stage}' is not a valid pipeline stage. Valid stages are "
+                "'unprocessed', 'filtered', 'post-reference', and 'post-interpolation'."
+            )
+
+        eeg_data = self.raw_eeg._data  # Default to most recent stage of pipeline
+        if stage:
+            eeg_data = stages[stage.lower()]
+            if not eeg_data:
+                raise ValueError(
+                    "Could not retrieve {stage} data, as that stage of the pipeline "
+                    "has not yet been performed."
+                )
+        full_raw = self.raw_eeg.copy()
+        full_raw._data = eeg_data
+        if self.raw_non_eeg is not None:
+            full_raw.add_channels([self.raw_non_eeg])
+
+        return full_raw
+
     def remove_line_noise(self, line_freqs):
         """Remove line noise from all EEG channels using multi-taper decomposition.
 
