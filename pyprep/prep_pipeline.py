@@ -164,24 +164,47 @@ class PrepPipeline:
         self.matlab_strict = matlab_strict
 
         # Initialize attributes to be filled in later
-        self.noisy_channels_original = None
-        self.noisy_channels_before_interpolation = None
-        self.noisy_channels_after_interpolation = None
-        self.bad_before_interpolation = None
-        self.EEG_before_interpolation = None
-        self.reference_before_interpolation = None
-        self.reference_after_interpolation = None
+        self.EEG_raw = self.raw_eeg.get_data()
+        self.EEG_filtered = None
+        self.EEG_post_reference = None
+
+        # NOTE: 'original' refers to before initial average reference, not first
+        # pass afterwards. Not necessarily comparable to later values?
+        self.noisy_info = {
+            "original": None, "post-reference": None, "post-interpolation": None
+        }
+        self.bad_channels = {
+            "original": None, "post-reference": None, "post-interpolation": None
+        }
         self.interpolated_channels = None
-        self.still_noisy_channels = None
+        self.robust_reference_signal = None
+        self._interpolated_reference_signal = None
 
     @property
     def raw(self):
         """Return a version of self.raw_eeg that includes the non-eeg channels."""
         full_raw = self.raw_eeg.copy()
-        if self.raw_non_eeg is None:
-            return full_raw
-        else:
-            return full_raw.add_channels([self.raw_non_eeg])
+        if self.raw_non_eeg is not None:
+            full_raw.add_channels([self.raw_non_eeg])
+        return full_raw
+
+    @property
+    def current_noisy_info(self):
+        post_ref = self.noisy_info["post-reference"]
+        post_interp = self.noisy_info["post-interpolation"]
+        return post_interp if post_interp else post_ref
+
+    @property
+    def remaining_bad_channels(self):
+        post_ref = self.bad_channels["post-reference"]
+        post_interp = self.bad_channels["post-interpolation"]
+        return post_interp if post_interp else post_ref
+
+    @property
+    def current_reference_signal(self):
+        post_ref = self.robust_reference_signal
+        post_interp = self._interpolated_reference_signal
+        return post_interp if post_interp else post_ref
 
     def remove_line_noise(self, line_freqs):
         """Remove line noise from all EEG channels using multi-taper decomposition.
@@ -216,6 +239,7 @@ class PrepPipeline:
             freqs=line_freqs,
             method="spectrum_fit",
             **settings,
+            # Add support for parallel jobs if joblib installed?
         )
         self.EEG_filtered = (self.EEG_raw - eeg_detrended) + eeg_cleaned
         self.raw_eeg._data = self.EEG_filtered
@@ -245,29 +269,28 @@ class PrepPipeline:
 
         """
         # Perform robust referencing on the signal
-        reference = Reference(
+        ref = Reference(
             self.raw_eeg,
             self.prep_params,
             random_state=self.random_state,
             matlab_strict=self.matlab_strict,
             **self.ransac_settings,
         )
-        reference.perform_reference(max_iterations, interpolate_bads)
+        ref.perform_reference(max_iterations, interpolate_bads)
 
-        self.raw_eeg = reference.raw
-        self.noisy_channels_original = reference.noisy_channels_original
-        self.noisy_channels_before_interpolation = (
-            reference.noisy_channels_before_interpolation
-        )
-        self.noisy_channels_after_interpolation = (
-            reference.noisy_channels_after_interpolation
-        )
-        self.bad_before_interpolation = reference.bad_before_interpolation
-        self.EEG_before_interpolation = reference.EEG_before_interpolation
-        self.reference_before_interpolation = reference.reference_signal
-        self.reference_after_interpolation = reference.reference_signal_new
-        self.interpolated_channels = reference.interpolated_channels
-        self.still_noisy_channels = reference.still_noisy_channels
+        self.raw_eeg = ref.raw
+        self.EEG_post_reference = ref.EEG_before_interpolation
+        self.robust_reference_signal = ref.reference_signal
+        self._interpolated_reference_signal = ref.reference_signal_new
+
+        self.noisy_info["original"] = ref.noisy_channels_original
+        self.noisy_info["post-reference"] = ref.noisy_channels_before_interpolation
+        self.noisy_info["post-interpolation"] = ref.noisy_channels_after_interpolation
+
+        self.bad_channels["original"] = ref.noisy_channels_original["bad_all"]
+        self.bad_channels["post-reference"] = ref.bad_before_interpolation
+        self.bad_channels["post-interpolation"] = ref.still_noisy_channels
+        self.interpolated_channels = ref.interpolated_channels
 
     def fit(self):
         """Run the whole PREP pipeline."""
