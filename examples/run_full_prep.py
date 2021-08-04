@@ -104,9 +104,12 @@ prep.fit()
 #
 # You can check the detected bad channels in each step of PREP.
 
+original_bads = prep.bad_channels["original"]
+post_interp_bads = prep.bad_channels["post-interpolation"]
+
 print("Bad channels: {}".format(prep.interpolated_channels))
-print("Bad channels original: {}".format(prep.noisy_channels_original["bad_all"]))
-print("Bad channels after interpolation: {}".format(prep.still_noisy_channels))
+print("Bad channels original: {}".format(original_bads))
+print("Bad channels after interpolation: {}".format(post_interp_bads))
 
 # Matlab's results
 # ----------------
