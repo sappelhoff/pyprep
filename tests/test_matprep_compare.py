@@ -378,7 +378,7 @@ class TestCompareRobustReference(object):
     def test_reference_signal(self, pyprep_reference, matprep_info):
         """Compare the final reference signal between PyPREP and MatPREP."""
         TOL = 1e-4  # NOTE: Some diffs > 1e-5, maybe rounding error?
-        pyprep_ref = pyprep_reference.reference_signal_new
+        pyprep_ref = pyprep_reference.reference_signal_new * 1e6
         assert np.allclose(pyprep_ref, matprep_info["ref_signal"], atol=TOL)
 
     def test_full_signal(self, pyprep_reference, matprep_reference):

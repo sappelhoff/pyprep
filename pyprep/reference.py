@@ -80,7 +80,7 @@ class Reference:
         self.ch_names = self.raw.ch_names
         self.raw.pick_types(eeg=True, eog=False, meg=False)
         self.ch_names_eeg = self.raw.ch_names
-        self.EEG = self.raw.get_data() * 1e6
+        self.EEG = self.raw.get_data()
         self.reference_channels = params["ref_chs"]
         self.rereferenced_channels = params["reref_chs"]
         self.sfreq = self.raw.info["sfreq"]
@@ -122,8 +122,8 @@ class Reference:
             _eeglab_interpolate_bads(dummy)
         else:
             dummy.interpolate_bads()
-        self.reference_signal = (
-            np.nanmean(dummy.get_data(picks=self.reference_channels), axis=0) * 1e6
+        self.reference_signal = np.nanmean(
+            dummy.get_data(picks=self.reference_channels), axis=0
         )
         del dummy
         rereferenced_index = [
@@ -134,7 +134,7 @@ class Reference:
         )
 
         # Phase 2: Find the bad channels and interpolate
-        self.raw._data = self.EEG * 1e-6
+        self.raw._data = self.EEG
         noisy_detector = NoisyChannels(
             self.raw, random_state=self.random_state, matlab_strict=self.matlab_strict
         )
@@ -152,17 +152,17 @@ class Reference:
             _eeglab_interpolate_bads(self.raw)
         else:
             self.raw.interpolate_bads()
-        reference_correct = (
-            np.nanmean(self.raw.get_data(picks=self.reference_channels), axis=0) * 1e6
+        reference_correct = np.nanmean(
+            self.raw.get_data(picks=self.reference_channels), axis=0
         )
-        self.EEG = self.raw.get_data() * 1e6
+        self.EEG = self.raw.get_data()
         self.EEG = self.remove_reference(
             self.EEG, reference_correct, rereferenced_index
         )
         # reference signal after interpolation
         self.reference_signal_new = self.reference_signal + reference_correct
         # MNE Raw object after interpolation
-        self.raw._data = self.EEG * 1e-6
+        self.raw._data = self.EEG
 
         # Still noisy channels after interpolation
         self.interpolated_channels = bad_channels
@@ -236,9 +236,9 @@ class Reference:
         }
 
         # Get initial estimate of the reference by the specified method
-        signal = raw.get_data() * 1e6
-        self.reference_signal = (
-            np.nanmedian(raw.get_data(picks=reference_channels), axis=0) * 1e6
+        signal = raw.get_data()
+        self.reference_signal = np.nanmedian(
+            raw.get_data(picks=reference_channels), axis=0
         )
         reference_index = [self.ch_names_eeg.index(ch) for ch in reference_channels]
         signal_tmp = self.remove_reference(
@@ -251,7 +251,7 @@ class Reference:
         previous_bads = set()
 
         while True:
-            raw_tmp._data = signal_tmp * 1e-6
+            raw_tmp._data = signal_tmp
             noisy_detector = NoisyChannels(
                 raw_tmp,
                 do_detrend=False,
@@ -297,17 +297,15 @@ class Reference:
                 )
 
             if len(bad_chans) > 0:
-                raw_tmp._data = signal * 1e-6
+                raw_tmp._data = signal.copy()
                 raw_tmp.info["bads"] = list(bad_chans)
                 if self.matlab_strict:
                     _eeglab_interpolate_bads(raw_tmp)
                 else:
                     raw_tmp.interpolate_bads()
-                signal_tmp = raw_tmp.get_data() * 1e6
-            else:
-                signal_tmp = signal
-            self.reference_signal = (
-                np.nanmean(raw_tmp.get_data(picks=reference_channels), axis=0) * 1e6
+
+            self.reference_signal = np.nanmean(
+                raw_tmp.get_data(picks=reference_channels), axis=0
             )
 
             signal_tmp = self.remove_reference(
