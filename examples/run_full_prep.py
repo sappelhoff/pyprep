@@ -8,7 +8,8 @@ In this example we show how to run PREP with ``pyprep``. We also compare
 :class:`~pyprep.PrepPipeline` with PREP's results in Matlab.
 
 We use sample EEG data from Physionet EEG Motor Movement/Imagery Dataset:
-`https://physionet.org/content/eegmmidb/1.0.0/ <https://physionet.org/content/eegmmidb/1.0.0/>`_
+`https://physionet.org/content/eegmmidb/1.0.0/
+<https://physionet.org/content/eegmmidb/1.0.0/>`_
 
 .. currentmodule:: pyprep
 """  # noqa: D205 D400
