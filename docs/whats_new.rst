@@ -28,8 +28,8 @@ Here we list a changelog of pyprep.
 
 .. _current:
 
-Current
--------
+Current (unreleased)
+--------------------
 
 Changelog
 ~~~~~~~~~
@@ -77,8 +77,8 @@ API
 
 .. _changes_0_3_1:
 
-Version 0.3.1
--------------
+Version 0.3.1 (2020-10-10)
+--------------------------
 
 Changelog
 ~~~~~~~~~
@@ -107,8 +107,8 @@ API
 
 .. _changes_0_3_0:
 
-Version 0.3.0
--------------
+Version 0.3.0 (2020-01-04)
+--------------------------
 
 Changelog
 ~~~~~~~~~
@@ -135,8 +135,8 @@ API
 
 .. _changes_0_2_3:
 
-Version 0.2.3
--------------
+Version 0.2.3 (2019-02-02)
+--------------------------
 
 Doc
 ~~~
@@ -145,8 +145,8 @@ Doc
 
 .. _changes_0_2_2:
 
-Version 0.2.2
--------------
+Version 0.2.2 (2018-05-01)
+--------------------------
 
 Bug
 ~~~
@@ -155,12 +155,23 @@ Bug
 
 .. _changes_0_2_1:
 
-Version 0.2.1
--------------
+Version 0.2.1 (2018-04-29)
+--------------------------
 
 Changelog
 ~~~~~~~~~
 - Add ``find_bad_epochs`` based on the FASTER algorithm, by `Stefan Appelhoff`_ (:gh:`commit/0fa9c06`)
+
+Version 0.1.1 (2018-04-29)
+--------------------------
+
+- Miscellaneous changes
+
+Version 0.1.0 (2018-04-24)
+--------------------------
+
+- Initial commit: 2018-04-12
+- Miscellaneous changes
 
 .. _Stefan Appelhoff: http://stefanappelhoff.com/
 .. _Aamna Lawrence: https://github.com/AamnaLawrence

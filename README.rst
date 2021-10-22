@@ -45,7 +45,7 @@ for EEG data, working with `MNE-Python <https://mne.tools>`_.
 **ALPHA SOFTWARE.**
 **This package is currently in its early stages of iteration.**
 **It may change both its internals or its user-facing API in the near future.**
-**Any feedback and ideas on how to improve either of these is more than welcome!**
+**Any feedback and ideas on how to improve either of these is welcome!**
 **Use this software at your own risk.**
 
 Installation
@@ -66,8 +66,6 @@ or, as an alternative to ``pip``, call:
 .. code-block:: Text
 
    conda install -c conda-forge pyprep
-
-**We currently recommend that you install the latest development version**
 
 For installing the **latest (development)** version of ``pyprep``, call:
 
