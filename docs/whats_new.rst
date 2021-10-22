@@ -6,6 +6,7 @@ Authors
 People who contributed to this software across releases (in **alphabetical order (last name)**)
 
 * `Stefan Appelhoff`_
+* `Jonte Dancker`_
 * `Austin Hurst`_
 * `Aamna Lawrence`_
 * `Adam Li`_
@@ -18,7 +19,7 @@ People who contributed to this software across releases (in **alphabetical order
 What's New
 ==========
 
-Here we list a changelog of pyprep.
+Here we list a changelog of ``pyprep``.
 
 .. contents:: Contents
    :local:
@@ -26,10 +27,10 @@ Here we list a changelog of pyprep.
 
 .. currentmodule:: pyprep
 
-.. _current:
+.. _changes_0_4_0:
 
-Current (unreleased)
---------------------
+Version 0.4.0 (2021-10-22)
+--------------------------
 
 Changelog
 ~~~~~~~~~
@@ -165,11 +166,15 @@ Changelog
 Version 0.1.1 (2018-04-29)
 --------------------------
 
+Changelog
+~~~~~~~~~
 - Miscellaneous changes
 
 Version 0.1.0 (2018-04-24)
 --------------------------
 
+Changelog
+~~~~~~~~~
 - Initial commit: 2018-04-12
 - Miscellaneous changes
 
@@ -180,3 +185,4 @@ Version 0.1.0 (2018-04-24)
 .. _Victor Xiang: https://github.com/Nick3151
 .. _Yorguin Mantilla: https://github.com/yjmantilla
 .. _Austin Hurst: https://github.com/a-hurst
+.. _Jonte Dancker: https://github.com/joDancker/
