@@ -593,7 +593,8 @@ def _print_progress(current, end, start=None, stepsize=1, every=0.1):
     current = current - start + 1
 
     if current == 1:
-        logger.info("Progress:", end=" ", flush=True)
+        logger.handlers[0].flush()
+        logger.info("Progress:")
     elif current == end:
         logger.info("100%")
     elif current > 0:
@@ -601,7 +602,8 @@ def _print_progress(current, end, start=None, stepsize=1, every=0.1):
         last = float(current - stepsize) / end
         if int(progress / every) > int(last / every):
             pct = int(progress / every) * every * 100
-            logger.info("{0}%...".format(int(pct)), end=" ", flush=True)
+            logger.handlers[0].flush()
+            logger.info("{0}%...".format(int(pct)))
 
 
 def _verify_free_ram(data, n_samples, n_channels, max_prop=0.95):
