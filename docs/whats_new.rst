@@ -27,6 +27,15 @@ Here we list a changelog of ``pyprep``.
 
 .. currentmodule:: pyprep
 
+.. _current:
+
+Current (unreleased)
+--------------------
+
+Changelog
+~~~~~~~~~
+- Nothing yet
+
 .. _changes_0_4_0:
 
 Version 0.4.0 (2021-10-22)
