@@ -2,7 +2,7 @@
 import mne
 import numpy as np
 from mne.channels.interpolation import _make_interpolation_matrix
-from mne.utils import check_random_state
+from mne.utils import check_random_state, logger
 
 from pyprep.utils import (
     _correlate_arrays,
@@ -181,7 +181,7 @@ def find_bad_by_ransac(
     # Is now data.shape[0] = n_chans_complete
     # They came from the same drop of channels
 
-    print("Executing RANSAC\nThis may take a while, so be patient...")
+    logger.info("Executing RANSAC\nThis may take a while, so be patient...")
 
     # If enabled, run window-wise RANSAC
     if not channel_wise:
@@ -223,11 +223,11 @@ def find_bad_by_ransac(
                 )
                 if chunk == channel_chunks[0]:
                     # If it gets here, it means it is the optimal
-                    print("Finding optimal chunk size :", chunk_size)
-                    print("Total # of chunks:", total_chunks)
-                    print("Current chunk:", end=" ", flush=True)
+                    logger.info("Finding optimal chunk size :", chunk_size)
+                    logger.info("Total # of chunks:", total_chunks)
+                    logger.info("Current chunk:", end=" ", flush=True)
 
-                print(current, end=" ", flush=True)
+                logger.info(current, end=" ", flush=True)
                 current = current + 1
 
             mem_error = False  # All chunks processed, hurray!
@@ -250,7 +250,7 @@ def find_bad_by_ransac(
     bad_ransac_channels_idx = np.argwhere(frac_bad_corr_windows > frac_bad)
     bad_ransac_channels_name = complete_chn_labs[bad_ransac_channels_idx.astype(int)]
     bad_by_ransac = [i[0] for i in bad_ransac_channels_name]
-    print("\nRANSAC done!")
+    logger.info("\nRANSAC done!")
 
     return bad_by_ransac, channel_correlations
 

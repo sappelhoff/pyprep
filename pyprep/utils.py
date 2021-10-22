@@ -6,6 +6,7 @@ import mne
 import numpy as np
 import scipy.interpolate
 from mne.surface import _normalize_vectors
+from mne.utils import logger
 from numpy.polynomial.legendre import legval
 from psutil import virtual_memory
 from scipy import linalg
@@ -566,7 +567,7 @@ def _split_list(mylist, chunk_size):
 
 
 def _print_progress(current, end, start=None, stepsize=1, every=0.1):
-    """Print the current progress in a loop.
+    """Log the current progress in a loop.
 
     Parameters
     ----------
@@ -582,9 +583,9 @@ def _print_progress(current, end, start=None, stepsize=1, every=0.1):
         The fixed amount by which `current` increases every iteration of the
         loop. Defaults to ``1``.
     every: float, optional
-        The frequency with which to print progress updates during the loop,
+        The frequency with which to log progress updates during the loop,
         as a proportion between 0 and 1, exclusive. Defaults to ``0.1``, which
-        prints a progress update after every 10%.
+        log a progress update after every 10%.
 
     """
     start = stepsize if not start else start
@@ -592,15 +593,15 @@ def _print_progress(current, end, start=None, stepsize=1, every=0.1):
     current = current - start + 1
 
     if current == 1:
-        print("Progress:", end=" ", flush=True)
+        logger.info("Progress:", end=" ", flush=True)
     elif current == end:
-        print("100%")
+        logger.info("100%")
     elif current > 0:
         progress = float(current) / end
         last = float(current - stepsize) / end
         if int(progress / every) > int(last / every):
             pct = int(progress / every) * every * 100
-            print("{0}%...".format(int(pct)), end=" ", flush=True)
+            logger.info("{0}%...".format(int(pct)), end=" ", flush=True)
 
 
 def _verify_free_ram(data, n_samples, n_channels, max_prop=0.95):
