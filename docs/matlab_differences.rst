@@ -31,13 +31,23 @@ influence from trends in the signal.
 In MATLAB PREP, the default method of trend removal is to use EEGLAB's
 ``pop_eegfiltnew``, which creates and applies an FIR high-pass filter to the
 data. MNE's :func:`mne.filter.filter_data` offers similar functionality, but
-uses slightly different filter creation math and a different filtering
-algorithm such that its results and subsequent :class:`~pyprep.NoisyChannels`
-values also differ slightly (on the order of ~0.002) for RANSAC correlations.
+with two key differences:
 
-Because the practical differences are small and MNE's filtering is fast and
-well-tested, PyPREP defaults to using :func:`mne.filter.filter_data` for
-high-pass trend removal. However, for exact numerical compatibility, PyPREP
+1) MNE's method of FIR filter design is slightly different, resulting in
+   slightly higher FIR filter orders in EEGLAB than in MNE for the same input
+   values.
+2) EEGLAB's ``pop_eegfiltnew`` only applies the filter to the signal forwards,
+   resulting in minor phase shift in the filtered signal. By contrast, MNE
+   defaults to applying the filter both forwards and backwards, eliminating any
+   phase shift from the filtering process.
+
+As a result of these differences, :class:`~pyprep.NoisyChannels` values also
+differ slightly (on the order of ~0.002) for RANSAC correlations between the
+filtering methods.
+
+Because MNE's filtering code is faster and technically preferable (due to
+the lack of phase shift) PyPREP defaults to using :func:`mne.filter.filter_data`
+for high-pass trend removal. However, for exact numeric equivalence, PyPREP
 has a basic re-implementation of EEGLAB's ``pop_eegfiltnew`` in Python that
 produces identical results to MATLAB PREP's ``removeTrend`` when the
 ``matlab_strict`` parameter is set to ``True``.
