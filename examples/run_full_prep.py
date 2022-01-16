@@ -131,7 +131,7 @@ EEG_raw_matlab = EEG_raw_matlab["save_data"]
 EEG_raw_diff = EEG_raw - EEG_raw_matlab
 EEG_raw_mse = (EEG_raw_diff / EEG_raw_max ** 2).mean(axis=None)
 
-fig, axs = plt.subplots(5, 3, "all", figsize=(16, 12))
+fig, axs = plt.subplots(5, 3, sharex="all", figsize=(16, 12))
 plt.setp(fig, facecolor=[1, 1, 1])
 fig.suptitle("Python versus Matlab PREP results", fontsize=16)
 
