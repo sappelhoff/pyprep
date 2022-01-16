@@ -33,9 +33,9 @@ In MATLAB PREP, the default method of trend removal is to use EEGLAB's
 data. MNE's :func:`mne.filter.filter_data` offers similar functionality, but
 with two key differences:
 
-1) MNE's method of FIR filter design is slightly different, resulting in
-   slightly higher FIR filter orders in EEGLAB than in MNE for the same input
-   values.
+1) MNE's method of FIR filter design has minor differences, resulting in
+   slightly lower FIR filter orders than EEGLAB for the same input
+   values (e.g. 845 instead of EEGLAB's 847).
 2) EEGLAB's ``pop_eegfiltnew`` only applies the filter to the signal forwards,
    resulting in minor phase shift in the filtered signal. By contrast, MNE
    defaults to applying the filter both forwards and backwards, eliminating any
