@@ -283,7 +283,7 @@ def _eeglab_calc_g(pos_from, pos_to, stiffness=4, num_lterms=7):
     # Calculate Legendre coefficients for the given degree and stiffness
     factors = [0]
     for n in range(1, num_lterms + 1):
-        f = (2 * n + 1) / (n ** stiffness * (n + 1) ** stiffness * 4 * np.pi)
+        f = (2 * n + 1) / (n**stiffness * (n + 1) ** stiffness * 4 * np.pi)
         factors.append(f)
 
     return legval(EI, factors)
@@ -452,8 +452,8 @@ def _correlate_arrays(a, b, matlab_strict=False):
 
     """
     if matlab_strict:
-        SSa = np.sum(a ** 2, axis=1)
-        SSb = np.sum(b ** 2, axis=1)
+        SSa = np.sum(a**2, axis=1)
+        SSb = np.sum(b**2, axis=1)
         SSab = np.sum(a * b, axis=1)
         return SSab / (np.sqrt(SSa) * np.sqrt(SSb))
     else:
