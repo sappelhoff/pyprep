@@ -58,7 +58,7 @@
     "upload_type": "software",
     "access_right": "open",
     "language": "eng",
-    "related_identifies": [
+    "related_identifiers": [
         {
             "relation": "isSupplementedBy",
             "identifier": "https://github.com/sappelhoff/pyprep/",
