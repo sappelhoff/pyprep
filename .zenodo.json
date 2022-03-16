@@ -67,7 +67,7 @@
         {
             "relation": "isSupplementedBy",
             "identifier": "10.3389/fninf.2015.00016",
-            "resource_type": "article"
+            "resource_type": "publication-article"
         },
         {
             "relation": "isDerivedFrom",
