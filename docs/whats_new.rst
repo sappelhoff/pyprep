@@ -27,14 +27,14 @@ Here we list a changelog of ``pyprep``.
 
 .. currentmodule:: pyprep
 
-.. _current:
+.. _changes_0_4_1:
 
-Current (unreleased)
---------------------
+Version 0.4.1 (2022-03-16)
+--------------------------
 
 Changelog
 ~~~~~~~~~
-- Nothing yet
+- This is a patch release, including a short documentation update (:gh:`110`) and several infrastructure fixes. Most importantly, this version is released to trigger an archive at `Zenodo <https://zenodo.org/>`_ via the GitHub integration.
 
 .. _changes_0_4_0:
 
@@ -130,7 +130,7 @@ Changelog
 - Stringing all the things together for the PREP pipeline + tests, by `Victor Xiang`_ (:gh:`6`)
 - Finding noisy channels with comparable output to Matlab + tests-including test for ransac, by `Aamna Lawrence`_ (:gh:`6`)
 - Finding the appropriate parameters in the MNE notch filter for implementing clean line noise functionality of Eeglab, by `Aamna Lawrence`_ (:gh:`6`)
-- Finding the reason for the difference between the Matlab and Pyprep’s output- Probably minor differences in the filter functions and also rounding done by functions like quantile, by `Victor Xiang`_  and `Aamna Lawrence`_ (:gh:`6`)
+- Finding the reason for the difference between the Matlab and Pyprep's output- Probably minor differences in the filter functions and also rounding done by functions like quantile, by `Victor Xiang`_  and `Aamna Lawrence`_ (:gh:`6`)
 
 Bug
 ~~~
@@ -172,12 +172,16 @@ Changelog
 ~~~~~~~~~
 - Add ``find_bad_epochs`` based on the FASTER algorithm, by `Stefan Appelhoff`_ (:gh:`commit/0fa9c06`)
 
+.. _changes_0_1_1:
+
 Version 0.1.1 (2018-04-29)
 --------------------------
 
 Changelog
 ~~~~~~~~~
 - Miscellaneous changes
+
+.. _changes_0_1_0:
 
 Version 0.1.0 (2018-04-24)
 --------------------------
