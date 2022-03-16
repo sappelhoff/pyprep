@@ -27,10 +27,22 @@ Here we list a changelog of ``pyprep``.
 
 .. currentmodule:: pyprep
 
+.. _changes_current:
+
+Current (unreleased)
+--------------------
+
+Changelog
+~~~~~~~~~
+- Nothing yet
+
 .. _changes_0_4_2:
 
 Version 0.4.2 (2022-03-16)
 --------------------------
+
+Changelog
+~~~~~~~~~
 - Fixing an issue in ``.zenodo.json`` metadata from 0.4.1.
 
 .. _changes_0_4_1:
