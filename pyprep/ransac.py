@@ -223,11 +223,11 @@ def find_bad_by_ransac(
                 )
                 if chunk == channel_chunks[0]:
                     # If it gets here, it means it is the optimal
-                    logger.info("Finding optimal chunk size :", chunk_size)
-                    logger.info("Total # of chunks:", total_chunks)
-                    logger.info("Current chunk:", end=" ", flush=True)
+                    logger.info("Finding optimal chunk size : %s", chunk_size)
+                    logger.info("Total # of chunks: %s", total_chunks)
+                    logger.info("Current chunk:")
 
-                logger.info(current, end=" ", flush=True)
+                logger.info(current)
                 current = current + 1
 
             mem_error = False  # All chunks processed, hurray!
