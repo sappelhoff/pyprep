@@ -27,9 +27,9 @@ def test_highpass():
     error1 = lowpass_filt1 - highfreq_signal
     error2 = lowpass_filt2 - highfreq_signal
     error3 = lowpass_filt3 - highfreq_signal
-    assert np.sqrt(np.mean(error1 ** 2)) < 0.1
-    assert np.sqrt(np.mean(error2 ** 2)) < 0.1
-    assert np.sqrt(np.mean(error3 ** 2)) < 0.1
+    assert np.sqrt(np.mean(error1**2)) < 0.1
+    assert np.sqrt(np.mean(error2**2)) < 0.1
+    assert np.sqrt(np.mean(error3**2)) < 0.1
 
 
 def test_detrend():
@@ -45,4 +45,4 @@ def test_detrend():
         signal_trend, detrendType="Local detrend", sample_rate=100
     )
     error3 = signal_detrend - signal
-    assert np.sqrt(np.mean(error3 ** 2)) < 0.1
+    assert np.sqrt(np.mean(error3**2)) < 0.1

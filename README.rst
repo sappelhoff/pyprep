@@ -28,6 +28,10 @@
    :target: https://anaconda.org/conda-forge/pyprep
    :alt: Conda version
 
+.. image:: https://zenodo.org/badge/129240824.svg
+   :target: https://zenodo.org/badge/latestdoi/129240824
+   :alt: Zenodo archive
+
 pyprep
 ======
 
@@ -103,6 +107,12 @@ Potential contributors should install ``pyprep`` in the following way:
    pip install -r requirements-dev.txt
    pre-commit install
    pip install -e .
+
+Citing
+======
+
+If you use this software in academic work, please cite it using the `Zenodo entry <https://zenodo.org/badge/latestdoi/129240824>`_.
+Please also consider citing the original publication on PREP (see "References" below).
 
 References
 ==========

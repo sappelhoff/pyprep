@@ -4,6 +4,8 @@ flake8
 flake8-docstrings
 isort
 matplotlib
+tdqm
+pooch
 numpydoc
 pillow
 pre-commit
