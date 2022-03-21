@@ -584,7 +584,7 @@ def _print_progress(current, end, start=None, stepsize=1, every=0.1):
     every: float, optional
         The frequency with which to print progress updates during the loop,
         as a proportion between 0 and 1, exclusive. Defaults to ``0.1``, which
-        prints  a progress update after every 10%.
+        prints a progress update after every 10%.
 
     """
     start = stepsize if not start else start
