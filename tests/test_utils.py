@@ -1,8 +1,6 @@
 """Test various helper functions."""
-import mne
 import numpy as np
 import pytest
-from mne.utils import logger
 from numpy.random import RandomState
 
 from pyprep.utils import (
@@ -173,41 +171,41 @@ def test_mad():
         _mad(tst, axis=0)
 
 
-def test_print_progress(caplog):
+def test_print_progress(capsys):
     """Test the function for printing progress updates within a loop."""
-    mne.set_log_level('INFO')
-    logger.propagate = True
     # Test printing start value
-    caplog.clear()
     _print_progress(1, 20)
-    assert "Progress:" in caplog.text
+    captured = capsys.readouterr()
+    assert captured.out == "Progress: "
 
     # Test printing end values
-    caplog.clear()
     iterations = 27
     for i in range(iterations):
         _print_progress(i + 1, iterations, every=0.2)
-    assert "Progress: 20%... 40%... 60%... 80%... 100%\n" in caplog.text
+    captured = capsys.readouterr()
+    assert captured.out == "Progress: 20%... 40%... 60%... 80%... 100%\n"
 
     # Test printing of updates at right times
     iterations = 176
     for i in range(iterations):
-        caplog.clear()
         _print_progress(i + 1, iterations)
         if (i + 1) == 17:
-            assert "Progress: " in caplog.text
+            captured = capsys.readouterr()
+            assert captured.out == "Progress: "
         elif (i + 1) == 18:
-            assert "10%... " in caplog.text
+            captured = capsys.readouterr()
+            assert captured.out == "10%... "
             break
 
     # Test shifted start value
     iterations = 25
     start = 5
     for i in range(start, iterations + 1):
-        caplog.clear()
         _print_progress(i, iterations, start=start)
         if i == 6:
-            assert "Progress: " in caplog.text
+            captured = capsys.readouterr()
+            assert captured.out == "Progress: "
         elif i == 7:
-            assert "10%... " in caplog.text
+            captured = capsys.readouterr()
+            assert captured.out == "10%... "
             break
