@@ -75,7 +75,7 @@ def removeTrend(
 
     elif detrendType.lower() == "high pass sinc":
         fOrder = np.round(14080 * sample_rate / 512)
-        fOrder = np.int(fOrder + fOrder % 2)
+        fOrder = int(fOrder + fOrder % 2)
         EEG = mne.filter.filter_data(
             data=EEG,
             sfreq=sample_rate,
@@ -106,7 +106,7 @@ def removeTrend(
             pass
         else:
             for ch in detrendChannels:
-                EEG[:, ch] = runline(EEG[:, ch], np.int(n), np.int(dn))
+                EEG[:, ch] = runline(EEG[:, ch], int(n), int(dn))
         EEG = np.transpose(EEG)
 
     else:
@@ -145,7 +145,7 @@ def runline(y, n, dn):
     nt = y.shape[0]
     y_line = np.zeros((nt, 1))
     norm = np.zeros((nt, 1))
-    nwin = np.int(np.ceil((nt - n) / dn))
+    nwin = int(np.ceil((nt - n) / dn))
     yfit = np.zeros((nwin, n))
     xwt = (np.arange(1, n + 1) - n / 2) / (n / 2)
     wt = np.power(1 - np.power(np.absolute(xwt), 3), 3)

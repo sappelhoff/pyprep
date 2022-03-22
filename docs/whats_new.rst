@@ -12,6 +12,7 @@ People who contributed to this software across releases (in **alphabetical order
 * `Adam Li`_
 * `Yorguin Mantilla`_
 * `Christian O'Reilly`_
+* `Mathieu Scheltienne`_
 * `Victor Xiang`_
 
 .. _whats_new:
@@ -34,7 +35,7 @@ Current (unreleased)
 
 Changelog
 ~~~~~~~~~
-- Nothing yet
+- Use MNE logger and ProgressBar instead of prints to display logging messages, by `Mathieu Scheltienne`_ (:gh:`112`).
 
 .. _changes_0_4_2:
 
@@ -217,3 +218,4 @@ Changelog
 .. _Yorguin Mantilla: https://github.com/yjmantilla
 .. _Austin Hurst: https://github.com/a-hurst
 .. _Jonte Dancker: https://github.com/joDancker/
+.. _Mathieu Scheltienne: https://github.com/mscheltienne

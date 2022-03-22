@@ -11,7 +11,6 @@ from pyprep.utils import (
     _mat_iqr,
     _mat_quantile,
     _mat_round,
-    _print_progress,
 )
 
 
@@ -169,43 +168,3 @@ def test_mad():
     tst = np.random.rand(3, 3, 3)
     with pytest.raises(ValueError):
         _mad(tst, axis=0)
-
-
-def test_print_progress(capsys):
-    """Test the function for printing progress updates within a loop."""
-    # Test printing start value
-    _print_progress(1, 20)
-    captured = capsys.readouterr()
-    assert captured.out == "Progress: "
-
-    # Test printing end values
-    iterations = 27
-    for i in range(iterations):
-        _print_progress(i + 1, iterations, every=0.2)
-    captured = capsys.readouterr()
-    assert captured.out == "Progress: 20%... 40%... 60%... 80%... 100%\n"
-
-    # Test printing of updates at right times
-    iterations = 176
-    for i in range(iterations):
-        _print_progress(i + 1, iterations)
-        if (i + 1) == 17:
-            captured = capsys.readouterr()
-            assert captured.out == "Progress: "
-        elif (i + 1) == 18:
-            captured = capsys.readouterr()
-            assert captured.out == "10%... "
-            break
-
-    # Test shifted start value
-    iterations = 25
-    start = 5
-    for i in range(start, iterations + 1):
-        _print_progress(i, iterations, start=start)
-        if i == 6:
-            captured = capsys.readouterr()
-            assert captured.out == "Progress: "
-        elif i == 7:
-            captured = capsys.readouterr()
-            assert captured.out == "10%... "
-            break
