@@ -2,7 +2,7 @@
 import mne
 import numpy as np
 from mne.channels.interpolation import _make_interpolation_matrix
-from mne.utils import check_random_state, logger, ProgressBar
+from mne.utils import ProgressBar, check_random_state, logger
 
 from pyprep.utils import (
     _correlate_arrays,
