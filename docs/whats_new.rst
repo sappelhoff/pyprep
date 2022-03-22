@@ -35,7 +35,7 @@ Current (unreleased)
 
 Changelog
 ~~~~~~~~~
-- Use MNE logger and ProgressBar instead of prints to display logging messages.
+- Use MNE logger and ProgressBar instead of prints to display logging messages, by `Mathieu Scheltienne`_ (:gh:`112`).
 
 .. _changes_0_4_2:
 
