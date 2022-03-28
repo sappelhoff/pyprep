@@ -172,7 +172,7 @@ class PrepPipeline:
         if self.raw_non_eeg is None:
             return full_raw
         else:
-            return full_raw.add_channels([self.raw_non_eeg])
+            return full_raw.add_channels([self.raw_non_eeg], force_update_info=True)
 
     def fit(self):
         """Run the whole PREP pipeline."""
