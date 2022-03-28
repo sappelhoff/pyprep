@@ -16,9 +16,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [ubuntu-latest, macos-latest, windows-latest]
+        platform: [ubuntu-20.4, ubuntu-latest, macos-latest, windows-latest]
         python-version: [3.8]
-        mne-version: [mne-stable, mne-main]
+        mne-version: [mne-stable]
+
+        include:
+          # Test mne development version only on ubuntu
+          - os: ubuntu-20.4
+            mne-version: mne-main
 
     runs-on: ${{ matrix.platform }}
 
