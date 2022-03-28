@@ -22,7 +22,8 @@ jobs:
 
         include:
           # Test mne development version only on ubuntu
-          - os: ubuntu-20.4
+          - platform: ubuntu-20.4
+            python-version: "3.8"
             mne-version: mne-main
 
     runs-on: ${{ matrix.platform }}
