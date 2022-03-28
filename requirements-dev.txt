@@ -9,6 +9,7 @@ pooch
 numpydoc
 pillow
 pre-commit
+pymatreader
 pytest-cov
 pytest-sugar
 pytest
