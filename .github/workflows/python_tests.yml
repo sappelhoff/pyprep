@@ -5,6 +5,11 @@ on:
     branches: [ master ]
   pull_request:
     branches: [ master ]
+  create:
+    branches: [master]
+    tags: ['**']
+  schedule:
+    - cron: "0 4 * * MON"
 
 jobs:
   test:
@@ -13,6 +18,14 @@ jobs:
       matrix:
         platform: [ubuntu-latest, macos-latest, windows-latest]
         python-version: [3.8]
+        mne-version: [mne-stable]
+
+        include:
+          # Test mne development version only on ubuntu
+          - platform: ubuntu-latest
+            python-version: "3.8"
+            mne-version: mne-main
+            run-as-extra: true
 
     runs-on: ${{ matrix.platform }}
 
@@ -37,6 +50,15 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements-dev.txt
         pip install -e .
+
+    - name: Install MNE-Python (development version)
+      if: "matrix.mne-version == 'mne-main'"
+      run: |
+        pip install git+https://github.com/mne-tools/mne-python.git@main
+
+    - name: Check installed versions
+      run: |
+        mne sys_info
 
     - name: Check formatting
       if: "matrix.platform == 'ubuntu-latest'"
