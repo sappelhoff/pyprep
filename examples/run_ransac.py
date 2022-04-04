@@ -44,9 +44,11 @@ info = mne.create_info(ch_names=ch_names, sfreq=sfreq, ch_types=["eeg"] * n_chan
 time = np.arange(0, 30, 1.0 / sfreq)  # 30 seconds of recording
 n_bad_chans = 3
 
-bad_channels = np.random.choice(np.arange(n_chans), n_bad_chans, replace=False)
+rng = np.random.default_rng(42)
+bad_channels = rng.choice(np.arange(n_chans), n_bad_chans, replace=False)
 bad_channels = [int(i) for i in bad_channels]
 bad_ch_names = [ch_names[i] for i in bad_channels]
+
 # The frequency components to use in the signal for good and bad channels
 freq_good = 20
 freq_bad = 20
@@ -59,7 +61,7 @@ X = [
     for i in range(n_chans)
 ]
 # Scale the signal amplitude and add noise.
-X = 2e-5 * np.array(X) + 1e-5 * np.random.random((n_chans, time.shape[0]))
+X = 2e-5 * np.array(X) + 1e-5 * rng.random((n_chans, time.shape[0]))
 
 raw = mne.io.RawArray(X, info)
 
@@ -70,8 +72,8 @@ raw.set_montage(montage, verbose=False)
 # Assign the mne object to the :class:`NoisyChannels` class. The resulting object
 # will be the place where all following methods are performed.
 
-nd = NoisyChannels(raw)
-nd2 = NoisyChannels(raw)
+nd = NoisyChannels(raw, random_state=1337)
+nd2 = NoisyChannels(raw, random_state=1337)
 
 ###############################################################################
 # Find all bad channels using channel-wise RANSAC and print a summary
