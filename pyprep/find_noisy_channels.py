@@ -54,6 +54,7 @@ class NoisyChannels:
         # Make sure that we got an MNE object
         assert isinstance(raw, mne.io.BaseRaw)
 
+        raw.load_data()
         self.raw_mne = raw.copy()
         self.raw_mne.pick_types(eeg=True)
         self.sample_rate = raw.info["sfreq"]

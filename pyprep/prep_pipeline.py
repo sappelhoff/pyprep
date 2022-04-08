@@ -125,6 +125,7 @@ class PrepPipeline:
         matlab_strict=False,
     ):
         """Initialize PREP class."""
+        raw.load_data()
         self.raw_eeg = raw.copy()
 
         # split eeg and non eeg channels
