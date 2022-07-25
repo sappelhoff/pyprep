@@ -5,7 +5,7 @@ from numpy.random import RandomState
 
 from pyprep.find_noisy_channels import NoisyChannels
 from pyprep.removeTrend import removeTrend
-
+from pyprep.ransac import find_bad_by_ransac
 # Set a fixed random seed for reproducible test results
 
 RNG = RandomState(30)
@@ -251,6 +251,10 @@ def test_find_bad_by_ransac(raw_tmp):
     nd = NoisyChannels(raw_tmp, do_detrend=False, random_state=rng, matlab_strict=True)
     nd.find_bad_by_ransac()
     assert rng.get_state()[2] == init_state
+
+    # Test calling the find_bad_by_ransac function directly
+    chn_pos = np.stack([ch['loc'][0:3] for ch in raw_tmp.info['chs']])
+    bads, corr = find_bad_by_ransac(raw_tmp._data, raw_tmp.info['sfreq'], raw_tmp.info['ch_names'], chn_pos, exclude=[])
 
 
 def test_find_bad_by_ransac_err(raw_tmp):
