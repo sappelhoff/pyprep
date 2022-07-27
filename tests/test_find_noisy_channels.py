@@ -4,8 +4,8 @@ import pytest
 from numpy.random import RandomState
 
 from pyprep.find_noisy_channels import NoisyChannels
-from pyprep.removeTrend import removeTrend
 from pyprep.ransac import find_bad_by_ransac
+from pyprep.removeTrend import removeTrend
 
 # Set a fixed random seed for reproducible test results
 
