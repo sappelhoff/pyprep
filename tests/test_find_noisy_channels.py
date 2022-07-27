@@ -254,9 +254,9 @@ def test_find_bad_by_ransac(raw_tmp):
     assert rng.get_state()[2] == init_state
 
     # Test calling the find_bad_by_ransac function directly
-    chn_pos = np.stack([ch['loc'][0:3] for ch in raw_tmp.info['chs']])
+    chn_pos = np.stack([ch["loc"][0:3] for ch in raw_tmp.info["chs"]])
     bads, corr = find_bad_by_ransac(
-        raw_tmp._data, raw_tmp.info['sfreq'], raw_tmp.info['ch_names'], chn_pos, []
+        raw_tmp._data, raw_tmp.info["sfreq"], raw_tmp.info["ch_names"], chn_pos, []
     )
 
 
