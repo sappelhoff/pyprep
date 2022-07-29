@@ -87,6 +87,6 @@ jobs:
 
     - name: Upload coverage report
       if: "matrix.platform == 'ubuntu-latest'"
-      uses: codecov/codecov-action@v2
+      uses: codecov/codecov-action@v3
       with:
         files: ./coverage.xml
