@@ -6,6 +6,7 @@ Authors
 People who contributed to this software across releases (in **alphabetical order (last name)**)
 
 * `Stefan Appelhoff`_
+* `Ole Bialas`_
 * `Jonte Dancker`_
 * `Austin Hurst`_
 * `Aamna Lawrence`_
@@ -35,6 +36,7 @@ Current (unreleased)
 
 Changelog
 ~~~~~~~~~
+- If channel labels are provided as a list, find_bad_by_ransac converts them to a numpy array, by `Ole_Bialas`_ (:gh:`116`).
 - Use MNE logger and ProgressBar instead of prints to display logging messages, by `Mathieu Scheltienne`_ (:gh:`112`).
 
 .. _changes_0_4_2:

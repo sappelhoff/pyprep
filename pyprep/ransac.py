@@ -122,6 +122,8 @@ def find_bad_by_ransac(
         err = "Argument 'n_samples' must be an int (got {0})"
         raise TypeError(err.format(type(n_samples).__name__))
 
+    complete_chn_labs = np.asarray(complete_chn_labs)
+
     # Get all channel positions and the position subset of "clean channels"
     # Exclude should be the bad channels from other methods
     # That is, identify all bad channels by other means
