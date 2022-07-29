@@ -36,8 +36,11 @@ Current (unreleased)
 
 Changelog
 ~~~~~~~~~
-- If channel labels are provided as a list, find_bad_by_ransac converts them to a numpy array, by `Ole_Bialas`_ (:gh:`116`).
 - Use MNE logger and ProgressBar instead of prints to display logging messages, by `Mathieu Scheltienne`_ (:gh:`112`).
+
+Bug
+~~~
+- :func:`find_bad_by_ransac <ransac.find_bad_by_ransac>` now accepts channel labels (``complete_chn_labs``) as a list as well, by `Ole_Bialas`_ (:gh:`116`).
 
 .. _changes_0_4_2:
 
