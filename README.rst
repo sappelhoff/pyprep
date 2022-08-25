@@ -113,6 +113,7 @@ Citing
 
 If you use this software in academic work, please cite it using the `Zenodo entry <https://zenodo.org/badge/latestdoi/129240824>`_.
 Please also consider citing the original publication on PREP (see "References" below).
+Metadata is encoded in the `CITATION.cff` file.
 
 References
 ==========

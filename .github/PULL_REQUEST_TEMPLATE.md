@@ -15,6 +15,7 @@
 - [ ] all [CI][what-is-ci] checks pass
 - [ ] (if applicable): the PR description includes the phrase `closes #<issue-number>` to [automatically close an issue][auto-close-documentation]
 - [ ] (if applicable): bug fixes, new features, or [API][what-is-api] changes are documented in [whats_new.rst][whats-new-file]
+- [ ] (if applicable): new contributors have added themselves to the authors list in the `CITATION.cff` file
 
 
 [what-is-ci]: https://help.github.com/en/actions/building-and-testing-code-with-continuous-integration/about-continuous-integration
