@@ -72,16 +72,16 @@ references:
     title: Original PREP code
     type: software
   - authors:
-      - family-names: Bielefeld
-        given-names: Arthur
-      - family-names: Bielefeld
-        given-names: Arthur
-      - family-names: Bielefeld
-        given-names: Arthur
-      - family-names: Bielefeld
-        given-names: Arthur
-      - family-names: Bielefeld
-        given-names: Arthur
+      - family-names: Bigdely-Shamlo
+        given-names: Nima
+      - family-names: Mullen
+        given-names: Tim
+      - family-names: Kothe
+        given-names: Christian
+      - family-names: Su
+        given-names: Kyungmin Su
+      - family-names: Robbins
+        given-names: Kay A.
     doi: 10.3389/fninf.2015.00016
     issue: 16
     journal: "Frontiers in Neuroinformatics"
