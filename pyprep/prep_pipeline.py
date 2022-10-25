@@ -123,6 +123,7 @@ class PrepPipeline:
         matlab_strict=False,
     ):
         """Initialize PREP class."""
+        raw.load_data()
         self.raw_eeg = raw.copy()
 
         # split eeg and non eeg channels
@@ -185,7 +186,7 @@ class PrepPipeline:
         """Return a version of self.raw_eeg that includes the non-eeg channels."""
         full_raw = self.raw_eeg.copy()
         if self.raw_non_eeg is not None:
-            full_raw.add_channels([self.raw_non_eeg])
+            full_raw.add_channels([self.raw_non_eeg], force_update_info=True)
         return full_raw
 
     @property

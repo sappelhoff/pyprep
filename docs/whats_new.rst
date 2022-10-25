@@ -6,11 +6,14 @@ Authors
 People who contributed to this software across releases (in **alphabetical order (last name)**)
 
 * `Stefan Appelhoff`_
+* `Ole Bialas`_
+* `Jonte Dancker`_
 * `Austin Hurst`_
 * `Aamna Lawrence`_
 * `Adam Li`_
 * `Yorguin Mantilla`_
 * `Christian O'Reilly`_
+* `Mathieu Scheltienne`_
 * `Victor Xiang`_
 
 .. _whats_new:
@@ -18,7 +21,7 @@ People who contributed to this software across releases (in **alphabetical order
 What's New
 ==========
 
-Here we list a changelog of pyprep.
+Here we list a changelog of ``pyprep``.
 
 .. contents:: Contents
    :local:
@@ -26,10 +29,41 @@ Here we list a changelog of pyprep.
 
 .. currentmodule:: pyprep
 
-.. _current:
+.. _changes_current:
 
-Current
--------
+Current (unreleased)
+--------------------
+
+Changelog
+~~~~~~~~~
+- Use MNE logger and ProgressBar instead of prints to display logging messages, by `Mathieu Scheltienne`_ (:gh:`112`).
+
+Bug
+~~~
+- :func:`find_bad_by_ransac <ransac.find_bad_by_ransac>` now accepts channel labels (``complete_chn_labs``) as a list as well, by `Ole_Bialas`_ (:gh:`116`).
+
+.. _changes_0_4_2:
+
+Version 0.4.2 (2022-03-16)
+--------------------------
+
+Changelog
+~~~~~~~~~
+- Fixing an issue in ``.zenodo.json`` metadata from 0.4.1.
+
+.. _changes_0_4_1:
+
+Version 0.4.1 (2022-03-16)
+--------------------------
+
+Changelog
+~~~~~~~~~
+- This is a patch release, including a short documentation update (:gh:`110`) and several infrastructure fixes. Most importantly, this version is released to trigger an archive at `Zenodo <https://zenodo.org/>`_ via the GitHub integration.
+
+.. _changes_0_4_0:
+
+Version 0.4.0 (2021-10-22)
+--------------------------
 
 Changelog
 ~~~~~~~~~
@@ -77,8 +111,8 @@ API
 
 .. _changes_0_3_1:
 
-Version 0.3.1
--------------
+Version 0.3.1 (2020-10-10)
+--------------------------
 
 Changelog
 ~~~~~~~~~
@@ -87,7 +121,7 @@ Changelog
 - Channel types  are now available from a new ``ch_types_all`` attribute, and non-EEG channel names are now available from a new ``ch_names_non_eeg`` attribute from :class:`PrepPipeline <pyprep.PrepPipeline>`, by `Yorguin Mantilla`_ (:gh:`34`)
 - Renaming of ``ch_names`` attribute of :class:`PrepPipeline <pyprep.PrepPipeline>` to ``ch_names_all``, by `Yorguin Mantilla`_ (:gh:`34`)
 - It's now possible to pass ``'eeg'`` to ``ref_chs`` and ``reref_chs`` keywords to the ``prep_params`` parameter of :class:`PrepPipeline <pyprep.PrepPipeline>` to select only eeg channels for referencing, by `Yorguin Mantilla`_ (:gh:`34`)
-- :class:`PrepPipeline <pyprep.PrepPipeline>` will retain the non eeg channels through the ``raw`` attribute. The eeg-only and non-eeg parts will be in raw_eeg and raw_non_eeg respectively. See the ``raw`` attribute, by `Christian Oreilly`_ (:gh:`34`)
+- :class:`PrepPipeline <pyprep.PrepPipeline>` will retain the non eeg channels through the ``raw`` attribute. The eeg-only and non-eeg parts will be in raw_eeg and raw_non_eeg respectively. See the ``raw`` attribute, by `Christian O'Reilly`_ (:gh:`34`)
 - When a ransac call needs more memory than available, pyprep will now automatically switch to a slower but less memory-consuming version of ransac, by `Yorguin Mantilla`_ (:gh:`32`)
 - It's now possible to pass an empty list for the ``line_freqs`` param in :class:`PrepPipeline <pyprep.PrepPipeline>` to skip the line noise removal, by `Yorguin Mantilla`_ (:gh:`29`)
 - The three main classes :class:`~pyprep.PrepPipeline`, :class:`~pyprep.NoisyChannels`, and :class:`pyprep.Reference` now have a ``random_state`` parameter to set a seed that gets passed on to all their internal methods and class calls, by `Stefan Appelhoff`_ (:gh:`31`)
@@ -107,8 +141,8 @@ API
 
 .. _changes_0_3_0:
 
-Version 0.3.0
--------------
+Version 0.3.0 (2020-01-04)
+--------------------------
 
 Changelog
 ~~~~~~~~~
@@ -120,7 +154,7 @@ Changelog
 - Stringing all the things together for the PREP pipeline + tests, by `Victor Xiang`_ (:gh:`6`)
 - Finding noisy channels with comparable output to Matlab + tests-including test for ransac, by `Aamna Lawrence`_ (:gh:`6`)
 - Finding the appropriate parameters in the MNE notch filter for implementing clean line noise functionality of Eeglab, by `Aamna Lawrence`_ (:gh:`6`)
-- Finding the reason for the difference between the Matlab and Pyprep’s output- Probably minor differences in the filter functions and also rounding done by functions like quantile, by `Victor Xiang`_  and `Aamna Lawrence`_ (:gh:`6`)
+- Finding the reason for the difference between the Matlab and Pyprep's output- Probably minor differences in the filter functions and also rounding done by functions like quantile, by `Victor Xiang`_  and `Aamna Lawrence`_ (:gh:`6`)
 
 Bug
 ~~~
@@ -135,8 +169,8 @@ API
 
 .. _changes_0_2_3:
 
-Version 0.2.3
--------------
+Version 0.2.3 (2019-02-02)
+--------------------------
 
 Doc
 ~~~
@@ -145,8 +179,8 @@ Doc
 
 .. _changes_0_2_2:
 
-Version 0.2.2
--------------
+Version 0.2.2 (2018-05-01)
+--------------------------
 
 Bug
 ~~~
@@ -155,12 +189,31 @@ Bug
 
 .. _changes_0_2_1:
 
-Version 0.2.1
--------------
+Version 0.2.1 (2018-04-29)
+--------------------------
 
 Changelog
 ~~~~~~~~~
 - Add ``find_bad_epochs`` based on the FASTER algorithm, by `Stefan Appelhoff`_ (:gh:`commit/0fa9c06`)
+
+.. _changes_0_1_1:
+
+Version 0.1.1 (2018-04-29)
+--------------------------
+
+Changelog
+~~~~~~~~~
+- Miscellaneous changes
+
+.. _changes_0_1_0:
+
+Version 0.1.0 (2018-04-24)
+--------------------------
+
+Changelog
+~~~~~~~~~
+- Initial commit: 2018-04-12
+- Miscellaneous changes
 
 .. _Stefan Appelhoff: http://stefanappelhoff.com/
 .. _Aamna Lawrence: https://github.com/AamnaLawrence
@@ -169,3 +222,5 @@ Changelog
 .. _Victor Xiang: https://github.com/Nick3151
 .. _Yorguin Mantilla: https://github.com/yjmantilla
 .. _Austin Hurst: https://github.com/a-hurst
+.. _Jonte Dancker: https://github.com/joDancker/
+.. _Mathieu Scheltienne: https://github.com/mscheltienne

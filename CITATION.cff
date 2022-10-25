@@ -1,0 +1,94 @@
+# YAML 1.2
+---
+# Metadata for citation of this software according to the CFF format (https://citation-file-format.github.io/)
+cff-version: 1.2.0
+title: 'PyPREP: A Python implementation of the preprocessing pipeline (PREP) for EEG data.'
+abstract: 'PyPrep is a Python library to facilitate preprocessing of EEG data. More information can be found at <a href=\"https://pyprep.readthedocs.io\">pyprep.readthedocs.io</a>.'
+authors:
+    - given-names: Stefan
+      family-names: Appelhoff
+      affiliation: 'Center for Adaptive Rationality, Max Planck Institute for Human Development, Berlin, Germany'
+      orcid: 'https://orcid.org/0000-0001-8002-0877'
+    - given-names: Austin J.
+      family-names: Hurst
+      affiliation: 'Dalhousie University, Halifax, Nova Scotia'
+      orcid: 'https://orcid.org/0000-0002-0219-4131'
+    - given-names: Aamna
+      family-names: Lawrence
+      affiliation: 'Johns Hopkins University, Baltimore, MD, USA'
+      orcid: 'https://orcid.org/0000-0002-0983-0997'
+    - given-names: Adam
+      family-names: Li
+      affiliation: 'Institute for Computational Medicine, Johns Hopkins University, Baltimore, MD, USA'
+      orcid: 'https://orcid.org/0000-0001-8421-365X'
+    - given-names: Yorguin José
+      family-names: Mantilla Ramos
+      affiliation: 'Grupo Neuropsicología y Conducta, Universidad de Antioquia, Medellín, Colombia'
+      orcid: 'https://orcid.org/0000-0003-4473-0876'
+    - given-names: Christian
+      family-names: O'Reilly
+      affiliation: 'Azrieli Centre for Autism Research, McGill University, Montreal, Canada'
+      orcid: 'https://orcid.org/0000-0002-3149-4934'
+    - given-names: Liang
+      family-names: Xiang
+      affiliation: 'Department of Biomedical Engineering, Johns Hopkins University, Baltimore, MD, USA'
+      orcid: 'https://orcid.org/0000-0003-3191-9565'
+    - given-names: Jonte
+      family-names: Dancker
+      affiliation: 'Institute of Electric Power Systems, Otto von Guericke University Magdeburg, Magdeburg, Germany'
+      orcid: 'https://orcid.org/0000-0001-6486-6987'
+    - given-names: Mathieu
+      family-names: Scheltienne
+      affiliation: 'Fondation Campus Biotech Geneva, Geneva, Switzerland'
+    - given-names: Ole
+      family-names: Bialas
+      affiliation: 'Department of Biomedical Engineering, University of Rochester, Rochester, NY, USA'
+      orcid: 'https://orcid.org/0000-0003-4472-7626'
+type: software
+repository-code: 'https://github.com/sappelhoff/pyprep'
+license: MIT
+keywords:
+  - EEG
+  - artifact
+  - preprocessing
+  - data
+  - neuroscience
+  - neuroimaging
+  - mne
+  - python
+  - electroencephalography
+  - eeg
+message: >-
+  Please cite this software using the citation string you can
+  find on the Zenodo archive page, or use the data provided
+  in the CITATION.cff file.
+identifiers:
+  - description: "Code archive on Zenodo"
+    type: doi
+    value: 10.5281/zenodo.6363575
+references:
+  - authors:
+      - name: "PREP developers"
+    repository-code: "https://github.com/VisLab/EEG-Clean-Tools"
+    title: Original PREP code
+    type: software
+  - authors:
+      - family-names: Bigdely-Shamlo
+        given-names: Nima
+      - family-names: Mullen
+        given-names: Tim
+      - family-names: Kothe
+        given-names: Christian
+      - family-names: Su
+        given-names: Kyungmin Su
+      - family-names: Robbins
+        given-names: Kay A.
+    doi: 10.3389/fninf.2015.00016
+    issue: 16
+    journal: "Frontiers in Neuroinformatics"
+    scope: "Cite this paper if you in addition to PyPrep, because it describes the original pipeline."
+    title: "The PREP pipeline: standardized preprocessing for large-scale EEG analysis"
+    type: article
+    volume: 42
+    year: 2015
+...

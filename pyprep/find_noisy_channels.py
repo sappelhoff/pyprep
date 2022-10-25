@@ -3,7 +3,7 @@ from copy import copy
 
 import mne
 import numpy as np
-from mne.utils import check_random_state
+from mne.utils import check_random_state, logger
 from scipy import signal
 
 from pyprep.ransac import find_bad_by_ransac
@@ -54,6 +54,7 @@ class NoisyChannels:
         # Make sure that we got an MNE object
         assert isinstance(raw, mne.io.BaseRaw)
 
+        raw.load_data()
         self.raw_mne = raw.copy()
         self.raw_mne.pick_types(eeg=True)
         self.sample_rate = raw.info["sfreq"]
@@ -172,7 +173,7 @@ class NoisyChannels:
                 if bad_type in name_map.keys():
                     bad_type = name_map[bad_type]
                 out += f"\n{len(bad_chs)} by {bad_type}: {bad_chs}\n"
-            print(out)
+            logger.info(out)
 
         if as_dict:
             bads["bad_all"] = list(all_bads)

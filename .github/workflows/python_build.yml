@@ -8,6 +8,8 @@ on:
   create:
     branches: [master]
     tags: ['**']
+  schedule:
+    - cron: "0 4 * * MON"
 
 jobs:
   build:
@@ -22,14 +24,14 @@ jobs:
       FORCE_COLOR: true
     steps:
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
 
     - name: Update pip and wheel
       run: python -m pip install --upgrade pip wheel
 
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Build sdist
       run: python setup.py sdist
     - name: Install sdist
@@ -41,7 +43,7 @@ jobs:
     - name: Remove sdist install
       run: pip uninstall -y pyprep
 
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Build wheel
       run: python setup.py bdist_wheel
     - name: Install wheel

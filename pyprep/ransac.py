@@ -2,13 +2,12 @@
 import mne
 import numpy as np
 from mne.channels.interpolation import _make_interpolation_matrix
-from mne.utils import check_random_state
+from mne.utils import ProgressBar, check_random_state, logger
 
 from pyprep.utils import (
     _correlate_arrays,
     _get_random_subset,
     _mat_round,
-    _print_progress,
     _split_list,
     _verify_free_ram,
 )
@@ -123,6 +122,8 @@ def find_bad_by_ransac(
         err = "Argument 'n_samples' must be an int (got {0})"
         raise TypeError(err.format(type(n_samples).__name__))
 
+    complete_chn_labs = np.asarray(complete_chn_labs)
+
     # Get all channel positions and the position subset of "clean channels"
     # Exclude should be the bad channels from other methods
     # That is, identify all bad channels by other means
@@ -181,7 +182,7 @@ def find_bad_by_ransac(
     # Is now data.shape[0] = n_chans_complete
     # They came from the same drop of channels
 
-    print("Executing RANSAC\nThis may take a while, so be patient...")
+    logger.info("Executing RANSAC\nThis may take a while, so be patient...")
 
     # If enabled, run window-wise RANSAC
     if not channel_wise:
@@ -223,11 +224,11 @@ def find_bad_by_ransac(
                 )
                 if chunk == channel_chunks[0]:
                     # If it gets here, it means it is the optimal
-                    print("Finding optimal chunk size :", chunk_size)
-                    print("Total # of chunks:", total_chunks)
-                    print("Current chunk:", end=" ", flush=True)
+                    logger.info("Finding optimal chunk size : %s", chunk_size)
+                    logger.info("Total # of chunks: %s", total_chunks)
+                    logger.info("Current chunk:")
 
-                print(current, end=" ", flush=True)
+                logger.info(current)
                 current = current + 1
 
             mem_error = False  # All chunks processed, hurray!
@@ -250,7 +251,7 @@ def find_bad_by_ransac(
     bad_ransac_channels_idx = np.argwhere(frac_bad_corr_windows > frac_bad)
     bad_ransac_channels_name = complete_chn_labs[bad_ransac_channels_idx.astype(int)]
     bad_by_ransac = [i[0] for i in bad_ransac_channels_name]
-    print("\nRANSAC done!")
+    logger.info("\nRANSAC done!")
 
     return bad_by_ransac, channel_correlations
 
@@ -329,11 +330,8 @@ def _ransac_by_window(data, interpolation_mats, win_size, win_count, matlab_stri
     ch_count = data.shape[0]
     correlations = np.ones((win_count, ch_count))
 
-    for window in range(win_count):
-
-        # Print RANSAC progress in 10% increments
-        _print_progress(window + 1, win_count, every=0.1)
-
+    pb = ProgressBar(range(win_count))
+    for window in pb:
         # Get the current window of EEG data
         start = window * win_size
         end = (window + 1) * win_size

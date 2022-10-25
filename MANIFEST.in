@@ -4,7 +4,7 @@ include LICENSE
 include requirements-dev.txt
 include versioneer.py
 include pyprep/_version.py
-include .zenodo.json
+include CITATION.cff
 
 graft docs
 graft examples

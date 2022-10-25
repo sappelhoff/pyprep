@@ -8,7 +8,8 @@ In this example we show how to run PREP with ``pyprep``. We also compare
 :class:`~pyprep.PrepPipeline` with PREP's results in Matlab.
 
 We use sample EEG data from Physionet EEG Motor Movement/Imagery Dataset:
-`https://physionet.org/content/eegmmidb/1.0.0/ <https://physionet.org/content/eegmmidb/1.0.0/>`_
+`https://physionet.org/content/eegmmidb/1.0.0/
+<https://physionet.org/content/eegmmidb/1.0.0/>`_
 
 .. currentmodule:: pyprep
 """  # noqa: D205 D400
@@ -132,9 +133,9 @@ EEG_raw_max = np.max(abs(EEG_raw), axis=None)
 EEG_raw_matlab = sio.loadmat(fname_mat1)
 EEG_raw_matlab = EEG_raw_matlab["save_data"]
 EEG_raw_diff = EEG_raw - EEG_raw_matlab
-EEG_raw_mse = (EEG_raw_diff / EEG_raw_max ** 2).mean(axis=None)
+EEG_raw_mse = (EEG_raw_diff / EEG_raw_max**2).mean(axis=None)
 
-fig, axs = plt.subplots(5, 3, "all", figsize=(16, 12))
+fig, axs = plt.subplots(5, 3, sharex="all", figsize=(16, 12))
 plt.setp(fig, facecolor=[1, 1, 1])
 fig.suptitle("Python versus Matlab PREP results", fontsize=16)
 
