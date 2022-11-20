@@ -90,7 +90,7 @@ class NoisyChannels:
         ch_names = np.asarray(self.raw_mne.info["ch_names"])
         self.ch_names_original = ch_names
         self.n_chans_original = len(ch_names)
-        self.n_samples = raw._data.shape[1]
+        self.n_samples = raw.get_data().shape[1]
 
         # Before anything else, flag bad-by-NaNs and bad-by-flats
         self.find_bad_by_nan_flat()

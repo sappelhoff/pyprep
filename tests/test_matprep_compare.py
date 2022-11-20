@@ -184,9 +184,9 @@ def test_compare_removeTrend(matprep_artifacts):
     sample_rate = matprep_raw.info["sfreq"]
 
     # Apply removeTrend to raw artifact to get expected and actual signals
-    expected = matprep_detrended._data
+    expected = matprep_detrended.get_data()
     actual = removeTrend(
-        matprep_raw._data, sample_rate, detrendType="high pass", matlab_strict=True
+        matprep_raw.get_data(), sample_rate, detrendType="high pass", matlab_strict=True
     )
 
     # Check MATLAB equivalence at start of recording
@@ -386,11 +386,11 @@ class TestCompareRobustReference(object):
         win_size = 500  # window of samples to check
 
         # Compare signals at start of recording
-        pyprep_start = pyprep_reference.raw._data[:, win_size]
-        matprep_start = matprep_reference._data[:, win_size]
+        pyprep_start = pyprep_reference.raw.get_data()[:, win_size]
+        matprep_start = matprep_reference.get_data()[:, win_size]
         assert np.allclose(pyprep_start, matprep_start)
 
         # Compare signals at end of recording
-        pyprep_end = pyprep_reference.raw._data[:, -win_size:]
-        matprep_end = matprep_reference._data[:, -win_size:]
+        pyprep_end = pyprep_reference.raw.get_data()[:, -win_size:]
+        matprep_end = matprep_reference.get_data()[:, -win_size:]
         assert np.allclose(pyprep_end, matprep_end)

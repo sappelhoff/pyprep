@@ -215,7 +215,7 @@ def test_prep_pipeline_non_eeg(raw, montage):
 
     # make arbitrary non eeg channels from the register
     sfreq = raw_copy.info["sfreq"]  # Sampling frequency
-    times = np.array(list(range(raw_copy._data.shape[1])))
+    times = np.array(list(range(raw_copy.get_data().shape[1])))
     ch_names_non_eeg = ["misc" + str(i) for i in range(4)]
     ch_types_non_eeg = ["misc" for i in range(4)]
     raw_non_eeg, _, _ = make_random_mne_object(
@@ -244,11 +244,11 @@ def test_prep_pipeline_non_eeg(raw, montage):
     # names of raw (only eeg)  same as full names - non eeg names
     assert set(prep.raw_eeg.ch_names) == set(raw_copy.ch_names) - set(ch_names_non_eeg)
     # quantity of raw (only eeg) same as quantity of all - non eeg lists
-    assert prep.raw_eeg._data.shape[0] == len(raw_copy.ch_names) - len(
+    assert prep.raw_eeg.get_data().shape[0] == len(raw_copy.ch_names) - len(
         prep.ch_names_non_eeg
     )
     # quantity of channels in is the same as qty of full raw
-    assert raw_copy._data.shape[0] == prep.raw._data.shape[0]
+    assert raw_copy.get_data().shape[0] == prep.raw.get_data().shape[0]
 
 
 @pytest.mark.usefixtures("raw", "montage")

@@ -58,7 +58,7 @@ def _generate_signal(fmin, fmax, timepoints, fcount=1):
 def test_bad_by_nan(raw_tmp):
     """Test the detection of channels containing any NaN values."""
     # Insert a NaN value into a random channel
-    n_chans = raw_tmp._data.shape[0]
+    n_chans = raw_tmp.get_data().shape[0]
     nan_idx = int(RNG.randint(0, n_chans, 1))
     raw_tmp._data[nan_idx, 3] = np.nan
 
@@ -74,9 +74,9 @@ def test_bad_by_nan(raw_tmp):
 def test_bad_by_flat(raw_tmp):
     """Test the detection of channels with flat or very weak signals."""
     # Make the signal for a random channel extremely weak
-    n_chans = raw_tmp._data.shape[0]
+    n_chans = raw_tmp.get_data().shape[0]
     flat_idx = int(RNG.randint(0, n_chans, 1))
-    raw_tmp._data[flat_idx, :] = raw_tmp._data[flat_idx, :] * 1e-12
+    raw_tmp._data[flat_idx, :] = raw_tmp.get_data()[flat_idx, :] * 1e-12
 
     # Test automatic detection of flat channels on NoisyChannels init
     nd = NoisyChannels(raw_tmp, do_detrend=False)
@@ -99,7 +99,7 @@ def test_bad_by_deviation(raw_tmp):
     high_dev_factor = 4.0
 
     # Make the signal for a random channel have a very high amplitude
-    n_chans = raw_tmp._data.shape[0]
+    n_chans = raw_tmp.get_data().shape[0]
     high_dev_idx = int(RNG.randint(0, n_chans, 1))
     raw_tmp._data[high_dev_idx, :] *= high_dev_factor
 
@@ -125,7 +125,7 @@ def test_bad_by_deviation(raw_tmp):
 def test_bad_by_hf_noise(raw_tmp):
     """Test detection of channels with high-frequency noise."""
     # Add some noise between 70 & 80 Hz to the signal of a random channel
-    n_chans = raw_tmp._data.shape[0]
+    n_chans = raw_tmp.get_data().shape[0]
     hf_noise_idx = int(RNG.randint(0, n_chans, 1))
     hf_noise = _generate_signal(70, 80, raw_tmp.times, 5) * 10
     raw_tmp._data[hf_noise_idx, :] += hf_noise
@@ -147,7 +147,7 @@ def test_bad_by_hf_noise(raw_tmp):
 def test_bad_by_dropout(raw_tmp):
     """Test detection of channels with excessive portions of flat signal."""
     # Add large dropout portions to the signal of a random channel
-    n_chans, n_samples = raw_tmp._data.shape
+    n_chans, n_samples = raw_tmp.get_data().shape
     dropout_idx = int(RNG.randint(0, n_chans, 1))
     x1, x2 = (int(n_samples / 10), int(2 * n_samples / 10))
     raw_tmp._data[dropout_idx, x1:x2] = 0  # flatten 10% of signal
@@ -161,7 +161,7 @@ def test_bad_by_dropout(raw_tmp):
 def test_bad_by_correlation(raw_tmp):
     """Test detection of channels that correlate poorly with others."""
     # Replace a random channel's signal with uncorrelated values
-    n_chans, n_samples = raw_tmp._data.shape
+    n_chans, n_samples = raw_tmp.get_data().shape
     low_corr_idx = int(RNG.randint(0, n_chans, 1))
     raw_tmp._data[low_corr_idx, :] = _generate_signal(10, 30, raw_tmp.times, 5)
 
@@ -186,7 +186,7 @@ def test_bad_by_correlation(raw_tmp):
 def test_bad_by_SNR(raw_tmp):
     """Test detection of channels that have low signal-to-noise ratios."""
     # Replace a random channel's signal with uncorrelated values
-    n_chans = raw_tmp._data.shape[0]
+    n_chans = raw_tmp.get_data().shape[0]
     low_snr_idx = int(RNG.randint(0, n_chans, 1))
     raw_tmp._data[low_snr_idx, :] = _generate_signal(10, 30, raw_tmp.times, 5)
 
@@ -275,7 +275,7 @@ def test_find_bad_by_ransac_err(raw_tmp):
         nd.find_bad_by_ransac(n_samples=n_samples)
 
     # Test IOError when too few good channels for RANSAC sample size
-    n_chans = raw_tmp._data.shape[0]
+    n_chans = raw_tmp.get_data().shape[0]
     nd = NoisyChannels(raw_tmp, do_detrend=False)
     nd.bad_by_deviation = raw_tmp.info["ch_names"][0 : int(n_chans * 0.8)]
     with pytest.raises(IOError):

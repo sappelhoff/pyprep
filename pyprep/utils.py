@@ -367,7 +367,7 @@ def _eeglab_interpolate_bads(raw):
     _normalize_vectors(pos_bad)
 
     # Interpolate bad channels
-    interp = _eeglab_interpolate(raw._data[good_idx, :], pos_good, pos_bad)
+    interp = _eeglab_interpolate(raw.get_data()[good_idx, :], pos_good, pos_bad)
     raw._data[bad_idx, :] = interp
 
     # Clear all bad EEG channels
