@@ -40,7 +40,7 @@ Changelog
 
 Bug
 ~~~
-- :func:`find_bad_by_ransac <ransac.find_bad_by_ransac>` now accepts channel labels (``complete_chn_labs``) as a list as well, by `Ole_Bialas`_ (:gh:`116`).
+- :func:`find_bad_by_ransac <ransac.find_bad_by_ransac>` now accepts channel labels (``complete_chn_labs``) as a list as well, by `Ole Bialas`_ (:gh:`116`).
 
 .. _changes_0_4_2:
 
@@ -224,3 +224,4 @@ Changelog
 .. _Austin Hurst: https://github.com/a-hurst
 .. _Jonte Dancker: https://github.com/joDancker/
 .. _Mathieu Scheltienne: https://github.com/mscheltienne
+.. _Ole Bialas: https://github.com/OleBialas
