@@ -117,6 +117,12 @@ def find_bad_by_ransac(
         Data. NeuroImage, 159, 417-429
 
     """
+    # Check we find channel positions
+    if np.isnan(chn_pos).any():
+        raise ValueError(
+            "Found NaN in channel positions. Did you supply a montage for the raw data?"
+        )
+
     # First, check that the argument types are valid
     if type(n_samples) != int:
         err = "Argument 'n_samples' must be an int (got {0})"
