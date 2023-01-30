@@ -1,2 +1,6 @@
+name = "pyprep"
+version = "0.4.2"
+description = "A Python implementation of the preprocessing pipeline (PREP) for EEG data."
+
 [tool.black]
 exclude = "matprep_artifacts"
