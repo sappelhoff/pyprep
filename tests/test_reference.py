@@ -18,13 +18,13 @@ def test_basic_input(raw, montage):
     params = {"ref_chs": ch_names, "reref_chs": ch_names}
     reference = Reference(raw_tmp, params, ransac=False)
     reference.perform_reference()
-    assert type(reference.noisy_channels) == dict
-    assert type(reference.noisy_channels_original) == dict
-    assert type(reference.bad_before_interpolation) == list
-    assert type(reference.reference_signal) == np.ndarray
-    assert type(reference.interpolated_channels) == list
-    assert type(reference.still_noisy_channels) == list
-    assert type(reference.raw) == mne.io.edf.edf.RawEDF
+    assert isinstance(reference.noisy_channels, dict)
+    assert isinstance(reference.noisy_channels_original, dict)
+    assert isinstance(reference.bad_before_interpolation, list)
+    assert isinstance(reference.reference_signal, np.ndarray)
+    assert isinstance(reference.interpolated_channels, list)
+    assert isinstance(reference.still_noisy_channels, list)
+    assert isinstance(reference.raw, mne.io.edf.edf.RawEDF)
 
     # Make sure the set of reference channels weren't modified by re-referencing
     assert params["ref_chs"] == reference.reference_channels

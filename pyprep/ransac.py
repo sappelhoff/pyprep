@@ -124,7 +124,7 @@ def find_bad_by_ransac(
         )
 
     # First, check that the argument types are valid
-    if type(n_samples) != int:
+    if not isinstance(n_samples, int):
         err = "Argument 'n_samples' must be an int (got {0})"
         raise TypeError(err.format(type(n_samples).__name__))
 
