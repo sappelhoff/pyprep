@@ -1,2 +1,6 @@
 [tool.black]
 exclude = "matprep_artifacts"
+
+[build-system]
+requires = ["setuptools", "versioneer[toml]"]
+build-backend = "setuptools.build_meta"

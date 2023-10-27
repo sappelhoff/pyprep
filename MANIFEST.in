@@ -2,7 +2,6 @@ include MANIFEST.in
 include README.rst
 include LICENSE
 include requirements-dev.txt
-include versioneer.py
 include pyprep/_version.py
 include CITATION.cff
 
