@@ -4,6 +4,7 @@ include LICENSE
 include requirements-dev.txt
 include pyprep/_version.py
 include CITATION.cff
+include versioneer.py
 
 graft docs
 graft examples

@@ -133,7 +133,6 @@ The same is true for the following lines in `./pyprep/__init__.py`:
 from ._version import get_versions
 
 __version__ = get_versions()["version"]
-del get_versions
 ```
 
 To update the `versioneer` software, follow the instructions on their documentation page.
