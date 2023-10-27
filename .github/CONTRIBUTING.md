@@ -1,7 +1,7 @@
 # Table of Contents
 
 - [Pull request workflow](#pull-request-workflow)
-  * [Syncing your fork's `master` with `upstream master`](#syncing-your-fork-s--master--with--upstream-master-)
+  * [Syncing your fork's `main` with `upstream main`](#syncing-your-fork-s--main--with--upstream-main-)
   * [Working on a feature (and rebasing)](#working-on-a-feature--and-rebasing-)
     + [Working on a feature](#working-on-a-feature)
     + [Rebasing without conflicts](#rebasing-without-conflicts)
@@ -18,16 +18,16 @@
 - `github.com/sappelhoff/pyprep` is `upstream`
 - `github.com/username/pyprep` is `origin` (your *fork*)
 
-## Syncing your fork's `master` with `upstream master`
+## Syncing your fork's `main` with `upstream main`
 
 - first, you start with *forking* `upstream`
 - then, you continue by *cloning* your fork: `git clone https://github.com/username/pyprep`
-    - you'll have your own `master` branch there
-- **you always want to make sure that your fork's `master` and `upstream master` are aligned**
+    - you'll have your own `main` branch there
+- **you always want to make sure that your fork's `main` and `upstream main` are aligned**
     - to do this, you work with *git remotes*
-    - Note: this also means that you NEVER work on `master` (unless you know
+    - Note: this also means that you NEVER work on `main` (unless you know
       what you are doing) ... because you want to always be able to SYNC your
-      fork with `upstream`, which would mean losing your own work on `master`
+      fork with `upstream`, which would mean losing your own work on `main`
 - use `git remote -v` to list your configured remotes
     - initially this will only list `origin` ... a bit like this maybe:
 
@@ -48,24 +48,24 @@ upstream	https://github.com/sappelhoff/pyprep (push)
 
 ```
 
-- Now you can use your `upstream` *remote* to make sure your fork's `master` is
+- Now you can use your `upstream` *remote* to make sure your fork's `main` is
   up to date.
-    1.  `git checkout master` to make sure you are on your `master` branch
-    1. Make sure you do not have any changes on your `master`, because we will
+    1.  `git checkout main` to make sure you are on your `main` branch
+    1. Make sure you do not have any changes on your `main`, because we will
        discard them!
-    1. `git pull upstream master` SYNC your fork and `upstream`
+    1. `git pull upstream main` SYNC your fork and `upstream`
     1. sometimes there are issues, so to be safe, do:
-       `git reset --hard upstream/master` ... this makes sure that both
+       `git reset --hard upstream/main` ... this makes sure that both
        branches are really synced.
-    1. ensure with another `git pull upstream master` ... this should say
+    1. ensure with another `git pull upstream main` ... this should say
        "already up to date"
 
 ## Working on a feature (and rebasing)
 
 ### Working on a feature
 
-- before working on any feature: always do `git checkout master` and
-  `git pull upstream master`
+- before working on any feature: always do `git checkout main` and
+  `git pull upstream main`
 - then make your new branch to work on and check it out, for example
   `git checkout -b my_feature`
     - do your work
@@ -76,9 +76,9 @@ upstream	https://github.com/sappelhoff/pyprep (push)
 
 ### Rebasing without conflicts
 
-1. sync `master` through: `git checkout master` and `git pull upstream master`
+1. sync `main` through: `git checkout main` and `git pull upstream main`
 1. go back to your branch and rebase it: `git checkout my_feature` and then
-   `git rebase master`
+   `git rebase main`
 
 Now it could be that you are lucky and there no conflicts ... in that case, the
 rebase just works and you can then finish up by *force pushing* your rebased
@@ -109,8 +109,8 @@ If you screw up **during** rebasing and you panic, you can do
 
 If nothing helps and you just don't know how to resolve the issues and
 conflicts that arise during rebasing, just make a new branch:
-    1. `git checkout master`
-    1. `git pull upstream master`
+    1. `git checkout main`
+    1. `git pull upstream main`
     1. `git checkout -b my_feature_2nd_attempt`
 
 ... and apply your changes manually.
@@ -161,17 +161,17 @@ Follow this workflow:
    version and updating the "Authors" section. "Authors" are all people
    who committed code or in other ways contributed to `pyprep` (e.g., by
    reviewing PRs, moderating discussions).
-1. commit the change and `git push` to master (or make a pull request).
+1. commit the change and `git push` to main (or make a pull request).
    Start your commit message with `[REL]`.
-1. make an annotated tag `git tag -a -m "1.2.3" 1.2.3 upstream/master` (This
+1. make an annotated tag `git tag -a -m "1.2.3" 1.2.3 upstream/main` (This
    assumes that you have a git remote configured with the name "upstream" and
    pointing to https://github.com/sappelhoff/pyprep).
 1. `git push --follow-tags upstream`
 1. make a release on GitHub, using the git tag from the previous step (e.g.,
    `1.2.3`). Fill the tag name into all fields of the release.
 
-Then the release is done and master has to be prepared for development of the
+Then the release is done and main has to be prepared for development of the
 next release:
 
 1. add a "current" headline to `docs/whats_new.rst`
-1. commit the changes and `git push` to master (or make a pull request)
+1. commit the changes and `git push` to main (or make a pull request)

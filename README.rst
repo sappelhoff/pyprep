@@ -10,7 +10,7 @@
    :alt: Python tests
 
 
-.. image:: https://codecov.io/gh/sappelhoff/pyprep/branch/master/graph/badge.svg
+.. image:: https://codecov.io/gh/sappelhoff/pyprep/branch/main/graph/badge.svg
    :target: https://codecov.io/gh/sappelhoff/pyprep
    :alt: codecov
 
@@ -75,7 +75,7 @@ For installing the **latest (development)** version of ``pyprep``, call:
 
 .. code-block:: Text
 
-   pip install git+https://github.com/sappelhoff/pyprep.git@master
+   pip install git+https://github.com/sappelhoff/pyprep.git@main
 
 
 Both the *stable* and the *latest* installation will additionally install
@@ -91,7 +91,7 @@ Contributions
 Please chime in with your ideas on how to improve this software by opening
 a GitHub issue, or submitting a pull request.
 
-See also our `CONTRIBUTING.md <https://github.com/sappelhoff/pyprep/blob/master/.github/CONTRIBUTING.md>`_
+See also our `CONTRIBUTING.md <https://github.com/sappelhoff/pyprep/blob/main/.github/CONTRIBUTING.md>`_
 file for help with submitting a pull request.
 
 Potential contributors should install ``pyprep`` in the following way:

@@ -2,11 +2,11 @@ name: Python tests
 
 on:
   push:
-    branches: [ master ]
+    branches: [ main ]
   pull_request:
-    branches: [ master ]
+    branches: [ main ]
   create:
-    branches: [master]
+    branches: [main]
     tags: ['**']
   schedule:
     - cron: "0 4 * * MON"
