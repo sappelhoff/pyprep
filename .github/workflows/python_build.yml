@@ -28,12 +28,14 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Update pip and wheel
-      run: python -m pip install --upgrade pip wheel
+    - name: Update pip et al.
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install --upgrade setuptools wheel build
 
     - uses: actions/checkout@v4
     - name: Build sdist
-      run: python setup.py sdist
+      run: python -m build --sdist
     - name: Install sdist
       run: pip install ./dist/pyprep-*
     - name: Clean up working directory
@@ -45,7 +47,7 @@ jobs:
 
     - uses: actions/checkout@v4
     - name: Build wheel
-      run: python setup.py bdist_wheel
+      run: python -m build --wheel
     - name: Install wheel
       run: pip install ./dist/pyprep-*.whl
     - name: Clean up working directory
