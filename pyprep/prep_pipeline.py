@@ -24,10 +24,13 @@ class PrepPipeline:
 
         - ref_chs : {list, 'eeg'}
             - A list of channel names to be used for rereferencing.
+              These channels will be used to construct the reference
+              signal.
               Can be a str 'eeg' to use all EEG channels.
         - reref_chs : {list, 'eeg'}
-            - A list of channel names to be used for line-noise removed,
-              and referenced. Can be a str 'eeg' to use all EEG channels.
+            - A list of channel names to define from which channels the
+              reference signal will be subtracted.
+              Can be a str 'eeg' to use all EEG channels.
         - line_freqs : {np.ndarray, list}
             - list of floats indicating frequencies to be removed.
               For example, for 60Hz you may specify
