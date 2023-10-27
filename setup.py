@@ -2,9 +2,8 @@
 
 import sys
 
-from setuptools import setup
-
 import versioneer
+from setuptools import setup
 
 # Give setuptools a hint to complain if it's too old a version
 # 30.3.0 allows us to put most metadata in setup.cfg

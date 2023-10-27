@@ -6,8 +6,8 @@ on:
   pull_request:
     branches: [ main ]
   create:
-    branches: [main]
-    tags: ['**']
+    branches: [ main ]
+    tags: [ '**' ]
   schedule:
     - cron: "0 4 * * MON"
 

@@ -20,4 +20,3 @@ python:
    - method: pip
      path: .
    - requirements: requirements-dev.txt
-

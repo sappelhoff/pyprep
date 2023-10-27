@@ -1,5 +1,12 @@
 [tool.black]
-exclude = "matprep_artifacts"
+extend-exclude = '''
+# A regex preceded with ^/ will apply only to files and directories
+# in the root of the project.
+(
+  matprep_artifacts
+  pyprep/_version.py
+)
+'''
 
 [build-system]
 requires = ["setuptools", "versioneer[toml]"]
