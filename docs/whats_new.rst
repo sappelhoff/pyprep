@@ -37,6 +37,7 @@ Current (unreleased)
 Changelog
 ~~~~~~~~~
 - Use MNE logger and ProgressBar instead of prints to display logging messages, by `Mathieu Scheltienne`_ (:gh:`112`).
+- Clarify the use of ``ref_chs`` and ``reref_chs`` for the ``prep_params`` dict in :class:`~pyprep.PrepPipeline`, by `Stefan Appelhoff`_ (:gh:`137`).
 
 Bug
 ~~~
