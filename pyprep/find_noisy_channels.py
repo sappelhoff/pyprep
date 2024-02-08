@@ -223,16 +223,23 @@ class NoisyChannels:
                 channel_wise=channel_wise, max_chunk_size=max_chunk_size
             )
 
-    def find_bad_by_nan_flat(self):
+    def find_bad_by_nan_flat(self, flat_threshold=1e-15):
         """Detect channels than contain NaN values or have near-flat signals.
 
         A channel is considered flat if its standard deviation or its median
-        absolute deviation from the median (MAD) are below 1e-9 microvolts.
+        absolute deviation from the median (MAD) are below the provided flat
+        threshold (default: ``1e-15`` volts).
 
         This method is run automatically when a ``NoisyChannels`` object is
         initialized, preventing flat or NaN-containing channels from interfering
         with the detection of other types of bad channels.
 
+        Parameters
+        ----------
+        flat_threshold : float, optional
+            The lowest standard deviation or MAD value for a channel to be
+            considered bad-by-flat. Defaults to ``1e-15`` (corresponds to
+            10e-10 µV in MATLAB PREP).
         """
         # Get all EEG channels from original copy of data
         EEGData = self.raw_mne.get_data()
@@ -242,9 +249,8 @@ class NoisyChannels:
         nan_channels = self.ch_names_original[nan_channel_mask]
 
         # Detect channels with flat or extremely weak signals
-        FLAT_THRESHOLD = 1e-15  # corresponds to 10e-10 µV in MATLAB PREP
-        flat_by_mad = _mad(EEGData, axis=1) < FLAT_THRESHOLD
-        flat_by_stdev = np.std(EEGData, axis=1) < FLAT_THRESHOLD
+        flat_by_mad = _mad(EEGData, axis=1) < flat_threshold
+        flat_by_stdev = np.std(EEGData, axis=1) < flat_threshold
         flat_channel_mask = flat_by_mad | flat_by_stdev
         flat_channels = self.ch_names_original[flat_channel_mask]
 
