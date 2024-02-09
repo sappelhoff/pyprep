@@ -38,6 +38,7 @@ import scipy.io as sio
 import matplotlib.pyplot as plt
 
 from pyprep.prep_pipeline import PrepPipeline
+from pyprep.removeTrend import removeTrend
 
 ###############################################################################
 # Let's download some data for testing. Picking the 1st run of subject 4 here.
@@ -104,9 +105,12 @@ prep.fit()
 #
 # You can check the detected bad channels in each step of PREP.
 
+original_bads = prep.bad_channels["original"]
+post_interp_bads = prep.bad_channels["post-interpolation"]
+
 print("Bad channels: {}".format(prep.interpolated_channels))
-print("Bad channels original: {}".format(prep.noisy_channels_original["bad_all"]))
-print("Bad channels after interpolation: {}".format(prep.still_noisy_channels))
+print("Bad channels original: {}".format(original_bads))
+print("Bad channels after interpolation: {}".format(post_interp_bads))
 
 # Matlab's results
 # ----------------
@@ -169,7 +173,7 @@ cb.set_label("\u03BCVolt", fontsize=14)
 
 EEG_new_matlab = sio.loadmat(fname_mat2)
 EEG_new_matlab = EEG_new_matlab["save_data"]
-EEG_new = prep.EEG_new
+EEG_new = removeTrend(prep.EEG_raw, sample_rate=prep.sfreq) * 1e6
 EEG_new_max = np.max(abs(EEG_new), axis=None)
 EEG_new_diff = EEG_new - EEG_new_matlab
 EEG_new_mse = ((EEG_new_diff / EEG_new_max) ** 2).mean(axis=None)
@@ -202,7 +206,7 @@ axs[1, 1].set_title("High pass filtered EEG", fontsize=14)
 
 EEG_clean_matlab = sio.loadmat(fname_mat3)
 EEG_clean_matlab = EEG_clean_matlab["save_data"]
-EEG_clean = prep.EEG
+EEG_clean = prep.EEG_filtered * 1e6
 EEG_max = np.max(abs(EEG_clean), axis=None)
 EEG_diff = EEG_clean - EEG_clean_matlab
 EEG_mse = ((EEG_diff / EEG_max) ** 2).mean(axis=None)
@@ -233,14 +237,14 @@ axs[2, 2].imshow(
 axs[2, 1].set_title("Line-noise removed EEG", fontsize=14)
 axs[2, 0].set_ylabel("Channel Number", fontsize=14)
 
-EEG = prep.EEG_before_interpolation
+EEG = prep.EEG_post_reference * 1e6
 EEG_max = np.max(abs(EEG), axis=None)
 EEG_ref_mat = sio.loadmat(fname_mat4)
 EEG_ref_matlab = EEG_ref_mat["save_EEG"]
 reference_matlab = EEG_ref_mat["save_reference"]
 EEG_ref_diff = EEG - EEG_ref_matlab
 EEG_ref_mse = ((EEG_ref_diff / EEG_max) ** 2).mean(axis=None)
-reference_signal = prep.reference_before_interpolation
+reference_signal = prep.robust_reference_signal * 1e6
 reference_max = np.max(abs(reference_signal), axis=None)
 reference_diff = reference_signal - reference_matlab
 reference_mse = ((reference_diff / reference_max) ** 2).mean(axis=None)
