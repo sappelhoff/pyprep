@@ -3,18 +3,8 @@
 Authors
 =======
 
-People who contributed to this software across releases (in **alphabetical order (last name)**)
-
-* `Stefan Appelhoff`_
-* `Ole Bialas`_
-* `Jonte Dancker`_
-* `Austin Hurst`_
-* `Aamna Lawrence`_
-* `Adam Li`_
-* `Yorguin Mantilla`_
-* `Christian O'Reilly`_
-* `Mathieu Scheltienne`_
-* `Victor Xiang`_
+Please see the ``authors`` section in the ``CITATION.cff`` file for authors
+who have contributed to this software across releases.
 
 .. _whats_new:
 
@@ -36,7 +26,7 @@ Version 0.5.0 (Unreleased)
 
 Changelog
 ~~~~~~~~~
-- nothing yet
+- :meth:`~pyprep.NoisyChannels.find_bad_by_nan_flat` now accepts a ``flat_threshold`` argument, by `Nabil Alibou`_ (:gh:`144`)
 
 Bug
 ~~~
@@ -239,3 +229,4 @@ Changelog
 .. _Jonte Dancker: https://github.com/joDancker/
 .. _Mathieu Scheltienne: https://github.com/mscheltienne
 .. _Ole Bialas: https://github.com/OleBialas
+.. _Nabil Alibou: https://github.com/nabilalibou
