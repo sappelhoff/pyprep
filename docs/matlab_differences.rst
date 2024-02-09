@@ -27,6 +27,7 @@ argument ``flat_threshold`` in the :class:`~pyprep.NoisyChannels` method
 :meth:`find_bad_by_nan_flat()`.
 However, the default value remains the same as in MATLAB PREP: ``1e-15`` volts or 1e-9 microvolts.
 
+
 Differences in Signal Detrending
 --------------------------------
 
