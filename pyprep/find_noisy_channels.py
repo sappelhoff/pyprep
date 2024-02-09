@@ -238,7 +238,7 @@ class NoisyChannels:
         ----------
         flat_threshold : float, optional
             The lowest standard deviation or MAD value for a channel to be
-            considered bad-by-flat. Defaults to ``1e-15`` (corresponds to
+            considered bad-by-flat. Defaults to ``1e-15`` volts (corresponds to
             10e-10 µV in MATLAB PREP).
         """
         # Get all EEG channels from original copy of data
