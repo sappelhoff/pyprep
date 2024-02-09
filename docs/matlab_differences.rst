@@ -18,6 +18,15 @@ PREP's internal math.
     :depth: 3
 
 
+Differences in ``find_bad_by_nan_flat``
+---------------------------------------
+
+Unlike in MATLAB PREP, PyPREP allows editing the threshold value for a channel
+to be considered 'bad-by-flat' by modifying the argument ``flat_threshold``
+in the method :meth:`~pyprep.NoisyChannels.find_bad_by_nan_flat`.
+However, the default value remains the same as in MATLAB PREP: ``1e-15`` volts
+(that is, 1e-9 microvolts).
+
 Differences in Signal Detrending
 --------------------------------
 
