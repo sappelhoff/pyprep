@@ -182,7 +182,7 @@ def _eeglab_create_highpass(cutoff, srate):
     N = order + 1
     filt = np.zeros(N)
     filt[N // 2] = 1
-    filt -= firwin(N, transition, window="hamming", nyq=1)
+    filt -= firwin(N, transition, window="hamming")
     return filt
 
 
