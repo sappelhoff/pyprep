@@ -76,7 +76,7 @@ def _mat_quantile(arr, q, axis=None):
     # Sort the array in ascending order along the given axis (any NaNs go to the end)
     # Return NaN if array is empty.
     if len(arr) == 0:
-        return np.NaN
+        return np.nan
     arr_sorted = np.sort(arr, axis=axis)
 
     # Ensure array is either 1D or 2D

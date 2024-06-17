@@ -64,7 +64,7 @@ def test_mat_quantile_iqr():
 
     # Add NaNs to test data
     tst_nan = tst.copy()
-    tst_nan[0, :] = np.NaN
+    tst_nan[0, :] = np.nan
 
     # Create arrays containing MATLAB results for NaN test case
     quantile_expected = np.asarray([0.9712, 0.9880, 0.9807])
