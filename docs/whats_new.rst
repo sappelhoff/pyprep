@@ -219,7 +219,7 @@ Changelog
 - Initial commit: 2018-04-12
 - Miscellaneous changes
 
-.. _Stefan Appelhoff: http://stefanappelhoff.com/
+.. _Stefan Appelhoff: https://stefanappelhoff.com/
 .. _Aamna Lawrence: https://github.com/AamnaLawrence
 .. _Adam Li: https://github.com/adam2392/
 .. _Christian O'Reilly: https://github.com/christian-oreilly

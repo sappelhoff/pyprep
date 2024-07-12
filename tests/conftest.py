@@ -77,7 +77,7 @@ def make_random_mne_object(
     n_freq_comps=5,
     freq_range=[10, 60],
     scale=1e-6,
-    RNG=np.random.RandomState(1337),
+    RNG=np.random.default_rng(1337),
 ):
     """Make a random MNE object to use for testing.
 

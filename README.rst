@@ -16,7 +16,7 @@
 
 
 .. image:: https://readthedocs.org/projects/pyprep/badge/?version=latest
-   :target: http://pyprep.readthedocs.io/en/latest/?badge=latest
+   :target: https://pyprep.readthedocs.io/en/latest/?badge=latest
    :alt: Documentation Status
 
 
@@ -37,8 +37,8 @@ pyprep
 
 For documentation, see the:
 
-- `stable documentation <http://pyprep.readthedocs.io/en/stable/>`_
-- `latest (development) documentation <http://pyprep.readthedocs.io/en/latest/>`_
+- `stable documentation <https://pyprep.readthedocs.io/en/stable/>`_
+- `latest (development) documentation <https://pyprep.readthedocs.io/en/latest/>`_
 
 .. docs_readme_include_label
 
