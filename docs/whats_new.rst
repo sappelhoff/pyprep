@@ -34,7 +34,7 @@ Bug
 
 Code health
 ~~~~~~~~~~~
-- Make ``pyprep`` compatible with ``Numpy 2``, be `Stefan Appelhoff`_ (:gh:`148`)
+- Make ``pyprep`` compatible with ``numpy`` version 2, by `Stefan Appelhoff`_ (:gh:`148`)
 
 .. _changes_0_4_3:
 
