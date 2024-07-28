@@ -9,7 +9,6 @@ include versioneer.py
 graft docs
 graft examples
 graft pyprep
-graft tests
 
 
 ### Exclude

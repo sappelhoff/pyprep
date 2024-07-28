@@ -66,7 +66,7 @@ jobs:
 
     - name: Test with pytest
       run: |
-        pytest tests/ --cov=pyprep/ --cov-report=xml --cov-config=setup.cfg --verbose -s
+        pytest pyprep/ --cov=pyprep/ --cov-report=xml --cov-config=setup.cfg --verbose -s
 
     - name: Build docs
       run: |
