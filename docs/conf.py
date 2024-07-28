@@ -4,7 +4,6 @@ import sys
 from datetime import date
 
 import sphinx_bootstrap_theme
-import sphinx_gallery  # noqa: F401
 
 import pyprep
 
@@ -18,7 +17,7 @@ sys.path.append(os.path.abspath(os.path.join(curdir, "sphinxext")))
 # -- Project information -----------------------------------------------------
 project = "pyprep"
 _today = date.today()
-copyright = f"2018-{_today.year}, pyprep developers. Last updated {_today.isoformat()}"
+copyright = f"2018, pyprep developers. Last updated {_today.isoformat()}"
 author = "pyprep developers"
 
 # The short X.Y version
