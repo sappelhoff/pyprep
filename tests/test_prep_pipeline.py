@@ -223,7 +223,7 @@ def test_prep_pipeline_non_eeg(raw, montage):
         ch_types_non_eeg,
         times,
         sfreq,
-        RNG=np.random.RandomState(1337),
+        rng=np.random.default_rng(1337),
     )
 
     raw_copy.add_channels([raw_non_eeg], force_update_info=True)

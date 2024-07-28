@@ -77,7 +77,7 @@ def make_random_mne_object(
     n_freq_comps=5,
     freq_range=[10, 60],
     scale=1e-6,
-    RNG=np.random.default_rng(1337),
+    rng=np.random.default_rng(1337),
 ):
     """Make a random MNE object to use for testing.
 
@@ -98,8 +98,9 @@ def make_random_mne_object(
     scale : float
         Scaling factor applied to the signal in volts. For example 1e-6 to
         get microvolts.
-    RNG : np.random.RandomState
-        Random state seed.
+    rng : np.random.Generator
+        The random number generator object. Must be created with
+        ``np.random.default_rng``.
 
     Returns
     -------
@@ -120,8 +121,8 @@ def make_random_mne_object(
     high = freq_range[1]
     for chan in range(n_chans):
         # Each channel signal is a sum of random freq sine waves
-        for freq_i in range(n_freq_comps):
-            freq = RNG.randint(low, high, signal_len)
+        for _ in range(n_freq_comps):
+            freq = rng.integers(low, high, signal_len)
             signal[chan, :] += np.sin(2 * np.pi * times * freq)
 
     signal *= scale  # scale
