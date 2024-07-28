@@ -215,7 +215,7 @@ def _eeglab_fir_filter(data, filt):
     pad_len = min(group_delay, n_samples)
 
     # Prepare initial state of filter, using padding at start of data
-    start_pad_idx = np.zeros(pad_len, dtype=np.uint8)
+    start_pad_idx = np.zeros(pad_len, dtype=np.uint)
     start_padded = np.concatenate((data[:, start_pad_idx], data[:, :pad_len]), axis=1)
     zi_init = lfilter_zi(filt, 1) * np.take(start_padded, [0], axis=0)
     _, zi = lfilter(filt, 1, start_padded, axis=1, zi=zi_init)
@@ -232,7 +232,7 @@ def _eeglab_fir_filter(data, filt):
         )
 
     # Finish filtering data, using padding at end to calculate final values
-    end_pad_idx = np.zeros(pad_len, dtype=np.uint8) + (n_samples - 1)
+    end_pad_idx = np.zeros(pad_len, dtype=np.uint) + (n_samples - 1)
     end, _ = lfilter(filt, 1, data[:, end_pad_idx], axis=1, zi=zi)
     out[:, (n_samples - pad_len) :] = end[:, (group_delay - pad_len) :]
 
