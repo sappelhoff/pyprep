@@ -170,5 +170,5 @@ def runline(y, n, dn):
         (np.multiply(np.arange(n + 1, n + npts + 1), a) + b), (npts, 1)
     )
     for i in range(0, len(y_line)):
-        y[i] = y[i] - y_line[i]
+        y[i] = y[i] - y_line[i, 0]
     return y
