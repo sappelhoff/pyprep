@@ -1,7 +1,6 @@
 """Test various helper functions."""
 import numpy as np
 import pytest
-from numpy.random import RandomState
 
 from pyprep.utils import (
     _correlate_arrays,
@@ -64,7 +63,7 @@ def test_mat_quantile_iqr():
 
     # Add NaNs to test data
     tst_nan = tst.copy()
-    tst_nan[0, :] = np.NaN
+    tst_nan[0, :] = np.nan
 
     # Create arrays containing MATLAB results for NaN test case
     quantile_expected = np.asarray([0.9712, 0.9880, 0.9807])
@@ -91,7 +90,7 @@ def test_mat_quantile_iqr():
 def test_get_random_subset():
     """Test the function for getting random channel subsets."""
     # Generate test data
-    rng = RandomState(435656)
+    rng = np.random.RandomState(435656)
     chans = range(1, 61)
 
     # Compare random subset equivalence with MATLAB
