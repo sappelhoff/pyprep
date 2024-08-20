@@ -1,3 +1,4 @@
+git+git://github.com/autoreject/autoreject.git@master#egg=autoreject
 black
 check-manifest
 flake8
