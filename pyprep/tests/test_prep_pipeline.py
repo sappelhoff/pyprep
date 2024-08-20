@@ -1,6 +1,5 @@
 """Test the full PREP pipeline."""
 import matplotlib.pyplot as plt
-import mne
 import numpy as np
 import pytest
 import scipy.io as sio
@@ -13,7 +12,7 @@ from .conftest import make_random_mne_object
 @pytest.mark.usefixtures("raw", "montage")
 def test_prep_pipeline(raw, montage):
     """Test prep pipeline."""
-    eeg_index = mne.pick_types(raw.info, eeg=True, eog=False, meg=False)
+    eeg_index = raw.pick(picks="eeg")
     raw_copy = raw.copy()
     ch_names = raw_copy.info["ch_names"]
     ch_names_eeg = list(np.asarray(ch_names)[eeg_index])
@@ -254,7 +253,7 @@ def test_prep_pipeline_non_eeg(raw, montage):
 @pytest.mark.usefixtures("raw", "montage")
 def test_prep_pipeline_filter_kwargs(raw, montage):
     """Test prep pipeline with filter kwargs."""
-    eeg_index = mne.pick_types(raw.info, eeg=True, eog=False, meg=False)
+    eeg_index = raw.pick(picks="eeg")
     raw_copy = raw.copy()
     ch_names = raw_copy.info["ch_names"]
     ch_names_eeg = list(np.asarray(ch_names)[eeg_index])

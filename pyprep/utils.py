@@ -2,7 +2,7 @@
 import math
 from cmath import sqrt
 
-import mne
+# import mne
 import numpy as np
 import scipy.interpolate
 from mne.surface import _normalize_vectors
@@ -355,8 +355,8 @@ def _eeglab_interpolate_bads(raw):
 
     """
     # Get the indices of good and bad EEG channels
-    eeg_chans = mne.pick_types(raw.info, eeg=True, exclude=[])
-    good_idx = mne.pick_types(raw.info, eeg=True, exclude="bads")
+    eeg_chans = raw.pick(picks="eeg", exclude=[])
+    good_idx = raw.pick(picks="eeg", exclude="bads")
     bad_idx = sorted(_set_diff(eeg_chans, good_idx))
 
     # Get the spatial coordinates of the good and bad electrodes
