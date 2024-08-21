@@ -8,6 +8,50 @@ import pytest
 from pyprep.reference import Reference
 
 
+@pytest.mark.usefixtures("raw_clean")
+def test_reference_no_bad_channels(raw_clean):
+    """Test robust reference with no bad channels."""
+    ch_names = raw_clean.info["ch_names"]
+    params = {"ref_chs": ch_names, "reref_chs": ch_names}
+
+    # Mock NoisyChannels to return no bad channels
+    with mock.patch("pyprep.NoisyChannels.get_bads", return_value={"bad_all": []}):
+        reference = Reference(raw_clean, params, ransac=False)
+        reference.perform_reference()
+
+    assert len(reference.noisy_channels["bad_all"]) == 0
+    assert reference.reference_signal is not None
+
+
+@pytest.mark.usefixtures("raw_clean")
+def test_reference_max_iterations(raw_clean):
+    """Test robust reference to ensure it respects max_iterations."""
+    ch_names = raw_clean.info["ch_names"]
+    params = {"ref_chs": ch_names, "reref_chs": ch_names}
+
+    with mock.patch("pyprep.NoisyChannels.find_all_bads", return_value=True):
+        reference = Reference(raw_clean, params, ransac=False)
+        # Force the loop to iterate the maximum number of times
+        reference.robust_reference(max_iterations=1)
+
+    # Check that the reference_signal was updated and no errors occurred
+    assert reference.reference_signal is not None
+
+
+@pytest.mark.usefixtures("raw_clean")
+def test_reference_matlab_strict(raw_clean):
+    """Test robust reference with matlab_strict set to True and False."""
+    ch_names = raw_clean.info["ch_names"]
+    params = {"ref_chs": ch_names, "reref_chs": ch_names}
+
+    for strict in [True, False]:
+        reference = Reference(raw_clean, params, ransac=False, matlab_strict=strict)
+        reference.perform_reference()
+
+        assert reference.reference_signal is not None
+        assert isinstance(reference.noisy_channels, dict)
+
+
 @pytest.mark.usefixtures("raw", "montage")
 def test_basic_input(raw, montage):
     """Test Reference output data type."""
