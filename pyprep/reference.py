@@ -197,14 +197,14 @@ class Reference:
             after referencing.
         reference_signal: np.ndarray, shape(n, )
             Estimation of the 'true' signal mean
-
         """
+        # Copy and detrend the data
         raw = self.raw.copy()
         raw._data = removeTrend(
             raw.get_data(), self.sfreq, matlab_strict=self.matlab_strict
         )
 
-        # Determine unusable channels and remove them from the reference channels
+        # Detect initial noisy channels
         noisy_detector = NoisyChannels(
             raw,
             do_detrend=False,
@@ -214,16 +214,16 @@ class Reference:
         noisy_detector.find_all_bads(**self.ransac_settings)
         self.noisy_channels_original = noisy_detector.get_bads(as_dict=True)
         self._extra_info["initial_bad"] = noisy_detector._extra_info
-        logger.info("Bad channels: {}".format(self.noisy_channels_original))
+        logger.info(f"Initial bad channels: {self.noisy_channels_original}")
 
-        # Determine channels to use/exclude from initial reference estimation
+        # Determine channels to exclude from reference estimation
         self.unusable_channels = _union(
             noisy_detector.bad_by_nan + noisy_detector.bad_by_flat,
             noisy_detector.bad_by_SNR,
         )
         reference_channels = _set_diff(self.reference_channels, self.unusable_channels)
 
-        # Initialize channels to permanently flag as bad during referencing
+        # Initialize structure to store noisy channels
         noisy = {
             "bad_by_nan": noisy_detector.bad_by_nan,
             "bad_by_flat": noisy_detector.bad_by_flat,
@@ -236,84 +236,75 @@ class Reference:
             "bad_all": [],
         }
 
-        # Get initial estimate of the reference by the specified method
-        signal = raw.get_data()
+        # Get initial reference signal
         self.reference_signal = np.nanmedian(
             raw.get_data(picks=reference_channels), axis=0
         )
         reference_index = [self.ch_names_eeg.index(ch) for ch in reference_channels]
         signal_tmp = self.remove_reference(
-            signal, self.reference_signal, reference_index
+            raw.get_data(), self.reference_signal, reference_index
         )
 
-        # Remove reference from signal, iteratively interpolating bad channels
-        raw_tmp = raw.copy()
+        # Iteratively update the reference signal and noisy channels
         iterations = 0
         previous_bads = set()
+        raw_tmp = raw.copy()
 
-        while True:
+        while iterations < max_iterations:
             raw_tmp._data = signal_tmp
+
+            # Detect noisy channels
             noisy_detector = NoisyChannels(
                 raw_tmp,
                 do_detrend=False,
                 random_state=self.random_state,
                 matlab_strict=self.matlab_strict,
             )
-            # Detrend applied at the beginning of the function.
-
-            # Detect all currently bad channels
             noisy_detector.find_all_bads(**self.ransac_settings)
             noisy_new = noisy_detector.get_bads(as_dict=True)
 
-            # Specify bad channel types to ignore when updating noisy channels
-            # NOTE: MATLAB PREP ignores dropout channels, possibly by mistake?
-            # see: https://github.com/VisLab/EEG-Clean-Tools/issues/28
-            ignore = ["bad_by_SNR", "bad_all"]
-            if self.matlab_strict:
-                ignore += ["bad_by_dropout"]
-
-            # Update set of all noisy channels detected so far with any new ones
+            # Update noisy channels, excluding certain types if needed
             bad_chans = set()
-            for bad_type in noisy_new.keys():
-                noisy[bad_type] = _union(noisy[bad_type], noisy_new[bad_type])
-                if bad_type not in ignore:
+            for bad_type, channels in noisy_new.items():
+                noisy[bad_type] = _union(noisy[bad_type], channels)
+                if bad_type not in {"bad_by_SNR", "bad_all"} or not self.matlab_strict:
                     bad_chans.update(noisy[bad_type])
+
             noisy["bad_all"] = list(bad_chans)
-            logger.info("Bad channels: {}".format(noisy))
+            logger.info(f"Updated bad channels: {noisy}")
 
-            if (
-                iterations > 1
-                and (len(bad_chans) == 0 or bad_chans == previous_bads)
-                or iterations > max_iterations
-            ):
-                logger.info("Robust reference done")
-                self.noisy_channels = noisy
+            # Stop if no new bad channels or maximum iterations reached
+            if bad_chans == previous_bads or len(bad_chans) == 0:
+                logger.info("Robust reference completed.")
                 break
-            previous_bads = bad_chans.copy()
 
-            if raw_tmp.info["nchan"] - len(bad_chans) < 2:
+            if len(bad_chans) >= raw_tmp.info["nchan"] - 2:
                 raise ValueError(
                     "RobustReference:TooManyBad "
-                    "Could not perform a robust reference -- not enough good channels"
+                    "Not enough good channels left to perform robust referencing."
                 )
 
-            if len(bad_chans) > 0:
-                raw_tmp._data = signal.copy()
-                raw_tmp.info["bads"] = list(bad_chans)
-                if self.matlab_strict:
-                    _eeglab_interpolate_bads(raw_tmp)
-                else:
-                    raw_tmp.interpolate_bads()
+            # Interpolate bad channels
+            raw_tmp._data = raw.get_data().copy()
+            raw_tmp.info["bads"] = list(bad_chans)
+            if self.matlab_strict:
+                _eeglab_interpolate_bads(raw_tmp)
+            else:
+                raw_tmp.interpolate_bads()
 
+            # Update the reference signal
             self.reference_signal = np.nanmean(
                 raw_tmp.get_data(picks=reference_channels), axis=0
             )
-
             signal_tmp = self.remove_reference(
-                signal, self.reference_signal, reference_index
+                raw.get_data(), self.reference_signal, reference_index
             )
-            iterations = iterations + 1
-            logger.info("Iterations: {}".format(iterations))
+
+            iterations += 1
+            logger.info(f"Iteration {iterations} completed.")
+
+        # Store the final set of noisy channels
+        self.noisy_channels = noisy
 
         return self.noisy_channels, self.reference_signal
 

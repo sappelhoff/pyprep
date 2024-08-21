@@ -5,7 +5,6 @@ from mne.utils import check_random_state
 from pyprep.find_noisy_channels import NoisyChannels
 from pyprep.reference import Reference
 from pyprep.removeTrend import removeTrend
-from pyprep.utils import _set_diff, _union  # noqa: F401
 
 
 class PrepPipeline:

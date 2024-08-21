@@ -150,16 +150,18 @@ def pyprep_reference(matprep_artifacts):
     right before MATLAB PREP calls ``performReference``. As such, the results
     of these tests will not be affected by any differences in the CleanLine
     implementations of MATLAB PREP and PyPREP.
-
     """
     # Import post-CleanLine MATLAB PREP data
     setfile_path = matprep_artifacts["3_matprep_cleanline"]
     matprep_set = mne.io.read_raw_eeglab(setfile_path, preload=True)
     ch_names = matprep_set.info["ch_names"]
 
+    # Ensure that ch_names is a 1D list or array
+    ch_names = np.array(ch_names, dtype=str)
+
     # Run robust referencing on MATLAB data and extract internal noisy info
     matprep_seed = 435656
-    params = {"ref_chs": ch_names, "reref_chs": ch_names}
+    params = {"ref_chs": ch_names.tolist(), "reref_chs": ch_names.tolist()}
     pyprep_reref = Reference(
         matprep_set, params, random_state=matprep_seed, matlab_strict=True
     )
@@ -386,8 +388,8 @@ class TestCompareRobustReference(object):
         win_size = 500  # window of samples to check
 
         # Compare signals at start of recording
-        pyprep_start = pyprep_reference.raw.get_data()[:, win_size]
-        matprep_start = matprep_reference.get_data()[:, win_size]
+        pyprep_start = pyprep_reference.raw.get_data()[:, :win_size]
+        matprep_start = matprep_reference.get_data()[:, :win_size]
         assert np.allclose(pyprep_start, matprep_start)
 
         # Compare signals at end of recording

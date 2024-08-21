@@ -1,8 +1,8 @@
 """Module contains frequently used functions dealing with channel lists."""
+import logging
 import math
 from cmath import sqrt
 
-# import mne
 import numpy as np
 import scipy.interpolate
 from mne.surface import _normalize_vectors
@@ -10,6 +10,8 @@ from numpy.polynomial.legendre import legval
 from psutil import virtual_memory
 from scipy import linalg
 from scipy.signal import firwin, lfilter, lfilter_zi
+
+logger = logging.getLogger(__name__)
 
 
 def _union(list1, list2):
@@ -352,28 +354,33 @@ def _eeglab_interpolate_bads(raw):
     appears to be loosely based on the same general Perrin et al. (1989) method
     as MNE's interpolation, but there are several quirks with the implementation
     that cause it to produce fairly different numbers.
-
     """
-    # Get the indices of good and bad EEG channels
-    eeg_chans = raw.pick(picks="eeg", exclude=[])
-    good_idx = raw.pick(picks="eeg", exclude="bads")
-    bad_idx = sorted(_set_diff(eeg_chans, good_idx))
+    # Get the indices of EEG channels
+    eeg_chans = raw.copy().pick(picks="eeg", exclude=[]).ch_names
+    good_chans = raw.copy().pick(picks="eeg", exclude="bads").ch_names
+
+    # Determine bad channels by comparing all EEG channels with the good ones
+    bad_chans = sorted(_set_diff(eeg_chans, good_chans))
+
+    if not bad_chans:
+        logger.info("No bad channels to interpolate.")
+        return
 
     # Get the spatial coordinates of the good and bad electrodes
     elec_pos = raw._get_channel_positions(picks=eeg_chans)
-    pos_good = elec_pos[good_idx, :].copy()
-    pos_bad = elec_pos[bad_idx, :].copy()
+    pos_good = elec_pos[[eeg_chans.index(ch) for ch in good_chans], :]
+    pos_bad = elec_pos[[eeg_chans.index(ch) for ch in bad_chans], :]
+
+    # Normalize the electrode positions
     _normalize_vectors(pos_good)
     _normalize_vectors(pos_bad)
 
-    # Interpolate bad channels
-    interp = _eeglab_interpolate(raw.get_data()[good_idx, :], pos_good, pos_bad)
-    raw._data[bad_idx, :] = interp
+    # Interpolate the bad channels
+    interp_data = _eeglab_interpolate(raw.get_data(picks=good_chans), pos_good, pos_bad)
+    raw._data[[raw.ch_names.index(ch) for ch in bad_chans], :] = interp_data
 
-    # Clear all bad EEG channels
-    eeg_bad_names = [raw.info["ch_names"][i] for i in bad_idx]
-    bads_non_eeg = _set_diff(raw.info["bads"], eeg_bad_names)
-    raw.info["bads"] = bads_non_eeg
+    # Remove bad EEG channels from the list of bads in raw.info
+    raw.info["bads"] = _set_diff(raw.info["bads"], bad_chans)
 
 
 def _get_random_subset(x, size, rand_state):
