@@ -1,16 +1,43 @@
 """Test various helper functions."""
+import logging
+
+import mne
 import numpy as np
 import pytest
 
 from pyprep.utils import (
     _correlate_arrays,
     _eeglab_create_highpass,
+    _eeglab_interpolate_bads,
     _get_random_subset,
     _mad,
     _mat_iqr,
     _mat_quantile,
     _mat_round,
 )
+
+
+def test_eeglab_interpolate_bads_no_bad_channels(caplog):
+    """Test _eeglab_interpolate_bads when no bad channels are present."""
+    # Create a Raw object with no bad channels
+    data = np.random.randn(64, 1000)  # 64 channels, 1000 samples
+    info = mne.create_info(
+        ch_names=[f"EEG {i}" for i in range(64)], sfreq=1000, ch_types="eeg"
+    )
+    raw = mne.io.RawArray(data, info)
+
+    # Ensure there are no bad channels
+    raw.info["bads"] = []
+
+    # Use caplog to capture the logging output
+    with caplog.at_level(logging.INFO):
+        _eeglab_interpolate_bads(raw)
+
+    # Assert that the appropriate log message was emitted
+    assert "No bad channels to interpolate." in caplog.text
+
+    # Verify that the function exits early without modifying the data
+    assert raw.info["bads"] == []
 
 
 def test_mat_round():
