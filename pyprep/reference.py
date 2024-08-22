@@ -95,38 +95,25 @@ class Reference:
         self.matlab_strict = matlab_strict
 
     def perform_reference(self, max_iterations=4):
-        """Estimate the true signal mean and interpolate bad channels.
-
-        Parameters
-        ----------
-        max_iterations : int, optional
-            The maximum number of iterations of noisy channel removal to perform
-            during robust referencing. Defaults to ``4``.
-
-        This function implements the functionality of the `performReference` function
-        as part of the PREP pipeline on mne raw object.
-
-        Notes
-        -----
-        This function calls ``robust_reference`` first.
-        Currently this function only implements the functionality of default
-        settings, i.e., ``doRobustPost``.
-
-        """
+        """Estimate the true signal mean and interpolate bad channels."""
         # Phase 1: Estimate the true signal mean with robust referencing
         self.robust_reference(max_iterations)
-        # If we interpolate the raw here we would be interpolating
-        # more than what we later actually account for (in interpolated channels).
+
+        # Create a copy of raw data to estimate reference signal
         dummy = self.raw.copy()
         dummy.info["bads"] = self.noisy_channels["bad_all"]
+
         if self.matlab_strict:
             _eeglab_interpolate_bads(dummy)
         else:
             dummy.interpolate_bads()
+
+        # Calculate the reference signal
         self.reference_signal = np.nanmean(
             dummy.get_data(picks=self.reference_channels), axis=0
         )
         del dummy
+
         rereferenced_index = [
             self.ch_names_eeg.index(ch) for ch in self.rereferenced_channels
         ]
@@ -141,18 +128,31 @@ class Reference:
         )
         noisy_detector.find_all_bads(**self.ransac_settings)
 
-        # Record Noisy channels and EEG before interpolation
+        # Record noisy channels and EEG before interpolation
         self.bad_before_interpolation = noisy_detector.get_bads(verbose=True)
         self.EEG_before_interpolation = self.EEG.copy()
         self.noisy_channels_before_interpolation = noisy_detector.get_bads(as_dict=True)
         self._extra_info["interpolated"] = noisy_detector._extra_info
 
-        bad_channels = _union(self.bad_before_interpolation, self.unusable_channels)
-        self.raw.info["bads"] = bad_channels
+        # Handle both cases: list or dict
+        if isinstance(self.bad_before_interpolation, dict):
+            bad_channels_from_dict = self.bad_before_interpolation.get("bad_all", [])
+        else:
+            bad_channels_from_dict = self.bad_before_interpolation
+
+        # Ensure 'bads' is a list of channel names
+        bad_channels = _union(bad_channels_from_dict, self.unusable_channels)
+        valid_bad_channels = [
+            ch for ch in bad_channels if ch in self.raw.info["ch_names"]
+        ]
+        self.raw.info["bads"] = valid_bad_channels
+
         if self.matlab_strict:
             _eeglab_interpolate_bads(self.raw)
         else:
             self.raw.interpolate_bads()
+
+        # Correct the reference signal after interpolation
         reference_correct = np.nanmean(
             self.raw.get_data(picks=self.reference_channels), axis=0
         )
@@ -160,19 +160,24 @@ class Reference:
         self.EEG = self.remove_reference(
             self.EEG, reference_correct, rereferenced_index
         )
-        # reference signal after interpolation
+
+        # Update the reference signal after interpolation
         self.reference_signal_new = self.reference_signal + reference_correct
+
         # MNE Raw object after interpolation
         self.raw._data = self.EEG
 
         # Still noisy channels after interpolation
-        self.interpolated_channels = bad_channels
+        self.interpolated_channels = valid_bad_channels
         noisy_detector = NoisyChannels(
             self.raw, random_state=self.random_state, matlab_strict=self.matlab_strict
         )
         noisy_detector.find_all_bads(**self.ransac_settings)
         self.still_noisy_channels = noisy_detector.get_bads()
-        self.raw.info["bads"] = self.still_noisy_channels
+        valid_still_noisy_channels = [
+            ch for ch in self.still_noisy_channels if ch in self.raw.info["ch_names"]
+        ]
+        self.raw.info["bads"] = valid_still_noisy_channels
         self.noisy_channels_after_interpolation = noisy_detector.get_bads(as_dict=True)
         self._extra_info["remaining_bad"] = noisy_detector._extra_info
 
