@@ -3,7 +3,7 @@
 # Metadata for citation of this software according to the CFF format (https://citation-file-format.github.io/)
 cff-version: 1.2.0
 title: 'PyPREP: A Python implementation of the preprocessing pipeline (PREP) for EEG data.'
-abstract: 'PyPrep is a Python library to facilitate preprocessing of EEG data. More information can be found at <a href=\"https://pyprep.readthedocs.io\">pyprep.readthedocs.io</a>.'
+abstract: 'PyPREP is a Python library to facilitate preprocessing of EEG data. More information can be found at <a href=\"https://pyprep.readthedocs.io\">pyprep.readthedocs.io</a>.'
 authors:
     - given-names: Stefan
       family-names: Appelhoff
@@ -93,7 +93,7 @@ references:
     doi: 10.3389/fninf.2015.00016
     issue: 16
     journal: "Frontiers in Neuroinformatics"
-    scope: "Cite this paper if you in addition to PyPrep, because it describes the original pipeline."
+    scope: "Cite this paper if you in addition to PyPREP, because it describes the original pipeline."
     title: "The PREP pipeline: standardized preprocessing for large-scale EEG analysis"
     type: article
     volume: 42
