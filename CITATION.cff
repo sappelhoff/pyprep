@@ -48,6 +48,9 @@ authors:
     - given-names: Nabil
       family-names: Alibou
       affiliation: 'Biotrial, Neuroscience Department, Rennes, France'
+    - given-names: Ayush
+      family-names: Agarwal
+      affiliation: 'Techno India University, India'
 type: software
 repository-code: 'https://github.com/sappelhoff/pyprep'
 license: MIT

@@ -10,6 +10,7 @@ from numpy.polynomial.legendre import legval
 from psutil import virtual_memory
 from scipy import linalg
 from scipy.signal import firwin, lfilter, lfilter_zi
+from scipy.stats import median_abs_deviation
 
 
 def _union(list1, list2):
@@ -487,11 +488,7 @@ def _mad(x, axis=None):
         raise ValueError(e.format(x.ndim))
 
     # Calculate the median absolute deviation from the median
-    med = np.median(x, axis=axis)
-    if axis == 1:
-        med = med.reshape(-1, 1)  # Transposes array to allow subtraction below
-    mad = np.median(np.abs(x - med), axis=axis)
-
+    mad = median_abs_deviation(x, axis=axis)
     return mad
 
 
