@@ -486,6 +486,7 @@ def _mad(x, axis=None):
     if x.ndim > 2:
         e = "Only 1D and 2D arrays are supported (input has {0} dimensions)"
         raise ValueError(e.format(x.ndim))
+
     # Calculate the median absolute deviation from the median
     mad = median_abs_deviation(x, axis=axis)
     return mad
