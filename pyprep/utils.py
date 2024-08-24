@@ -481,14 +481,14 @@ def _mad(x, axis=None):
         the MAD for each index along the specified axis.
 
     """
+    # Ensure array is either 1D or 2D
     x = np.asarray(x)
     if x.ndim > 2:
         e = "Only 1D and 2D arrays are supported (input has {0} dimensions)"
         raise ValueError(e.format(x.ndim))
-
-    # Calculate the MAD using SciPy
-    mad = median_abs_deviation(x, axis=axis, keepdims=True)
-    return mad.squeeze()  # Remove singleton dimensions if needed
+    # Calculate the median absolute deviation from the median
+    mad = median_abs_deviation(x, axis=axis)
+    return mad
 
 
 def _filter_design(N_order, amp, freq):
