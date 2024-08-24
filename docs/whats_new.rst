@@ -224,15 +224,4 @@ Changelog
 - Initial commit: 2018-04-12
 - Miscellaneous changes
 
-.. _Stefan Appelhoff: https://stefanappelhoff.com/
-.. _Aamna Lawrence: https://github.com/AamnaLawrence
-.. _Adam Li: https://github.com/adam2392/
-.. _Christian O'Reilly: https://github.com/christian-oreilly
-.. _Victor Xiang: https://github.com/Nick3151
-.. _Yorguin Mantilla: https://github.com/yjmantilla
-.. _Austin Hurst: https://github.com/a-hurst
-.. _Jonte Dancker: https://github.com/joDancker/
-.. _Mathieu Scheltienne: https://github.com/mscheltienne
-.. _Ole Bialas: https://github.com/OleBialas
-.. _Nabil Alibou: https://github.com/nabilalibou
-.. _Ayush Agarwal: https://github.com/Ayush-Devs
+.. include:: authors.rst
