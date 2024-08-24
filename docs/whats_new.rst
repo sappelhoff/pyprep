@@ -235,3 +235,4 @@ Changelog
 .. _Mathieu Scheltienne: https://github.com/mscheltienne
 .. _Ole Bialas: https://github.com/OleBialas
 .. _Nabil Alibou: https://github.com/nabilalibou
+.. _Ayush Agarwal: https://github.com/Ayush-Devs
