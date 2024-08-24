@@ -3,10 +3,11 @@ import mne
 import numpy as np
 from mne.utils import check_random_state, logger
 from scipy import signal
+from scipy.stats import median_abs_deviation
 
 from pyprep.ransac import find_bad_by_ransac
 from pyprep.removeTrend import removeTrend
-from pyprep.utils import _filter_design, _mad, _mat_iqr, _mat_quantile
+from pyprep.utils import _filter_design, _mat_iqr, _mat_quantile
 
 
 class NoisyChannels:
@@ -247,7 +248,7 @@ class NoisyChannels:
         nan_channels = self.ch_names_original[nan_channel_mask]
 
         # Detect channels with flat or extremely weak signals
-        flat_by_mad = _mad(EEGData, axis=1) < flat_threshold
+        flat_by_mad = median_abs_deviation(EEGData, axis=1) < flat_threshold
         flat_by_stdev = np.std(EEGData, axis=1) < flat_threshold
         flat_channel_mask = flat_by_mad | flat_by_stdev
         flat_channels = self.ch_names_original[flat_channel_mask]
@@ -336,8 +337,8 @@ class NoisyChannels:
         # < 50 Hz amplitude for each channel and get robust z-scores of values
         if self.sample_rate > 100:
             noisiness = np.divide(
-                _mad(self.EEGData - self.EEGFiltered, axis=1),
-                _mad(self.EEGFiltered, axis=1),
+                median_abs_deviation(self.EEGData - self.EEGFiltered, axis=1),
+                median_abs_deviation(self.EEGFiltered, axis=1),
             )
             noise_median = np.nanmedian(noisiness)
             noise_sd = np.median(np.abs(noisiness - noise_median)) * MAD_TO_SD
@@ -421,7 +422,7 @@ class NoisyChannels:
             channel_amplitudes[w, usable] = _mat_iqr(eeg_raw, axis=1) * IQR_TO_SD
 
             # Check for any channel dropouts (flat signal) within the window
-            eeg_amplitude = _mad(eeg_filtered, axis=1)
+            eeg_amplitude = median_abs_deviation(eeg_filtered, axis=1)
             dropout[w, usable] = eeg_amplitude == 0
 
             # Exclude any dropout chans from further calculations (avoids div-by-zero)
@@ -431,7 +432,7 @@ class NoisyChannels:
             eeg_amplitude = eeg_amplitude[eeg_amplitude > 0]
 
             # Get high-frequency noise ratios for the window
-            high_freq_amplitude = _mad(eeg_raw - eeg_filtered, axis=1)
+            high_freq_amplitude = median_abs_deviation(eeg_raw - eeg_filtered, axis=1)
             noiselevels[w, usable] = high_freq_amplitude / eeg_amplitude
 
             # Get inter-channel correlations for the window
