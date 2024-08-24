@@ -27,7 +27,7 @@ Version 0.5.0 (Unreleased)
 Changelog
 ~~~~~~~~~
 - :meth:`~pyprep.NoisyChannels.find_bad_by_nan_flat` now accepts a ``flat_threshold`` argument, by `Nabil Alibou`_ (:gh:`144`)
-- replaced an internal implementation of the MAD algorithm with :func:`scipy.stats.median_abs_deviation`, by `Ayush Agarwal`_ (:gh:`153`) and `Stefan Appelhoff`_ (:gh:`154`)
+- replaced an internal implementation of the MAD algorithm with :func:`scipy.stats.median_abs_deviation`, by `Ayush Agarwal`_ (:gh:`153`) and `Stefan Appelhoff`_ (:gh:`155`)
 
 Bug
 ~~~
