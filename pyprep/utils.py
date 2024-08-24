@@ -10,7 +10,6 @@ from numpy.polynomial.legendre import legval
 from psutil import virtual_memory
 from scipy import linalg
 from scipy.signal import firwin, lfilter, lfilter_zi
-from scipy.stats import median_abs_deviation
 
 
 def _union(list1, list2):
@@ -460,36 +459,6 @@ def _correlate_arrays(a, b, matlab_strict=False):
     else:
         n_chan = a.shape[0]
         return np.diag(np.corrcoef(a, b)[:n_chan, n_chan:])
-
-
-def _mad(x, axis=None):
-    """Calculate median absolute deviations from the median (MAD) for an array.
-
-    Parameters
-    ----------
-    x : np.ndarray
-        A 1-D or 2-D numeric array to summarize.
-    axis : {int, tuple of int, None}, optional
-        Axis along which MADs should be calculated. If ``None``, the MAD will
-        be calculated for the full input array. Defaults to ``None``.
-
-    Returns
-    -------
-    mad : scalar or np.ndarray
-        If no axis is specified, returns the MAD for the full input array as a
-        single numeric value. Otherwise, returns an ``np.ndarray`` containing
-        the MAD for each index along the specified axis.
-
-    """
-    # Ensure array is either 1D or 2D
-    x = np.asarray(x)
-    if x.ndim > 2:
-        e = "Only 1D and 2D arrays are supported (input has {0} dimensions)"
-        raise ValueError(e.format(x.ndim))
-
-    # Calculate the median absolute deviation from the median
-    mad = median_abs_deviation(x, axis=axis)
-    return mad
 
 
 def _filter_design(N_order, amp, freq):
