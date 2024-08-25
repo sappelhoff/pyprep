@@ -61,12 +61,11 @@ jobs:
       if: matrix.platform == 'ubuntu-latest'
       run: |
         flake8 --docstring-convention numpy .
-        check-manifest .
         pre-commit run --all-files || ( git status --short ; git diff ; exit 1 )
 
     - name: Test with pytest
-      run: |
-        pytest pyprep/ --cov=pyprep/ --cov-report=xml --cov-config=setup.cfg --verbose -s
+      # Options defined in pyproject.toml
+      run: pytest
 
     - name: Build docs
       run: |
