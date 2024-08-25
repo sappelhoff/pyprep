@@ -29,8 +29,7 @@ We use sample EEG data from Physionet EEG Motor Movement/Imagery Dataset:
 
 ###############################################################################
 # First we import what we need for this example.
-import os
-import pathlib
+from pathlib import Path
 
 import mne
 import numpy as np
@@ -52,13 +51,13 @@ mne.set_log_level("WARNING")
 fname_test_file = data_paths[0]
 
 # mat files for validation
-here = pathlib.Path("__file__").parent.absolute()
+here = Path("__file__").parent.absolute()
 
-fname_mat1 = os.path.join(here, "matlab_results", "EEG_raw.mat")
-fname_mat2 = os.path.join(here, "matlab_results", "EEGNew.mat")
-fname_mat3 = os.path.join(here, "matlab_results", "EEG.mat")
-fname_mat4 = os.path.join(here, "matlab_results", "EEGref.mat")
-fname_mat5 = os.path.join(here, "matlab_results", "EEGinterp.mat")
+fname_mat1 = here / "matlab_results" / "EEG_raw.mat"
+fname_mat2 = here / "matlab_results" / "EEGNew.mat"
+fname_mat3 = here / "matlab_results" / "EEG.mat"
+fname_mat4 = here / "matlab_results" / "EEGref.mat"
+fname_mat5 = here / "matlab_results" / "EEGinterp.mat"
 
 ###############################################################################
 # Load data and prepare it

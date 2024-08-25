@@ -32,7 +32,7 @@
    :target: https://zenodo.org/badge/latestdoi/129240824
    :alt: Zenodo archive
 
-pyprep
+PyPREP
 ======
 
 For documentation, see the:

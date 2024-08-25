@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "pyprep"
-description = "A Python implementation of the preprocessing pipeline (PREP) for EEG data."
+description = "PyPREP: A Python implementation of the preprocessing pipeline (PREP) for EEG data."
 dynamic = ["version"]
 authors = [{ name = "PyPREP developers" }]
 maintainers = [
@@ -54,10 +54,7 @@ dependencies = [
 # Dependencies for running the test infrastructure
 test = [
     "build",
-    "black",
-    "flake8",
-    "flake8-docstrings",
-    "flake8-pyproject",
+    "ruff",
     "isort",
     "matplotlib",
     "pytest",
@@ -116,35 +113,13 @@ addopts = """. --cov=pyprep/ --cov-report=xml --cov-config=pyproject.toml --verb
 filterwarnings = [
 ]
 
-[tool.black]
-extend-exclude = '''
-# A regex preceded with ^/ will apply only to files and directories
-# in the root of the project.
-(
-  matprep_artifacts
-)
-'''
-
-[tool.isort]
-profile="black"
-skip_glob = [
-    "examples/*",
-    "matprep_artifacts/*",
-]
-
-[tool.flake8]
-docstring-convention = "numpy"
-# Recommend matching the black line length (default 88),
-# rather than using the flake8 default of 79:
-max-line-length = 88
-extend-ignore = [
-  # See https://github.com/PyCQA/pycodestyle/issues/373
-  "E203",
-]
+[tool.ruff.lint]
+select = ["A", "D", "E", "F", "I", "UP", "W"]
+ignore = ["A002"]
 exclude = [
-  "*docs/_build/*",
-  "*docs/auto_examples/*",
-  "*build/lib*",
-  "examples/",
-  "*matprep_artifacts/*",
+    "__init__.py",
+    "matprep_artifacts/**"
 ]
+
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"

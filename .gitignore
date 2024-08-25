@@ -5,6 +5,7 @@
 /.pytest_*
 docs/generated
 docs/auto_examples
+.ruff_cache
 
 # Invisible system files
 .DS_Store
