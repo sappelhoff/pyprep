@@ -6,12 +6,12 @@ Authors
 Please see the ``authors`` section in the ``CITATION.cff`` file for authors
 who have contributed to this software across releases.
 
-.. _whats_new:
+.. _changelog:
 
-What's New
-==========
+Changelog
+=========
 
-Here we list a changelog of ``pyprep``.
+Here we list what's new in ``pyprep``.
 
 .. contents:: Contents
    :local:

@@ -14,11 +14,11 @@
 - [ ] the PR has been reviewed and all comments are resolved
 - [ ] all [CI][what-is-ci] checks pass
 - [ ] (if applicable): the PR description includes the phrase `closes #<issue-number>` to [automatically close an issue][auto-close-documentation]
-- [ ] (if applicable): bug fixes, new features, or [API][what-is-api] changes are documented in [whats_new.rst][whats-new-file]
-- [ ] (if applicable): new contributors have added themselves to the authors list in the `CITATION.cff` file
+- [ ] (if applicable): the changes are documented in the changelog [changelog.rst][changelog]
+- [ ] (if applicable): new contributors have added themselves to the authors list in the [`CITATION.cff`][citationcff] file
 
 
 [what-is-ci]: https://help.github.com/en/actions/building-and-testing-code-with-continuous-integration/about-continuous-integration
 [auto-close-documentation]: https://help.github.com/en/github/managing-your-work-on-github/linking-a-pull-request-to-an-issue#linking-a-pull-request-to-an-issue-using-a-keyword
-[what-is-api]: https://en.wikipedia.org/wiki/Application_programming_interface
-[whats-new-file]: https://github.com/sappelhoff/pyprep/blob/main/docs/whats_new.rst
+[changelog]: https://github.com/sappelhoff/pyprep/blob/main/docs/changelog.rst
+[citationcff]: https://github.com/sappelhoff/pyprep/blob/main/CITATION.cff

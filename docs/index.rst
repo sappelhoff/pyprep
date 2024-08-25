@@ -9,5 +9,5 @@ PyPREP
 
    Examples<examples>
    API<api>
-   Changelog<whats_new>
+   Changelog<changelog>
    Differences from PREP<matlab_differences>

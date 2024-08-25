@@ -139,7 +139,7 @@ Follow this workflow:
 
 1. go to your python environment for `pyprep`
 1. make sure all tests pass and the docs are built cleanly
-1. update `docs/whats_new.rst`, renaming the "current" headline to the new
+1. update `docs/changelog.rst`, renaming the "current" headline to the new
    version and updating the "Authors" section. "Authors" are all people
    who committed code or in other ways contributed to `pyprep` (e.g., by
    reviewing PRs, moderating discussions).
@@ -155,5 +155,5 @@ Follow this workflow:
 Then the release is done and main has to be prepared for development of the
 next release:
 
-1. add a "current" headline to `docs/whats_new.rst`
+1. add a "current" headline to `docs/changelog.rst`
 1. commit the changes and `git push` to main (or make a pull request)
