@@ -54,7 +54,7 @@ jobs:
     - name: Install MNE-Python (development version)
       if: matrix.mne-version == 'mne-main'
       run: |
-        pip install git+https://github.com/mne-tools/mne-python.git@main
+        pip install --upgrade https://github.com/mne-tools/mne-python/archive/refs/heads/main.zip
 
     - name: Check installed versions
       run: |

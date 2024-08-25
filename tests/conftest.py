@@ -1,5 +1,8 @@
 """Configure tests."""
 
+# Authors: The PyPREP developers
+# SPDX-License-Identifier: MIT
+
 import mne
 import numpy as np
 import pytest

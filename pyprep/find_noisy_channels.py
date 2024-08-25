@@ -1,5 +1,8 @@
 """finds bad channels."""
 
+# Authors: The PyPREP developers
+# SPDX-License-Identifier: MIT
+
 import mne
 import numpy as np
 from mne.utils import check_random_state, logger

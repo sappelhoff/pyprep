@@ -1,5 +1,8 @@
 """Test various helper functions."""
 
+# Authors: The PyPREP developers
+# SPDX-License-Identifier: MIT
+
 import numpy as np
 import pytest
 

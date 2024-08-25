@@ -1,5 +1,8 @@
 """RANSAC bad channel identification."""
 
+# Authors: The PyPREP developers
+# SPDX-License-Identifier: MIT
+
 import mne
 import numpy as np
 from mne.channels.interpolation import _make_interpolation_matrix

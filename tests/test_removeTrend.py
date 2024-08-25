@@ -1,5 +1,8 @@
 """Test remove trend."""
 
+# Authors: The PyPREP developers
+# SPDX-License-Identifier: MIT
+
 import numpy as np
 
 import pyprep.removeTrend as removeTrend

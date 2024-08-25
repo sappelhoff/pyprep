@@ -1,5 +1,8 @@
 """Module for PREP pipeline."""
 
+# Authors: The PyPREP developers
+# SPDX-License-Identifier: MIT
+
 import mne
 from mne.utils import check_random_state
 

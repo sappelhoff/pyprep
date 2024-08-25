@@ -1,5 +1,8 @@
 """Module contains frequently used functions dealing with channel lists."""
 
+# Authors: The PyPREP developers
+# SPDX-License-Identifier: MIT
+
 import math
 from cmath import sqrt
 

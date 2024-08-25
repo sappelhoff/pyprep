@@ -1,5 +1,8 @@
 """Test the full PREP pipeline."""
 
+# Authors: The PyPREP developers
+# SPDX-License-Identifier: MIT
+
 import matplotlib.pyplot as plt
 import mne
 import numpy as np

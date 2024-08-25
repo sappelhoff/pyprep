@@ -1,5 +1,8 @@
 """Compare PyPREP results to MATLAB PREP."""
 
+# Authors: The PyPREP developers
+# SPDX-License-Identifier: MIT
+
 from urllib.request import urlopen
 
 import mne

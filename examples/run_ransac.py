@@ -9,10 +9,8 @@ In this example we show how to run the RANSAC of ``pyprep``.
 .. currentmodule:: pyprep
 """  # noqa: D205 D400
 
-# Authors: Yorguin Mantilla <yjmantilla@gmail.com>
-#
-# License: MIT
-# Based On: use_noisy_module.py
+# Authors: The PyPREP developers
+# SPDX-License-Identifier: MIT
 
 ###############################################################################
 # First we import what we need for this example.

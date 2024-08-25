@@ -14,12 +14,8 @@ We use sample EEG data from Physionet EEG Motor Movement/Imagery Dataset:
 .. currentmodule:: pyprep
 """  # noqa: D205 D400
 
-# Authors: Aamna Lawrence <aamna.lawrence@gmail.com>
-#          Adam Li <adam2392@gmail.com>
-#          Victor Xiang <xiangliang3151@gmail.com>
-#
-# License: MIT
-#
+# Authors: The PyPREP developers
+# SPDX-License-Identifier: MIT
 
 ###############################################################################
 #

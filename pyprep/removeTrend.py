@@ -1,5 +1,8 @@
 """High-pass filter and locally detrend the EEG signal."""
 
+# Authors: The PyPREP developers
+# SPDX-License-Identifier: MIT
+
 import logging
 
 import mne

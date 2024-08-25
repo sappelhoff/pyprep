@@ -46,12 +46,6 @@ For documentation, see the:
 `Preprocessing Pipeline (PREP) <https://doi.org/10.3389/fninf.2015.00016>`_
 for EEG data, working with `MNE-Python <https://mne.tools>`_.
 
-**ALPHA SOFTWARE.**
-**This package is currently in its early stages of iteration.**
-**It may change both its internals or its user-facing API in the near future.**
-**Any feedback and ideas on how to improve either of these is welcome!**
-**Use this software at your own risk.**
-
 Installation
 ============
 
@@ -75,13 +69,12 @@ For installing the **latest (development)** version of ``pyprep``, call:
 
 .. code-block:: Text
 
-   pip install git+https://github.com/sappelhoff/pyprep.git@main
-
+   pip install --upgrade https://github.com/sappelhoff/pyprep/archive/refs/heads/main.zip
 
 Both the *stable* and the *latest* installation will additionally install
 all required dependencies automatically.
 The dependencies are defined in the ``pyproject.toml`` file under the
-``project.optional-dependencies`` section.
+``dependencies`` and ``project.optional-dependencies`` sections.
 
 Contributions
 =============
