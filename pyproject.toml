@@ -91,7 +91,7 @@ allow-direct-references = true # allow specifying URLs in our dependencies
 [tool.hatch.build]
 exclude = [
     "/.*",
-    "**/tests",
+    "tests/**",
     "/examples",
     "/docs",
     "/.github/**",
@@ -111,7 +111,7 @@ omit = ["*tests*"]
 exclude_lines = ["pragma: no cover", "if 0:", "if __name__ == .__main__.:"]
 
 [tool.pytest.ini_options]
-addopts = """pyprep/ --cov=pyprep/ --cov-report=xml --cov-config=pyproject.toml --verbose -s"""
+addopts = """. --cov=pyprep/ --cov-report=xml --cov-config=pyproject.toml --verbose -s"""
 filterwarnings = [
 ]
 
