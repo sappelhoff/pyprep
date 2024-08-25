@@ -1,7 +1,7 @@
 """Configure sphinx."""
 import os
 import sys
-from datetime import date
+from datetime import datetime
 
 import sphinx_bootstrap_theme
 
@@ -16,15 +16,13 @@ sys.path.append(os.path.abspath(os.path.join(curdir, "sphinxext")))
 
 # -- Project information -----------------------------------------------------
 project = "pyprep"
-_today = date.today()
-copyright = f"2018, pyprep developers. Last updated {_today.isoformat()}"
-author = "pyprep developers"
+author = "PyPREP developers"
+copyright = f"2018, {author}. Last updated {datetime.now().isoformat()}"
 
 # The short X.Y version
 version = pyprep.__version__
 # The full version, including alpha/beta/rc tags
 release = version
-
 
 # -- General configuration ---------------------------------------------------
 

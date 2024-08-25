@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 name = "pyprep"
 description = "A Python implementation of the preprocessing pipeline (PREP) for EEG data."
 dynamic = ["version"]
-authors = [{ name = "The PyPREP developers" }]
+authors = [{ name = "PyPREP developers" }]
 maintainers = [
     { name = "Stefan Appelhoff", email = "stefan.appelhoff@mailbox.org" },
 ]
@@ -67,16 +67,17 @@ test = [
 ]
 
 # Dependencies for building the documentation
-doc = [
+docs = [
     "matplotlib",
     "sphinx>3",
     "sphinx_bootstrap_theme",
     "sphinx_gallery",
     "sphinx-copybutton",
+    "numpydoc",
 ]
 
 # Dependencies for developer installations
-dev = ["pyprep[test,doc]"]
+dev = ["pyprep[test,docs]"]
 
 
 [project.urls]
