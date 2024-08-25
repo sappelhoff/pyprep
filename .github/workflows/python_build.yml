@@ -31,6 +31,9 @@ jobs:
         python -m pip install --upgrade build
 
     - uses: actions/checkout@v4
+      with:
+        fetch-tags: true
+        submodules: true
     - name: Build sdist
       run: python -m build --sdist
     - name: Install sdist
@@ -43,6 +46,9 @@ jobs:
       run: pip uninstall -y pyprep
 
     - uses: actions/checkout@v4
+      with:
+        fetch-tags: true
+        submodules: true
     - name: Build wheel
       run: python -m build --wheel
     - name: Install wheel

@@ -47,6 +47,38 @@ dependencies = [
     "psutil>=5.4.3"
 ]
 
+[project.optional-dependencies]
+# Variants with dependencies that will get installed on top of those listed unter
+# project.dependencies
+
+# Dependencies for running the test infrastructure
+test = [
+    "build",
+    "black",
+    "flake8",
+    "flake8-docstrings",
+    "flake8-pyproject",
+    "isort",
+    "matplotlib",
+    "pytest",
+    "pytest-cov",
+    "pytest-sugar",
+    "pre-commit",
+]
+
+# Dependencies for building the documentation
+doc = [
+    "matplotlib",
+    "sphinx>3",
+    "sphinx_bootstrap_theme",
+    "sphinx_gallery",
+    "sphinx-copybutton",
+]
+
+# Dependencies for developer installations
+dev = ["pyprep[test,doc]"]
+
+
 [project.urls]
 "Homepage" = "https://pyprep.readthedocs.io/en/latest"
 "Bug Tracker" = "https://github.com/sappelhoff/pyprep/issues/"
@@ -64,8 +96,7 @@ exclude = [
     "/docs",
     "/.github/**",
     "matprep_artifacts/**",
-    "matprep_artifacts",
-    "requirements-dev.txt",
+    "matprep_artifacts"
 ]
 
 [tool.hatch.version]

@@ -31,6 +31,9 @@ jobs:
       FORCE_COLOR: true
     steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-tags: true
+        submodules: true
 
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v5
@@ -40,13 +43,12 @@ jobs:
     - uses: actions/cache@v4
       with:
         path: ${{ env.pythonLocation }}
-        key: ${{ env.pythonLocation }}-${{ hashFiles('setup.cfg') }}-${{ hashFiles('requirements-dev.txt') }}
+        key: ${{ env.pythonLocation }}-${{ hashFiles('pyproject.toml') }}
 
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements-dev.txt
-        pip install -e .
+        pip install -e ".[dev]"
 
     - name: Install MNE-Python (development version)
       if: matrix.mne-version == 'mne-main'

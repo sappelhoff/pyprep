@@ -120,8 +120,8 @@ only few changes, this is often a practical solution.
 
 # Info about versioning
 
-The version of PyPREP is tracked in `pyprep/__init__.py`.
-We follow a semantic versioning scheme.
+We follow a [semantic versioning scheme](https://semver.org/).
+This is implemented via [hatch-vcs](https://github.com/ofek/hatch-vcs).
 
 # Info about docs
 

@@ -55,7 +55,7 @@ for EEG data, working with `MNE-Python <https://mne.tools>`_.
 Installation
 ============
 
-``pyprep`` requires Python version ``3.8`` or higher to run properly.
+``pyprep`` requires Python version ``3.9`` or higher to run properly.
 We recommend to run ``pyprep`` in a dedicated virtual environment
 (for example using `conda <https://docs.conda.io/en/latest/miniconda.html>`_).
 
@@ -80,8 +80,8 @@ For installing the **latest (development)** version of ``pyprep``, call:
 
 Both the *stable* and the *latest* installation will additionally install
 all required dependencies automatically.
-The dependencies are defined in the ``setup.cfg`` file under the
-``options.install_requires`` section.
+The dependencies are defined in the ``pyproject.toml`` file under the
+``project.optional-dependencies`` section.
 
 Contributions
 =============
@@ -104,9 +104,9 @@ Potential contributors should install ``pyprep`` in the following way:
 
    git clone https://github.com/<gh-username>/pyprep
    cd pyprep
-   pip install -r requirements-dev.txt
+   git fetch --tags --prune --prune-tags
+   pip install -e ".[dev]"
    pre-commit install
-   pip install -e .
 
 Citing
 ======
