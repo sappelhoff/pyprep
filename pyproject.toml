@@ -68,7 +68,7 @@ test = [
 docs = [
     "matplotlib",
     "sphinx>3",
-    "sphinx_bootstrap_theme",
+    "pydata-sphinx-theme",
     "sphinx_gallery",
     "sphinx-copybutton",
     "numpydoc",

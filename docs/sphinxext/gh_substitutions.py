@@ -7,6 +7,9 @@ https://doughellmann.com/blog/2010/05/09/defining-custom-roles-in-sphinx/
 
 """
 
+# Authors: The PyPREP developers
+# SPDX-License-Identifier: MIT
+
 from docutils.nodes import reference
 from docutils.parsers.rst.roles import set_classes
 

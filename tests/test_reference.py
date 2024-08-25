@@ -1,5 +1,8 @@
 """Test Robust Reference."""
 
+# Authors: The PyPREP developers
+# SPDX-License-Identifier: MITs
+
 from unittest import mock
 
 import mne

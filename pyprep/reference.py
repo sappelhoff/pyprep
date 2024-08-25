@@ -1,5 +1,8 @@
 """functions of referencing part of PREP."""
 
+# Authors: The PyPREP developers
+# SPDX-License-Identifier: MIT
+
 import logging
 
 import numpy as np

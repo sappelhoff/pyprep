@@ -105,7 +105,7 @@ After everything is resolved, you can again do `git push -f my_feature`.
 If you screw up **during** rebasing and you panic, you can do
 `git rebase --abort` and start again.
 
-### Rebasing ... panic mode (or "the easy way")
+### Rebasing ... panic mode
 
 If nothing helps and you just don't know how to resolve the issues and
 conflicts that arise during rebasing, just make a new branch:

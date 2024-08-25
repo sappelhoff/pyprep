@@ -1,9 +1,9 @@
-.. _general_examples:
+:orphan:
 
 Examples Gallery
 ================
 
-Here we show some exemplary use cases for pyprep.
+Here we show some exemplary use cases for PyPREP.
 
 .. contents:: Contents
    :local:

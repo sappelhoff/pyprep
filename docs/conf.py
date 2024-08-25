@@ -1,10 +1,13 @@
-"""Configure sphinx."""
+"""Configure Sphinx."""
+
+# Authors: The PyPREP developers
+# SPDX-License-Identifier: MIT
 
 import os
 import sys
 from datetime import datetime
 
-import sphinx_bootstrap_theme
+from sphinx.config import is_serializable
 
 import pyprep
 
@@ -41,9 +44,11 @@ extensions = [
     "sphinx_copybutton",
 ]
 
+# configure sphinx-copybutton
 copybutton_prompt_text = r">>> |\.\.\. "
 copybutton_prompt_is_regexp = True
 
+# configure numpydoc
 master_doc = "index"
 autosummary_generate = True
 numpydoc_show_class_members = False  # https://stackoverflow.com/a/34604043/5201771
@@ -71,30 +76,40 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 # see: https://sphinx-bootstrap-theme.readthedocs.io/en/latest/README.html
 # Clean up sidebar: Do not show "Source" link
 html_show_sourcelink = False
+html_copy_source = False
 
-html_theme = "bootstrap"
-html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
+html_theme = "pydata_sphinx_theme"
 
+# Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
+html_static_path = ["_static"]
+html_css_files = ["style.css"]
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
 html_theme_options = {
-    "navbar_title": "pyprep",
-    "bootswatch_theme": "flatly",
-    "navbar_sidebarrel": False,  # no "previous / next" navigation
-    "navbar_pagenav": False,  # no "Page" navigation in sidebar
-    "bootstrap_version": "3",
-    "navbar_links": [
-        ("Examples", "auto_examples/index"),
-        ("API", "api"),
-        ("What's new", "whats_new"),
-        ("Differences from PREP", "matlab_differences"),
-        ("GitHub", "https://github.com/sappelhoff/pyprep", True),
+    "icon_links": [
+        dict(
+            name="GitHub",
+            url="https://github.com/sappelhoff/pyprep",
+            icon="fab fa-github-square",
+        ),
     ],
+    "icon_links_label": "Quick Links",  # for screen reader
+    "use_edit_page_button": False,
+    "navigation_with_keys": False,
+    "show_toc_level": 1,
+    "header_links_before_dropdown": 6,
+    "navbar_end": ["theme-switcher", "navbar-icon-links"],
 }
 
+html_context = {
+    "default_mode": "auto",
+    "doc_path": "doc",
+}
+
+html_sidebars = {}
 
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {
@@ -116,3 +131,5 @@ sphinx_gallery_conf = {
     "filename_pattern": "^((?!sgskip).)*$",
     "backreferences_dir": "generated",
 }
+
+assert is_serializable(sphinx_gallery_conf)

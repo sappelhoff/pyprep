@@ -22,7 +22,7 @@ Here we list a changelog of ``pyprep``.
 .. _changes_0_5_0:
 
 Version 0.5.0 (Unreleased)
--------------------------
+--------------------------
 
 Changelog
 ~~~~~~~~~
