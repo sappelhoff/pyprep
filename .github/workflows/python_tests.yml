@@ -63,7 +63,6 @@ jobs:
     - name: Check formatting
       if: matrix.platform == 'ubuntu-latest'
       run: |
-        flake8 --docstring-convention numpy .
         pre-commit run --all-files || ( git status --short ; git diff ; exit 1 )
 
     - name: Test with pytest

@@ -54,6 +54,7 @@ dependencies = [
 # Dependencies for running the test infrastructure
 test = [
     "build",
+    "twine",
     "ruff",
     "isort",
     "matplotlib",

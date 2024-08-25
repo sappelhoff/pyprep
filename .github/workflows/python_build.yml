@@ -28,7 +28,7 @@ jobs:
     - name: Update pip et al.
       run: |
         python -m pip install --upgrade pip
-        python -m pip install --upgrade build
+        python -m pip install --upgrade build twine
 
     - uses: actions/checkout@v4
       with:
@@ -37,6 +37,8 @@ jobs:
         submodules: true
     - name: Build sdist
       run: python -m build --sdist
+    - name: Check sdist
+      run: twine check --strict dist/*
     - name: Install sdist
       run: pip install ./dist/pyprep-*
     - name: Clean up working directory
@@ -53,6 +55,8 @@ jobs:
         submodules: true
     - name: Build wheel
       run: python -m build --wheel
+    - name: Check wheel
+      run: twine check --strict dist/*
     - name: Install wheel
       run: pip install ./dist/pyprep-*.whl
     - name: Clean up working directory

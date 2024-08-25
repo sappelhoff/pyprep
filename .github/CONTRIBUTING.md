@@ -133,8 +133,7 @@ Admin credentials are needed to access the setup.
 
 - needs admin rights
 - we are using [semver](https://semver.org/) (see section on versioning)
-- we are using [GitHub Actions to deploy](./workflows/python_publish.yml)
-- PyPi credentials are stored as GitHub secrets
+- we are using [GitHub Actions to deploy](./workflows/release.yml)
 
 Follow this workflow:
 
