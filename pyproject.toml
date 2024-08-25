@@ -4,7 +4,5 @@ extend-exclude = '''
 # in the root of the project.
 (
   matprep_artifacts
-  versioneer.py
-  pyprep/_version.py
 )
 '''

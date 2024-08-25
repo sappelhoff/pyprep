@@ -120,24 +120,8 @@ only few changes, this is often a practical solution.
 
 # Info about versioning
 
-The versioning of `pyprep` is done with [versioneer](https://github.com/python-versioneer/python-versioneer).
-
-The following files are controlled by `versioneer` and should not be modified manually:
-
-- `./versioneer.py`
-- `./pyprep/_version.py`
-
-The same is true for the following lines in `./pyprep/__init__.py`:
-
-```Python
-from ._version import get_versions
-
-__version__ = get_versions()["version"]
-```
-
-To update the `versioneer` software, follow the instructions on their documentation page.
-For the day-to-day development of `pyprep`, no interaction with `versioneer` is neeeded,
-because the software picks up all information from the `git` commands.
+The version of PyPREP is tracked in `pyprep/__init__.py`.
+We follow a semantic versioning scheme.
 
 # Info about docs
 
