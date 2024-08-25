@@ -31,10 +31,10 @@ We use sample EEG data from Physionet EEG Motor Movement/Imagery Dataset:
 # First we import what we need for this example.
 from pathlib import Path
 
+import matplotlib.pyplot as plt
 import mne
 import numpy as np
 import scipy.io as sio
-import matplotlib.pyplot as plt
 
 from pyprep.prep_pipeline import PrepPipeline
 
@@ -103,9 +103,9 @@ prep.fit()
 #
 # You can check the detected bad channels in each step of PREP.
 
-print("Bad channels: {}".format(prep.interpolated_channels))
-print("Bad channels original: {}".format(prep.noisy_channels_original["bad_all"]))
-print("Bad channels after interpolation: {}".format(prep.still_noisy_channels))
+print(f"Bad channels: {prep.interpolated_channels}")
+print(f"Bad channels original: {prep.noisy_channels_original['bad_all']}")
+print(f"Bad channels after interpolation: {prep.still_noisy_channels}")
 
 # Matlab's results
 # ----------------
@@ -164,7 +164,7 @@ axs[0, 2].set_title("Difference", fontsize=14)
 axs[0, 1].set_title("Original EEG", fontsize=14)
 # axs[0, 0].set_ylabel('Channel Number', fontsize=14)
 cb = fig.colorbar(im, ax=axs, fraction=0.05, pad=0.04)
-cb.set_label("\u03BCVolt", fontsize=14)
+cb.set_label("\u03bcVolt", fontsize=14)
 
 EEG_new_matlab = sio.loadmat(fname_mat2)
 EEG_new_matlab = EEG_new_matlab["save_data"]
@@ -307,11 +307,11 @@ axs[4, 1].set_xlabel("Time(s)", fontsize=14)
 ###############################################################################
 # Mean square error of each step:
 
-print("Raw data MSE: {}".format(EEG_raw_mse))
-print("Filtered data MSE: {}".format(EEG_new_mse))
-print("Line-noise removed data MSE: {}".format(EEG_mse))
-print("Referenced data MSE: {}".format(EEG_ref_mse))
-print("Interpolated data MSE: {}".format(EEG_final_mse))
+print(f"Raw data MSE: {EEG_raw_mse}")
+print(f"Filtered data MSE: {EEG_new_mse}")
+print(f"Line-noise removed data MSE: {EEG_mse}")
+print(f"Referenced data MSE: {EEG_ref_mse}")
+print(f"Interpolated data MSE: {EEG_final_mse}")
 
 ###############################################################################
 # Discussion

@@ -1,4 +1,5 @@
 """finds bad channels."""
+
 import mne
 import numpy as np
 from mne.utils import check_random_state, logger

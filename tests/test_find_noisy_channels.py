@@ -1,4 +1,5 @@
 """Test the find_noisy_channels module."""
+
 import numpy as np
 import pytest
 

@@ -1,4 +1,5 @@
 """Test remove trend."""
+
 import numpy as np
 
 import pyprep.removeTrend as removeTrend

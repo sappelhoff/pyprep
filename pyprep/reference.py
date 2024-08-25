@@ -1,4 +1,5 @@
 """functions of referencing part of PREP."""
+
 import logging
 
 import numpy as np
@@ -214,7 +215,7 @@ class Reference:
         noisy_detector.find_all_bads(**self.ransac_settings)
         self.noisy_channels_original = noisy_detector.get_bads(as_dict=True)
         self._extra_info["initial_bad"] = noisy_detector._extra_info
-        logger.info("Bad channels: {}".format(self.noisy_channels_original))
+        logger.info(f"Bad channels: {self.noisy_channels_original}")
 
         # Determine channels to use/exclude from initial reference estimation
         self.unusable_channels = _union(
@@ -279,7 +280,7 @@ class Reference:
                 if bad_type not in ignore:
                     bad_chans.update(noisy[bad_type])
             noisy["bad_all"] = list(bad_chans)
-            logger.info("Bad channels: {}".format(noisy))
+            logger.info(f"Bad channels: {noisy}")
 
             if (
                 iterations > 1
@@ -313,7 +314,7 @@ class Reference:
                 signal, self.reference_signal, reference_index
             )
             iterations = iterations + 1
-            logger.info("Iterations: {}".format(iterations))
+            logger.info(f"Iterations: {iterations}")
 
         return self.noisy_channels, self.reference_signal
 
@@ -356,9 +357,7 @@ class Reference:
         else:
             if not isinstance(index, list):
                 raise TypeError(
-                    "RemoveReference: Expected type list, got {} instead".format(
-                        type(index)
-                    )
+                    f"RemoveReference: Expected type list, got {type(index)} instead"
                 )
             signal_referenced = signal.copy()
             signal_referenced[np.asarray(index), :] = (

@@ -1,4 +1,5 @@
 """Module for PREP pipeline."""
+
 import mne
 from mne.utils import check_random_state
 

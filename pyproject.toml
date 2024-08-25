@@ -113,13 +113,14 @@ addopts = """. --cov=pyprep/ --cov-report=xml --cov-config=pyproject.toml --verb
 filterwarnings = [
 ]
 
+[tool.ruff]
+extend-exclude = [
+    "matprep_artifacts/**"
+]
+
 [tool.ruff.lint]
 select = ["A", "D", "E", "F", "I", "UP", "W"]
 ignore = ["A002"]
-exclude = [
-    "__init__.py",
-    "matprep_artifacts/**"
-]
 
 [tool.ruff.lint.pydocstyle]
 convention = "numpy"

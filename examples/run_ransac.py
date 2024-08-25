@@ -16,10 +16,11 @@ In this example we show how to run the RANSAC of ``pyprep``.
 
 ###############################################################################
 # First we import what we need for this example.
-import numpy as np
-import mne
-from scipy import signal as signal
 from time import perf_counter
+
+import mne
+import numpy as np
+from scipy import signal as signal
 
 from pyprep.find_noisy_channels import NoisyChannels
 

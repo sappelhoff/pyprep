@@ -1,4 +1,5 @@
 """Configure tests."""
+
 import mne
 import numpy as np
 import pytest

@@ -1,4 +1,5 @@
 """Configure sphinx."""
+
 import os
 import sys
 from datetime import datetime
@@ -17,7 +18,7 @@ sys.path.append(os.path.abspath(os.path.join(curdir, "sphinxext")))
 # -- Project information -----------------------------------------------------
 project = "pyprep"
 author = "PyPREP developers"
-copyright = f"2018, {author}. Last updated {datetime.now().isoformat()}"
+copyright = f"2018, {author}. Last updated {datetime.now().isoformat()}"  # noqa: A001
 
 # The short X.Y version
 version = pyprep.__version__

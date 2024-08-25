@@ -1,4 +1,5 @@
 """Compare PyPREP results to MATLAB PREP."""
+
 from urllib.request import urlopen
 
 import mne
@@ -204,7 +205,7 @@ def test_compare_removeTrend(matprep_artifacts):
     assert np.allclose(actual[:, -win_size:], expected[:, -win_size:], equal_nan=True)
 
 
-class TestCompareNoisyChannels(object):
+class TestCompareNoisyChannels:
     """Compare the results of NoisyChannels to the equivalent MatPREP code.
 
     These comparisons use input data that's already had adaptive line noise
@@ -351,7 +352,7 @@ class TestCompareNoisyChannels(object):
         assert pyprep_bads_all == matprep_bads_all
 
 
-class TestCompareRobustReference(object):
+class TestCompareRobustReference:
     """Compare the results of Reference to the equivalent MatPREP code.
 
     These comparisons use input data that's already had adaptive line noise

@@ -1,4 +1,5 @@
 """Module contains frequently used functions dealing with channel lists."""
+
 import math
 from cmath import sqrt
 
@@ -81,8 +82,10 @@ def _mat_quantile(arr, q, axis=None):
 
     # Ensure array is either 1D or 2D
     if arr_sorted.ndim > 2:
-        e = "Only 1D and 2D arrays are supported (input has {0} dimensions)"
-        raise ValueError(e.format(arr_sorted.ndim))
+        raise ValueError(
+            "Only 1D and 2D arrays are supported "
+            f"(input has {arr_sorted.ndim} dimensions)"
+        )
 
     # Reshape data into a 2D array with the shape (num_axes, data_per_axis)
     if axis is None:
@@ -558,10 +561,9 @@ def _verify_free_ram(data, n_samples, n_channels, max_prop=0.95):
     if available_gb < needed_gb:
         ram_diff = needed_gb - available_gb
         raise MemoryError(
-            "For given data of shape {} and the requested"
-            " number of {} samples, {} GB of additional memory"
+            f"For given data of shape {data.shape} and the requested"
+            f" number of {n_samples} samples, {ram_diff} GB of additional memory"
             " would be needed. You could close other programs,"
             " downsample the data, or reduce the number"
             " of requested samples."
-            "".format(data.shape, n_samples, ram_diff)
         )

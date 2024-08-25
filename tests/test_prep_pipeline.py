@@ -1,4 +1,5 @@
 """Test the full PREP pipeline."""
+
 import matplotlib.pyplot as plt
 import mne
 import numpy as np
@@ -67,7 +68,7 @@ def test_prep_pipeline(raw, montage):
     # axs[0, 0].set_title('Original EEG', loc='left', fontsize=14)
     # axs[0, 0].set_ylabel('Channel Number', fontsize=14)
     cb = fig.colorbar(im, ax=axs, fraction=0.05, pad=0.04)
-    cb.set_label("\u03BCVolt", fontsize=14)
+    cb.set_label("\u03bcVolt", fontsize=14)
 
     EEG_new_matlab = sio.loadmat("./examples/matlab_results/EEGNew.mat")
     EEG_new_matlab = EEG_new_matlab["save_data"]

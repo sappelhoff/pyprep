@@ -1,4 +1,5 @@
 """High-pass filter and locally detrend the EEG signal."""
+
 import logging
 
 import mne

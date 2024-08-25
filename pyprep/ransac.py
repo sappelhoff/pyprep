@@ -1,4 +1,5 @@
 """RANSAC bad channel identification."""
+
 import mne
 import numpy as np
 from mne.channels.interpolation import _make_interpolation_matrix
@@ -125,8 +126,9 @@ def find_bad_by_ransac(
 
     # First, check that the argument types are valid
     if not isinstance(n_samples, int):
-        err = "Argument 'n_samples' must be an int (got {0})"
-        raise TypeError(err.format(type(n_samples).__name__))
+        raise TypeError(
+            f"Argument 'n_samples' must be an int (got {type(n_samples).__name__})"
+        )
 
     complete_chn_labs = np.asarray(complete_chn_labs)
 
@@ -144,13 +146,17 @@ def find_bad_by_ransac(
 
     if n_pred_chns <= 3:
         sample_pct = int(sample_prop * 100)
-        e = "Too few channels in the original data to reliably perform RANSAC "
-        e += "(minimum {0} for a sample size of {1}%)."
-        raise IOError(e.format(int(np.floor(4.0 / sample_prop)), sample_pct))
+        raise OSError(
+            "Too few channels in the original data to reliably perform RANSAC"
+            f"(minimum {int(np.floor(4.0 / sample_prop))} for a sample size "
+            f"of {sample_pct}%)."
+        )
     elif n_chans_good < (n_pred_chns + 1):
-        e = "Too many noisy channels in the data to reliably perform RANSAC "
-        e += "(only {0} good channels remaining, need at least {1})."
-        raise IOError(e.format(n_chans_good, n_pred_chns + 1))
+        raise OSError(
+            "Too many noisy channels in the data to reliably perform RANSAC "
+            f"(only {n_chans_good} good channels remaining, "
+            f"need at least {n_pred_chns + 1})."
+        )
 
     # Before running, make sure we have enough memory when using the
     # smallest possible chunk size

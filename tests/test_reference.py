@@ -1,4 +1,5 @@
 """Test Robust Reference."""
+
 from unittest import mock
 
 import mne
