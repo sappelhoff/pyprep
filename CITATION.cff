@@ -51,6 +51,9 @@ authors:
     - given-names: Ayush
       family-names: Agarwal
       affiliation: 'Techno India University, India'
+    - given-names: John
+      family-names: Veillette
+      affiliation: 'Department of Psychology, University of Chicago, Chicago, IL, USA'
 type: software
 repository-code: 'https://github.com/sappelhoff/pyprep'
 license: MIT
