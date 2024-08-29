@@ -10,3 +10,4 @@
 .. _Stefan Appelhoff: https://stefanappelhoff.com/
 .. _Victor Xiang: https://github.com/Nick3151
 .. _Yorguin Mantilla: https://github.com/yjmantilla
+.. _John Veillette: https://github.com/john-veillette
