@@ -83,7 +83,7 @@ class Reference:
         raw.load_data()
         self.raw = raw.copy()
         self.ch_names = self.raw.ch_names
-        self.raw.pick_types(eeg=True, eog=False, meg=False)
+        self.raw.pick_types(eeg=True, eog=False, meg=False, exclude = [])
         self.ch_names_eeg = self.raw.ch_names
         self.EEG = self.raw.get_data()
         self.reference_channels = params["ref_chs"]
@@ -97,6 +97,7 @@ class Reference:
         self.random_state = check_random_state(random_state)
         self._extra_info = {}
         self.matlab_strict = matlab_strict
+        self.bads_manual = raw.info["bads"]
 
     def perform_reference(self, max_iterations=4):
         """Estimate the true signal mean and interpolate bad channels.
@@ -149,6 +150,7 @@ class Reference:
         self.bad_before_interpolation = noisy_detector.get_bads(verbose=True)
         self.EEG_before_interpolation = self.EEG.copy()
         self.noisy_channels_before_interpolation = noisy_detector.get_bads(as_dict=True)
+        self.noisy_channels_before_interpolation['bad_manual'] = self.bads_manual
         self._extra_info["interpolated"] = noisy_detector._extra_info
 
         bad_channels = _union(self.bad_before_interpolation, self.unusable_channels)
@@ -223,7 +225,7 @@ class Reference:
         # Determine channels to use/exclude from initial reference estimation
         self.unusable_channels = _union(
             noisy_detector.bad_by_nan + noisy_detector.bad_by_flat,
-            noisy_detector.bad_by_SNR,
+            noisy_detector.bad_by_SNR + self.bads_manual,
         )
         reference_channels = _set_diff(self.reference_channels, self.unusable_channels)
 
@@ -237,6 +239,7 @@ class Reference:
             "bad_by_SNR": [],
             "bad_by_dropout": [],
             "bad_by_ransac": [],
+            "bad_manual": self.bads_manual,
             "bad_all": [],
         }
 
@@ -282,7 +285,8 @@ class Reference:
                 noisy[bad_type] = _union(noisy[bad_type], noisy_new[bad_type])
                 if bad_type not in ignore:
                     bad_chans.update(noisy[bad_type])
-            noisy["bad_all"] = list(bad_chans)
+            noisy["bad_manual"] = self.bads_manual
+            noisy["bad_all"] = list(bad_chans) + self.bads_manual
             logger.info(f"Bad channels: {noisy}")
 
             if (
