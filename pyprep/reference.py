@@ -83,7 +83,7 @@ class Reference:
         raw.load_data()
         self.raw = raw.copy()
         self.ch_names = self.raw.ch_names
-        self.raw.pick_types(eeg=True, eog=False, meg=False, exclude = [])
+        self.raw.pick_types(eeg=True, eog=False, meg=False, exclude=[])
         self.ch_names_eeg = self.raw.ch_names
         self.EEG = self.raw.get_data()
         self.reference_channels = params["ref_chs"]
@@ -150,7 +150,7 @@ class Reference:
         self.bad_before_interpolation = noisy_detector.get_bads(verbose=True)
         self.EEG_before_interpolation = self.EEG.copy()
         self.noisy_channels_before_interpolation = noisy_detector.get_bads(as_dict=True)
-        self.noisy_channels_before_interpolation['bad_manual'] = self.bads_manual
+        self.noisy_channels_before_interpolation["bad_manual"] = self.bads_manual
         self._extra_info["interpolated"] = noisy_detector._extra_info
 
         bad_channels = _union(self.bad_before_interpolation, self.unusable_channels)
