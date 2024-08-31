@@ -6,7 +6,6 @@
 import mne
 from mne.utils import check_random_state
 
-from pyprep.find_noisy_channels import NoisyChannels
 from pyprep.reference import Reference
 from pyprep.removeTrend import removeTrend
 from pyprep.utils import _set_diff, _union  # noqa: F401
@@ -184,12 +183,6 @@ class PrepPipeline:
 
     def fit(self):
         """Run the whole PREP pipeline."""
-        noisy_detector = NoisyChannels(self.raw_eeg, random_state=self.random_state)
-        noisy_detector.find_bad_by_nan_flat()
-        # unusable_channels = _union(
-        #     noisy_detector.bad_by_nan, noisy_detector.bad_by_flat
-        # )
-        # reference_channels = _set_diff(self.prep_params["ref_chs"], unusable_channels)
         # Step 1: 1Hz high pass filtering
         if len(self.prep_params["line_freqs"]) != 0:
             self.EEG_new = removeTrend(
