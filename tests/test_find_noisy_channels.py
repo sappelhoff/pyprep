@@ -79,12 +79,13 @@ def test_bad_by_manual(raw_tmp):
     n_chans = raw_tmp.get_data().shape[0]
     nan_idx = int(rng.integers(0, n_chans, 1)[0])
     raw_tmp._data[nan_idx, 3] = np.nan
-    raw_tmp.info["bads"] = [raw.ch_names[0]]
+    raw_tmp.info["bads"] = [raw_tmp.ch_names[0]]
 
     # Test record of a priori bad channels on NoisyChannels init
     nd = NoisyChannels(raw_tmp, do_detrend=False)
-    assert nd.bad_by_manual == [raw.ch_names[0]]
-    assert raw.ch_names[0] in nd.get_bads(as_dict = False)
+    assert nd.bad_by_manual == [raw_tmp.ch_names[0]]
+    assert raw_tmp.ch_names[0] in nd.get_bads(as_dict=False)
+    raw_tmp.info["bads"] = []
 
 
 def test_bad_by_flat(raw_tmp):
