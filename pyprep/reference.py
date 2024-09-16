@@ -150,7 +150,7 @@ class Reference:
         self.bad_before_interpolation = noisy_detector.get_bads(verbose=True)
         self.EEG_before_interpolation = self.EEG.copy()
         self.noisy_channels_before_interpolation = noisy_detector.get_bads(as_dict=True)
-        self.noisy_channels_before_interpolation["bad_manual"] = self.bads_manual
+        self.noisy_channels_before_interpolation["bad_by_manual"] = self.bads_manual
         self._extra_info["interpolated"] = noisy_detector._extra_info
 
         bad_channels = _union(self.bad_before_interpolation, self.unusable_channels)
@@ -239,7 +239,7 @@ class Reference:
             "bad_by_SNR": [],
             "bad_by_dropout": [],
             "bad_by_ransac": [],
-            "bad_manual": self.bads_manual,
+            "bad_by_manual": self.bads_manual,
             "bad_all": [],
         }
 
@@ -285,7 +285,7 @@ class Reference:
                 noisy[bad_type] = _union(noisy[bad_type], noisy_new[bad_type])
                 if bad_type not in ignore:
                     bad_chans.update(noisy[bad_type])
-            noisy["bad_manual"] = self.bads_manual
+            noisy["bad_by_manual"] = self.bads_manual
             noisy["bad_all"] = list(bad_chans) + self.bads_manual
             logger.info(f"Bad channels: {noisy}")
 
