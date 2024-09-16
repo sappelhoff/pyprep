@@ -163,7 +163,7 @@ class NoisyChannels:
             "bad_by_SNR": self.bad_by_SNR,
             "bad_by_dropout": self.bad_by_dropout,
             "bad_by_ransac": self.bad_by_ransac,
-            "bad_by_manual": self.bad_by_manual
+            "bad_by_manual": self.bad_by_manual,
         }
 
         all_bads = set()
