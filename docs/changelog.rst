@@ -31,7 +31,7 @@ Changelog
 
 Bug
 ~~~
-- nothing yet
+- :class:`~pyprep.Reference` now keeps and interpolates channels channels manually marked as bad before PREP, by `John Veillette`_ (:gh:`146`)
 
 Code health
 ~~~~~~~~~~~

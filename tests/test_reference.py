@@ -23,6 +23,7 @@ def test_basic_input(raw, montage):
     reference = Reference(raw_tmp, params, ransac=False)
     reference.perform_reference()
     assert isinstance(reference.noisy_channels, dict)
+    assert isinstance(reference.noisy_channels["bad_by_manual"], list)
     assert isinstance(reference.noisy_channels_original, dict)
     assert isinstance(reference.bad_before_interpolation, list)
     assert isinstance(reference.reference_signal, np.ndarray)

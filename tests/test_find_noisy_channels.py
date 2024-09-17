@@ -74,6 +74,20 @@ def test_bad_by_nan(raw_tmp):
     assert nd.bad_by_nan == [raw_tmp.ch_names[nan_idx]]
 
 
+def test_bad_by_manual(raw_tmp):
+    """Test the detection of channels marked bad a priori."""
+    n_chans = raw_tmp.get_data().shape[0]
+    nan_idx = int(rng.integers(0, n_chans, 1)[0])
+    raw_tmp._data[nan_idx, 3] = np.nan
+    raw_tmp.info["bads"] = [raw_tmp.ch_names[0]]
+
+    # Test record of a priori bad channels on NoisyChannels init
+    nd = NoisyChannels(raw_tmp, do_detrend=False)
+    assert nd.bad_by_manual == [raw_tmp.ch_names[0]]
+    assert raw_tmp.ch_names[0] in nd.get_bads(as_dict=False)
+    raw_tmp.info["bads"] = []
+
+
 def test_bad_by_flat(raw_tmp):
     """Test the detection of channels with flat or very weak signals."""
     # Make the signal for a random channel extremely weak

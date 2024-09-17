@@ -59,6 +59,7 @@ class NoisyChannels:
 
         raw.load_data()
         self.raw_mne = raw.copy()
+        self.bad_by_manual = raw.info["bads"]
         self.raw_mne.pick_types(eeg=True)
         self.sample_rate = raw.info["sfreq"]
         if do_detrend:
@@ -162,6 +163,7 @@ class NoisyChannels:
             "bad_by_SNR": self.bad_by_SNR,
             "bad_by_dropout": self.bad_by_dropout,
             "bad_by_ransac": self.bad_by_ransac,
+            "bad_by_manual": self.bad_by_manual,
         }
 
         all_bads = set()
