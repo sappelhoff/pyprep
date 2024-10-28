@@ -44,7 +44,7 @@ jobs:
     - uses: actions/cache@v4
       with:
         path: ${{ env.pythonLocation }}
-        key: ${{ env.pythonLocation }}-${{ hashFiles('pyproject.toml') }}
+        key: v-0-${{ env.pythonLocation }}-${{ hashFiles('pyproject.toml') }}
 
     - name: Install dependencies
       run: |
@@ -84,5 +84,5 @@ jobs:
     - name: Upload coverage report
       uses: codecov/codecov-action@v4
       with:
-        token: ${{ secrets.CODECOV_TOKEN }}  # not required but might help API rate limits
+        token: ${{ secrets.CODECOV_TOKEN }}
         files: ./coverage.xml
