@@ -1,111 +1,105 @@
 [build-system]
-requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
+requires = ["hatch-vcs", "hatchling"]
 
 [project]
-name = "pyprep"
-description = "PyPREP: A Python implementation of the preprocessing pipeline (PREP) for EEG data."
-dynamic = ["version"]
-authors = [{ name = "PyPREP developers" }]
-maintainers = [
-    { name = "Stefan Appelhoff", email = "stefan.appelhoff@mailbox.org" },
-]
-license = { file = "LICENSE" }
-readme = { file = "README.rst", content-type = "text/x-rst" }
-requires-python = ">=3.9"
-keywords = [
-    "EEG",
-    "electroencephalography",
-    "artifact",
-    "preprocessing",
-    "data",
-    "neuroscience",
-    "neuroimaging",
-    "mne",
-    "python",
-]
+authors = [{name = "PyPREP developers"}]
 classifiers = [
-    "Topic :: Scientific/Engineering",
-    "Intended Audience :: Science/Research",
-    "Intended Audience :: Developers",
-    "License :: OSI Approved",
-    "Operating System :: Microsoft :: Windows",
-    "Operating System :: POSIX :: Linux",
-    "Operating System :: MacOS",
-    "Programming Language :: Python",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved",
+  "Operating System :: MacOS",
+  "Operating System :: Microsoft :: Windows",
+  "Operating System :: POSIX :: Linux",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python",
+  "Topic :: Scientific/Engineering",
 ]
 dependencies = [
-    "numpy>=1.20.2",
-    "scipy>=1.6.3",
-    "mne>=1.3.0",
-    "psutil>=5.4.3"
+  "mne>=1.3.0",
+  "numpy>=1.20.2",
+  "psutil>=5.4.3",
+  "scipy>=1.6.3",
 ]
+description = "PyPREP: A Python implementation of the preprocessing pipeline (PREP) for EEG data."
+dynamic = ["version"]
+keywords = [
+  "artifact",
+  "data",
+  "EEG",
+  "electroencephalography",
+  "mne",
+  "neuroimaging",
+  "neuroscience",
+  "preprocessing",
+  "python",
+]
+license = {file = "LICENSE"}
+maintainers = [
+  {email = "stefan.appelhoff@mailbox.org", name = "Stefan Appelhoff"},
+]
+name = "pyprep"
+readme = {content-type = "text/x-rst", file = "README.rst"}
+requires-python = ">=3.9"
 
 [project.optional-dependencies]
-# Variants with dependencies that will get installed on top of those listed unter
-# project.dependencies
-
-# Dependencies for running the test infrastructure
-test = [
-    "build",
-    "twine",
-    "ruff",
-    "isort",
-    "matplotlib",
-    "pytest",
-    "pytest-cov",
-    "pytest-sugar",
-    "pre-commit",
-]
-
-# Dependencies for building the documentation
-docs = [
-    "matplotlib",
-    "sphinx>3",
-    "pydata-sphinx-theme",
-    "sphinx_gallery",
-    "sphinx-copybutton",
-    "numpydoc",
-]
-
 # Dependencies for developer installations
 dev = ["pyprep[test,docs]"]
-
-
-[project.urls]
-"Homepage" = "https://pyprep.readthedocs.io/en/latest"
-"Bug Tracker" = "https://github.com/sappelhoff/pyprep/issues/"
-"Documentation" = "https://pyprep.readthedocs.io/en/latest"
-"Source Code" = "https://github.com/sappelhoff/pyprep"
-
-[tool.hatch.metadata]
-allow-direct-references = true # allow specifying URLs in our dependencies
-
-[tool.hatch.build]
-exclude = [
-    "/.*",
-    "tests/**",
-    "/examples",
-    "/docs",
-    "/.github/**",
-    "matprep_artifacts/**",
-    "matprep_artifacts"
+# Dependencies for building the documentation
+docs = [
+  "matplotlib",
+  "numpydoc",
+  "pydata-sphinx-theme",
+  "sphinx-copybutton",
+  "sphinx>3",
+  "sphinx_gallery",
+]
+# Dependencies for running the test infrastructure
+test = [
+  "build",
+  "isort",
+  "matplotlib",
+  "pre-commit",
+  "pytest",
+  "pytest-cov",
+  "pytest-sugar",
+  "ruff",
+  "twine",
 ]
 
-[tool.hatch.version]
-source = "vcs"
-raw-options = { version_scheme = "release-branch-semver" }
+[project.urls]
+"Bug Tracker" = "https://github.com/sappelhoff/pyprep/issues/"
+"Documentation" = "https://pyprep.readthedocs.io/en/latest"
+"Homepage" = "https://pyprep.readthedocs.io/en/latest"
+"Source Code" = "https://github.com/sappelhoff/pyprep"
+
+[tool.coverage.report]
+# Regexes for lines to exclude from consideration
+exclude_lines = ["if 0:", "if __name__ == .__main__.:", "pragma: no cover"]
 
 [tool.coverage.run]
 omit = ["*tests*"]
 
-[tool.coverage.report]
-# Regexes for lines to exclude from consideration
-exclude_lines = ["pragma: no cover", "if 0:", "if __name__ == .__main__.:"]
+[tool.hatch.build]
+exclude = [
+  "/.*",
+  "/.github/**",
+  "/docs",
+  "/examples",
+  "matprep_artifacts",
+  "matprep_artifacts/**",
+  "tests/**",
+]
+
+[tool.hatch.metadata]
+allow-direct-references = true  # allow specifying URLs in our dependencies
+
+[tool.hatch.version]
+raw-options = {version_scheme = "release-branch-semver"}
+source = "vcs"
 
 [tool.pytest.ini_options]
 addopts = """. --cov=pyprep/ --cov-report=xml --cov-config=pyproject.toml --verbose -s"""
@@ -114,12 +108,18 @@ filterwarnings = [
 
 [tool.ruff]
 extend-exclude = [
-    "matprep_artifacts/**"
+  "matprep_artifacts/**",
 ]
 
 [tool.ruff.lint]
-select = ["A", "D", "E", "F", "I", "UP", "W"]
 ignore = ["A002"]
+select = ["A", "D", "E", "F", "I", "UP", "W"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "numpy"
+
+[tool.tomlsort]
+all = true
+ignore_case = true
+spaces_before_inline_comment = 2
+trailing_comma_inline_array = true
