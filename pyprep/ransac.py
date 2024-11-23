@@ -138,7 +138,7 @@ def find_bad_by_ransac(
     # Get all channel positions and the position subset of "clean channels"
     # Exclude should be the bad channels from other methods
     # That is, identify all bad channels by other means
-    good_idx = mne.pick_channels(list(complete_chn_labs), include=[], exclude=exclude)
+    good_idx = np.array([idx for idx, ch in enumerate(complete_chn_labs) if ch not in exclude])
     n_chans_good = good_idx.shape[0]
     chn_pos_good = chn_pos[good_idx, :]
 

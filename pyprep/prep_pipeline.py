@@ -143,12 +143,12 @@ class PrepPipeline:
             if self.ch_types_all[i] == "eeg"
         ]
         self.ch_names_non_eeg = list(set(self.ch_names_all) - set(self.ch_names_eeg))
-        self.raw_eeg.pick_channels(self.ch_names_eeg)
+        self.raw_eeg.pick(self.ch_names_eeg)
         if self.ch_names_non_eeg == []:
             self.raw_non_eeg = None
         else:
             self.raw_non_eeg = raw.copy()
-            self.raw_non_eeg.pick_channels(self.ch_names_non_eeg)
+            self.raw_non_eeg.pick(self.ch_names_non_eeg)
 
         self.raw_eeg.set_montage(montage)
         # raw_non_eeg may not be compatible with the montage
