@@ -60,7 +60,7 @@ class NoisyChannels:
         raw.load_data()
         self.raw_mne = raw.copy()
         self.bad_by_manual = raw.info["bads"]
-        self.raw_mne.pick_types(eeg=True)
+        self.raw_mne.pick("eeg")  # excludes bads
         self.sample_rate = raw.info["sfreq"]
         if do_detrend:
             self.raw_mne._data = removeTrend(

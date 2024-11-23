@@ -75,11 +75,12 @@ jobs:
         make -C docs/ html
 
     - name: Upload artifacts
-      if: matrix.platform == 'ubuntu-latest'
+      if: ${{ matrix.platform == 'ubuntu-latest' && matrix.mne-version == 'mne-stable' }}
       uses: actions/upload-artifact@v4
       with:
         name: docs-artifact
         path: docs/_build/html
+        include-hidden-files: true
 
     - name: Upload coverage report
       uses: codecov/codecov-action@v5
