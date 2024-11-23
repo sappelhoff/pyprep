@@ -1,135 +1,58 @@
-# Table of Contents
+# Contributions
 
-- [Pull request workflow](#pull-request-workflow)
-  * [Syncing your fork's `main` with `upstream main`](#syncing-your-fork-s--main--with--upstream-main-)
-  * [Working on a feature (and rebasing)](#working-on-a-feature--and-rebasing-)
-    + [Working on a feature](#working-on-a-feature)
-    + [Rebasing without conflicts](#rebasing-without-conflicts)
-    + [Rebasing WITH conflicts](#rebasing-with-conflicts)
-    + [Rebasing ... panic mode (or "the easy way")](#rebasing--panic-mode--or--the-easy-way--)
-- [Info about docs](#info-about-docs)
-- [Info about versioning](#info-about-versioning)
-- [How to make a release](#how-to-make-a-release)
+Contributions are welcome in the form of feedback and discussion in issues,
+or pull requests for changes to the code.
 
-# Pull request workflow
+Once the implementation of a piece of functionality is considered to be free of
+bugs and properly documented, it can be incorporated into the `main` branch.
 
-- assuming you are working with `git` from a command line
-- assuming your GitHub username is `username`
-- `github.com/sappelhoff/pyprep` is `upstream`
-- `github.com/username/pyprep` is `origin` (your *fork*)
+To help developing `pyprep`,
+you will need a few adjustments to your installation as shown below.
 
-## Syncing your fork's `main` with `upstream main`
+## Install the development version
 
-- first, you start with *forking* `upstream`
-- then, you continue by *cloning* your fork: `git clone https://github.com/username/pyprep`
-    - you'll have your own `main` branch there
-- **you always want to make sure that your fork's `main` and `upstream main` are aligned**
-    - to do this, you work with *git remotes*
-    - Note: this also means that you NEVER work on `main` (unless you know
-      what you are doing) ... because you want to always be able to SYNC your
-      fork with `upstream`, which would mean losing your own work on `main`
-- use `git remote -v` to list your configured remotes
-    - initially this will only list `origin` ... a bit like this maybe:
+First make a fork of the repository under your `USERNAME` GitHub account.
+Then, in your Python environment follow these steps:
 
-```Text
-origin	https://github.com/username/pyprep (fetch)
-origin	https://github.com/username/pyprep (push)
+```Shell
+git clone https://github.com/USERNAME/pyprep
+cd pyprep
+git fetch --tags --prune --prune-tags
+python -m pip install -e ".[dev]"
+pre-commit install
 ```
 
-- Now you want to add `upstream` as a remote. Use
-  `git remote add upstream https://github.com/sappelhoff/pyprep`
-- again, do `git remote -v`, it should look like this:
+You may also clone the repository via ssh, depending on your preferred workflow
+(`git clone git@github.com:USERNAME/pyprep.git`).
 
-```Text
-origin	https://github.com/username/pyprep (fetch)
-origin	https://github.com/username/pyprep (push)
-upstream	https://github.com/sappelhoff/pyprep (fetch)
-upstream	https://github.com/sappelhoff/pyprep (push)
+Note that we are working with "pre-commit hooks".
+See https://pre-commit.com/ for more information.
 
-```
+## Running tests and coverage
 
-- Now you can use your `upstream` *remote* to make sure your fork's `main` is
-  up to date.
-    1.  `git checkout main` to make sure you are on your `main` branch
-    1. Make sure you do not have any changes on your `main`, because we will
-       discard them!
-    1. `git pull upstream main` SYNC your fork and `upstream`
-    1. sometimes there are issues, so to be safe, do:
-       `git reset --hard upstream/main` ... this makes sure that both
-       branches are really synced.
-    1. ensure with another `git pull upstream main` ... this should say
-       "already up to date"
+If you have followed the steps to get the development version,
+you can run tests as follows.
+From the project root, call:
 
-## Working on a feature (and rebasing)
+- `pytest` to run tests and coverage
+- `pre-commit run -a` to run style checks (Ruff and some additional hooks)
 
-### Working on a feature
+## Building the documentation
 
-- before working on any feature: always do `git checkout main` and
-  `git pull upstream main`
-- then make your new branch to work on and check it out, for example
-  `git checkout -b my_feature`
-    - do your work
-    - submit a pull request
-    - hope you are lucky and nobody did work in between
-- however IF somebody did work in between, we need to *rebase*. Just follow the
-  steps below
+The documentation can be built using [Sphinx](https://www.sphinx-doc.org).
 
-### Rebasing without conflicts
+The publicly accessible documentation is built and hosted by
+[Read the Docs](https://readthedocs.org/).
+Credentials for Read the Docs are currently held by:
 
-1. sync `main` through: `git checkout main` and `git pull upstream main`
-1. go back to your branch and rebase it: `git checkout my_feature` and then
-   `git rebase main`
+- [@sappelhoff](https://github.com/sappelhoff/)
 
-Now it could be that you are lucky and there no conflicts ... in that case, the
-rebase just works and you can then finish up by *force pushing* your rebased
-branch: `git push -f my_feature` ... you need to force it, because rebasing
-changed the history of your branch. But don't worry, if rebasing "just worked"
-without any conflicts, this should be very safe.
-
-### Rebasing WITH conflicts
-
-In case you are unlucky, there are conflicts and you'll have to resolve them
-step by step ... `git` will be in *rebase* mode and try to rebase one commit
-after another ... for each commit where conflicts are detected, it'll stop.
-
-Then you have to do: `git status` to see conflicting files ... then edit these
-files to resolve conflicts ... then `git add <filename>` ... and then
-`git rebase --continue` to go on to the next commit, rinse and repeat.
-
-**NOTE: the conflict resolution part is the dangerous part that can get very
-messy and where you can actually lose stuff ... so make backups of your branch
-before.**
-
-After everything is resolved, you can again do `git push -f my_feature`.
-
-If you screw up **during** rebasing and you panic, you can do
-`git rebase --abort` and start again.
-
-### Rebasing ... panic mode
-
-If nothing helps and you just don't know how to resolve the issues and
-conflicts that arise during rebasing, just make a new branch:
-    1. `git checkout main`
-    1. `git pull upstream main`
-    1. `git checkout -b my_feature_2nd_attempt`
-
-... and apply your changes manually.
-
-This method is not really a `git` workflow, ... but in cases where there are
-only few changes, this is often a practical solution.
-
-# Info about versioning
+## Info about versioning
 
 We follow a [semantic versioning scheme](https://semver.org/).
 This is implemented via [hatch-vcs](https://github.com/ofek/hatch-vcs).
 
-# Info about docs
-
-The documentation is build and hosted by [https://readthedocs.org/](https://readthedocs.org/).
-
-Admin credentials are needed to access the setup.
-
-# How to make a release
+## Making a release on GitHub, PyPi, and Conda-Forge
 
 - needs admin rights
 - we are using [semver](https://semver.org/) (see section on versioning)

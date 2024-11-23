@@ -1,6 +1,6 @@
 # Upload a Python Package using Twine when a release is created
 
-name: build
+name: release
 on:  # yamllint disable-line rule:truthy
   release:
     types: [published]
