@@ -83,7 +83,8 @@ class Reference:
         raw.load_data()
         self.raw = raw.copy()
         self.ch_names = self.raw.ch_names
-        self.raw.pick_types(eeg=True, eog=False, meg=False, exclude=[])
+        self.raw.pick("eeg", exclude=[])  # include previously marked bads
+        self.bads_manual = raw.info["bads"]
         self.ch_names_eeg = self.raw.ch_names
         self.EEG = self.raw.get_data()
         self.reference_channels = params["ref_chs"]
@@ -97,7 +98,6 @@ class Reference:
         self.random_state = check_random_state(random_state)
         self._extra_info = {}
         self.matlab_strict = matlab_strict
-        self.bads_manual = raw.info["bads"]
 
     def perform_reference(self, max_iterations=4):
         """Estimate the true signal mean and interpolate bad channels.
