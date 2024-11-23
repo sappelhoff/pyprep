@@ -15,8 +15,8 @@ import pyprep
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here.
 curdir = Path(__file__).parent
-sys.path.append((curdir / ".." / "eeg_positions").resolve())
-sys.path.append((curdir / ".." / "sphinxext").resolve())
+sys.path.append((curdir.parent / "pyprep").resolve().as_posix())
+sys.path.append((curdir / "sphinxext").resolve().as_posix())
 
 # -- Project information -----------------------------------------------------
 project = "pyprep"
