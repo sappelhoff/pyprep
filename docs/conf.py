@@ -3,9 +3,9 @@
 # Authors: The PyPREP developers
 # SPDX-License-Identifier: MIT
 
-import os
 import sys
 from datetime import datetime
+from pathlib import Path
 
 from intersphinx_registry import get_intersphinx_mapping
 from sphinx.config import is_serializable
@@ -13,11 +13,10 @@ from sphinx.config import is_serializable
 import pyprep
 
 # If extensions (or modules to document with autodoc) are in another directory,
-# add these directories to sys.path here. If the directory is relative to the
-# documentation root, use os.path.abspath to make it absolute, like shown here.
-curdir = os.path.dirname(__file__)
-sys.path.append(os.path.abspath(os.path.join(curdir, "..", "pyprep")))
-sys.path.append(os.path.abspath(os.path.join(curdir, "sphinxext")))
+# add these directories to sys.path here.
+curdir = Path(__file__).parent
+sys.path.append((curdir / ".." / "eeg_positions").resolve())
+sys.path.append((curdir / ".." / "sphinxext").resolve())
 
 # -- Project information -----------------------------------------------------
 project = "pyprep"

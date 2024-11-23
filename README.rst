@@ -12,8 +12,7 @@
 
 .. image:: https://codecov.io/gh/sappelhoff/pyprep/branch/main/graph/badge.svg
    :target: https://codecov.io/gh/sappelhoff/pyprep
-   :alt: codecov
-
+   :alt: Test coverage
 
 .. image:: https://readthedocs.org/projects/pyprep/badge/?version=latest
    :target: https://pyprep.readthedocs.io/en/latest/?badge=latest
@@ -49,7 +48,8 @@ for EEG data, working with `MNE-Python <https://mne.tools>`_.
 Installation
 ============
 
-``pyprep`` requires Python version ``3.9`` or higher to run properly.
+``pyprep`` runs on Python version 3.9 or higher.
+
 We recommend to run ``pyprep`` in a dedicated virtual environment
 (for example using `conda <https://docs.conda.io/en/latest/miniconda.html>`_).
 
@@ -57,49 +57,33 @@ For installing the **stable** version of ``pyprep``, call:
 
 .. code-block:: Text
 
-   pip install pyprep
+   python -m pip install --upgrade pyprep
 
-or, as an alternative to ``pip``, call:
+or if you use `conda <https://docs.conda.io/en/latest/miniconda.html>`_:
 
 .. code-block:: Text
 
-   conda install -c conda-forge pyprep
+   conda install --channel conda-forge pyprep
 
 For installing the **latest (development)** version of ``pyprep``, call:
 
 .. code-block:: Text
 
-   pip install --upgrade https://github.com/sappelhoff/pyprep/archive/refs/heads/main.zip
+   python -m pip install --upgrade https://github.com/sappelhoff/pyprep/archive/refs/heads/main.zip
 
 Both the *stable* and the *latest* installation will additionally install
 all required dependencies automatically.
 The dependencies are defined in the ``pyproject.toml`` file under the
 ``dependencies`` and ``project.optional-dependencies`` sections.
 
-Contributions
-=============
+Contributing
+============
 
-**We are actively looking for contributors!**
+The development of ``pyprep`` is taking place on
+`GitHub <https://github.com/sappelhoff/pyprep>`_.
 
-Please chime in with your ideas on how to improve this software by opening
-a GitHub issue, or submitting a pull request.
-
-See also our `CONTRIBUTING.md <https://github.com/sappelhoff/pyprep/blob/main/.github/CONTRIBUTING.md>`_
-file for help with submitting a pull request.
-
-Potential contributors should install ``pyprep`` in the following way:
-
-#. First they should fork ``pyprep`` to their own GitHub account.
-#. Then they should run the following commands,
-   adequately replacing ``<gh-username>`` with their GitHub username.
-
-.. code-block:: Text
-
-   git clone https://github.com/<gh-username>/pyprep
-   cd pyprep
-   git fetch --tags --prune --prune-tags
-   pip install -e ".[dev]"
-   pre-commit install
+For more information, please see
+`CONTRIBUTING.md <https://github.com/sappelhoff/pyprep/blob/main/.github/CONTRIBUTING.md>`_.
 
 Citing
 ======

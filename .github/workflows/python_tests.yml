@@ -1,5 +1,9 @@
 name: Python tests
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.number }}-${{ github.event.ref }}
+  cancel-in-progress: true
+
 on:
   push:
     branches: [ main ]
@@ -49,21 +53,25 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -e ".[dev]"
+        python -m pip install -e ".[dev]"
 
     - name: Install MNE-Python (development version)
       if: matrix.mne-version == 'mne-main'
       run: |
-        pip install --upgrade https://github.com/mne-tools/mne-python/archive/refs/heads/main.zip
+        python -m pip install --upgrade https://github.com/mne-tools/mne-python/archive/refs/heads/main.zip
 
-    - name: Check installed versions
+    - name: Display versions and environment information
       run: |
+        echo $TZ
+        date
+        python --version
+        which python
         mne sys_info
 
     - name: Check formatting
       if: matrix.platform == 'ubuntu-latest'
       run: |
-        pre-commit run --all-files || ( git status --short ; git diff ; exit 1 )
+        pre-commit run --all-files
 
     - name: Test with pytest
       # Options defined in pyproject.toml
@@ -74,7 +82,7 @@ jobs:
         make -C docs/ clean
         make -C docs/ html
 
-    - name: Upload artifacts
+    - name: Upload docs build artifacts
       if: ${{ matrix.platform == 'ubuntu-latest' && matrix.mne-version == 'mne-stable' }}
       uses: actions/upload-artifact@v4
       with:

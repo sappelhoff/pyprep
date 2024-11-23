@@ -47,18 +47,16 @@ requires-python = ">=3.9"
 
 [project.optional-dependencies]
 # Dependencies for developer installations
-dev = ["pyprep[test,docs]"]
-# Dependencies for building the documentation
+dev = ["ipykernel", "ipython", "pyprep[test,docs]"]
 docs = [
   "intersphinx_registry",
   "matplotlib",
   "numpydoc",
   "pydata-sphinx-theme",
+  "sphinx",
   "sphinx-copybutton",
-  "sphinx>3",
   "sphinx_gallery",
 ]
-# Dependencies for running the test infrastructure
 test = [
   "build",
   "matplotlib",
