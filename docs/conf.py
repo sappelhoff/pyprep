@@ -7,6 +7,7 @@ import os
 import sys
 from datetime import datetime
 
+from intersphinx_registry import get_intersphinx_mapping
 from sphinx.config import is_serializable
 
 import pyprep
@@ -111,14 +112,18 @@ html_context = {
 
 html_sidebars = {}
 
-# Example configuration for intersphinx: refer to the Python standard library.
-intersphinx_mapping = {
-    "python": ("https://docs.python.org/3", None),
-    "mne": ("https://mne.tools/dev", None),
-    "numpy": ("https://numpy.org/devdocs", None),
-    "scipy": ("https://scipy.github.io/devdocs", None),
-    "matplotlib": ("https://matplotlib.org", None),
-}
+# When functions from other packages are mentioned, link to them
+# If a package is not in the intersphinx_registry, add like:
+# intersphinx_mapping["mne"] = ("https://mne.tools/dev", None)
+intersphinx_mapping = get_intersphinx_mapping(
+    packages={
+        "python",
+        "mne",
+        "numpy",
+        "scipy",
+        "matplotlib",
+    }
+)
 intersphinx_timeout = 10
 
 sphinx_gallery_conf = {

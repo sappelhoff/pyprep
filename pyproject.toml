@@ -50,6 +50,7 @@ requires-python = ">=3.9"
 dev = ["pyprep[test,docs]"]
 # Dependencies for building the documentation
 docs = [
+  "intersphinx_registry",
   "matplotlib",
   "numpydoc",
   "pydata-sphinx-theme",
@@ -60,7 +61,6 @@ docs = [
 # Dependencies for running the test infrastructure
 test = [
   "build",
-  "isort",
   "matplotlib",
   "pre-commit",
   "pytest",
