@@ -46,7 +46,6 @@ readme = {content-type = "text/x-rst", file = "README.rst"}
 requires-python = ">=3.9"
 
 [project.optional-dependencies]
-# Dependencies for developer installations
 dev = ["ipykernel", "ipython", "pyprep[test,docs]"]
 docs = [
   "intersphinx_registry",
