@@ -47,6 +47,11 @@ jobs:
 
     - uses: actions/cache@v4
       with:
+        path: ${{ env.HOME }}/mne_data/MNE-eegbci-data
+        key: v-0-eegbci-${{ hashFiles('pyproject.toml') }}
+
+    - uses: actions/cache@v4
+      with:
         path: ${{ env.pythonLocation }}
         key: v-0-${{ env.pythonLocation }}-${{ hashFiles('pyproject.toml') }}
 
