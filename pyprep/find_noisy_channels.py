@@ -242,6 +242,7 @@ class NoisyChannels:
                 f"Overwriting `ransac` value. Was `{self.ransac}` at instantiation "
                 f"of NoisyChannels. Now setting to `{ransac}`."
             )
+            self.ransac = ransac
 
         # NOTE: Bad-by-NaN/flat is already run during init, no need to re-run here
         self.find_bad_by_deviation()
