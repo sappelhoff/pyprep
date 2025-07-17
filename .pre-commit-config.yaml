@@ -14,11 +14,15 @@ repos:
       - id: check-docstring-first
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.8.0
+    rev: v0.12.3
     hooks:
       - id: ruff
+        name: ruff check --fix
+        files: ^(pyprep/|examples/|tests/)
         args: ["--fix"]
       - id: ruff-format
+        name: ruff format
+        files: ^(pyprep/|examples/|tests/)
 
   - repo: https://github.com/pappasam/toml-sort
     rev: v0.24.2
