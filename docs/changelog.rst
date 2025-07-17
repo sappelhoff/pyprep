@@ -21,7 +21,7 @@ Here we list what's new in ``pyprep``.
 
 .. _changes_0_5_0:
 
-Version 0.5.0 (Unreleased)
+Version 0.5.0 (2025-07-17)
 --------------------------
 
 Changelog
