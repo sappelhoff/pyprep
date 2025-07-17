@@ -1,4 +1,4 @@
-"""finds bad channels."""
+"""Find bad channels."""
 
 # Authors: The PyPREP developers
 # SPDX-License-Identifier: MIT
@@ -44,6 +44,11 @@ class NoisyChannels:
         Whether or not PyPREP should strictly follow MATLAB PREP's internal
         math, ignoring any improvements made in PyPREP over the original code
         (see :ref:`matlab-diffs` for more details). Defaults to ``False``.
+    ransac : bool
+        Whether RANSAC should be used for bad channel detection, in addition
+        to other methods. RANSAC can detect bad channels that other
+        methods are unable to catch, but also slows down noisy channel
+        detection considerably. Defaults to ``True``.
 
     References
     ----------
@@ -53,7 +58,15 @@ class NoisyChannels:
 
     """
 
-    def __init__(self, raw, do_detrend=True, random_state=None, matlab_strict=False):
+    def __init__(
+        self,
+        raw,
+        do_detrend=True,
+        random_state=None,
+        matlab_strict=False,
+        *,
+        ransac=True,
+    ):
         # Make sure that we got an MNE object
         assert isinstance(raw, mne.io.BaseRaw)
 
@@ -67,6 +80,9 @@ class NoisyChannels:
                 self.raw_mne.get_data(), self.sample_rate, matlab_strict=matlab_strict
             )
         self.matlab_strict = matlab_strict
+
+        assert isinstance(ransac, bool), f"ransac must be boolean, got: {ransac}"
+        self.ransac = ransac
 
         # Extra data for debugging
         self._extra_info = {
@@ -187,18 +203,20 @@ class NoisyChannels:
 
         return bads
 
-    def find_all_bads(self, ransac=True, channel_wise=False, max_chunk_size=None):
+    def find_all_bads(self, ransac=None, channel_wise=False, max_chunk_size=None):
         """Call all the functions to detect bad channels.
 
         This function calls all the bad-channel detecting functions.
 
         Parameters
         ----------
-        ransac : bool, optional
+        ransac : bool | None
             Whether RANSAC should be used for bad channel detection, in addition
             to the other methods. RANSAC can detect bad channels that other
             methods are unable to catch, but also slows down noisy channel
-            detection considerably. Defaults to ``True``.
+            detection considerably. If ``None`` (default), then the value at
+            instantiation of the ``NoisyChannels`` class is taken (defaults
+            to ``True``), else the instantiation value is overwritten.
         channel_wise : bool, optional
             Whether RANSAC should predict signals for chunks of channels over the
             entire signal length ("channel-wise RANSAC", see `max_chunk_size`
@@ -218,12 +236,19 @@ class NoisyChannels:
             effect. Defaults to ``None``.
 
         """
+        if ransac is not None and ransac != self.ransac:
+            assert isinstance(ransac, bool), f"ransac must be boolean, got: {ransac}"
+            logger.warning(
+                f"Overwriting `ransac` value. Was `{self.ransac}` at instantiation "
+                f"of NoisyChannels. Now setting to `{ransac}`."
+            )
+
         # NOTE: Bad-by-NaN/flat is already run during init, no need to re-run here
         self.find_bad_by_deviation()
         self.find_bad_by_hfnoise()
         self.find_bad_by_correlation()
         self.find_bad_by_SNR()
-        if ransac:
+        if self.ransac:
             self.find_bad_by_ransac(
                 channel_wise=channel_wise, max_chunk_size=max_chunk_size
             )
