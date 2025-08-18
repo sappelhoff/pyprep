@@ -34,7 +34,7 @@ jobs:
         python -m pip install --upgrade pip
         python -m pip install --upgrade build twine
 
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
       with:
         fetch-depth: 0
         fetch-tags: true
@@ -52,7 +52,7 @@ jobs:
     - name: Remove sdist install
       run: python -m pip uninstall -y pyprep
 
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
       with:
         fetch-depth: 0
         fetch-tags: true
