@@ -26,7 +26,7 @@ Version 0.6.0 (unreleased)
 
 Changelog
 ~~~~~~~~~
-- Nothing yet
+- Manually marked bad channels are ignored for finding further bads (just like NaN and flat channels) in :meth:`~pyprep.NoisyChannels.find_all_bads`, by `Stefan Appelhoff`_ (:gh:`168`)
 
 .. _changes_0_5_0:
 
