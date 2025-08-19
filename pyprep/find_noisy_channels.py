@@ -29,18 +29,19 @@ class NoisyChannels:
     Parameters
     ----------
     raw : mne.io.Raw
-        An MNE Raw object to check for bad EEG channels.
-    do_detrend : bool, optional
+        An MNE Raw object to check for bad EEG channels. Channels set to bad
+        in ``raw.info["bads"]`` will not be used to find additional bad channels.
+    do_detrend : bool
         Whether or not low-frequency (<1.0 Hz) trends should be removed from the
         EEG signal prior to bad channel detection. This should always be set to
         ``True`` unless the signal has already had low-frequency trends removed.
         Defaults to ``True``.
-    random_state : {int, None, np.random.RandomState}, optional
+    random_state : {int, None, np.random.RandomState} | None
         The seed to use for random number generation within RANSAC. This can be
         ``None``, an integer, or a :class:`~numpy.random.RandomState` object.
         If ``None``, a random seed will be obtained from the operating system.
         Defaults to ``None``.
-    matlab_strict : bool, optional
+    matlab_strict : bool
         Whether or not PyPREP should strictly follow MATLAB PREP's internal
         math, ignoring any improvements made in PyPREP over the original code
         (see :ref:`matlab-diffs` for more details). Defaults to ``False``.
@@ -49,6 +50,13 @@ class NoisyChannels:
         to other methods. RANSAC can detect bad channels that other
         methods are unable to catch, but also slows down noisy channel
         detection considerably. Defaults to ``True``.
+    correlation : bool
+        Whether correlation should be used for bad channel detection, in addition
+        to other methods. Defaults to ``True``.
+    bad_by_manual : list of str | None
+        List of channels that are bad. These channels will be excluded when
+        trying to find additional bad channels. Note that the union of these channels
+        and those declared in ``raw.info["bads"]`` will be used. Defaults to ``None``.
 
     References
     ----------
@@ -66,13 +74,16 @@ class NoisyChannels:
         matlab_strict=False,
         *,
         ransac=True,
+        correlation=True,
+        bad_by_manual=None,
     ):
         # Make sure that we got an MNE object
         assert isinstance(raw, mne.io.BaseRaw)
 
         raw.load_data()
         self.raw_mne = raw.copy()
-        self.bad_by_manual = raw.info["bads"]
+        bad_by_manual = bad_by_manual if bad_by_manual else []
+        self.bad_by_manual = list(set(bad_by_manual + raw.info["bads"]))
         self.raw_mne.pick("eeg")  # excludes bads
         self.sample_rate = raw.info["sfreq"]
         if do_detrend:
@@ -81,8 +92,13 @@ class NoisyChannels:
             )
         self.matlab_strict = matlab_strict
 
-        assert isinstance(ransac, bool), f"ransac must be boolean, got: {ransac}"
+        msg = f"ransac must be boolean, got: {ransac}"
+        assert isinstance(ransac, bool), msg
         self.ransac = ransac
+
+        msg = f"correlation must be boolean, got: {correlation}"
+        assert isinstance(correlation, bool), msg
+        self.correlation = correlation
 
         # Extra data for debugging
         self._extra_info = {
@@ -116,8 +132,11 @@ class NoisyChannels:
         self.find_bad_by_nan_flat()
         bads_by_nan_flat = self.bad_by_nan + self.bad_by_flat
 
+        # unusable channels are also those manually marked as bad
+        bads_unusable = self.bad_by_manual + bads_by_nan_flat
+
         # Make a subset of the data containing only usable EEG channels
-        self.usable_idx = np.isin(ch_names, bads_by_nan_flat, invert=True)
+        self.usable_idx = np.isin(ch_names, bads_unusable, invert=True)
         self.EEGData = self.raw_mne.get_data(picks=ch_names[self.usable_idx])
         self.EEGFiltered = None
 
@@ -203,7 +222,9 @@ class NoisyChannels:
 
         return bads
 
-    def find_all_bads(self, ransac=None, channel_wise=False, max_chunk_size=None):
+    def find_all_bads(
+        self, *, ransac=None, channel_wise=False, max_chunk_size=None, correlation=None
+    ):
         """Call all the functions to detect bad channels.
 
         This function calls all the bad-channel detecting functions.
@@ -234,20 +255,38 @@ class NoisyChannels:
             other programs on the host system. If using window-wise RANSAC
             (the default) or not using RANSAC at all, this parameter has no
             effect. Defaults to ``None``.
+        correlation : bool | None
+            Whether correlation should be used for bad channel detection, in addition
+            to the other methods. If ``None`` (default), then the value at
+            instantiation of the ``NoisyChannels`` class is taken (defaults
+            to ``True``), else the instantiation value is overwritten.
 
         """
         if ransac is not None and ransac != self.ransac:
-            assert isinstance(ransac, bool), f"ransac must be boolean, got: {ransac}"
+            msg = f"ransac must be boolean, got: {ransac}"
+            assert isinstance(ransac, bool), msg
             logger.warning(
-                f"Overwriting `ransac` value. Was `{self.ransac}` at instantiation "
+                "Overwriting `ransac` value. "
+                f"Was `{self.ransac}` at instantiation "
                 f"of NoisyChannels. Now setting to `{ransac}`."
             )
             self.ransac = ransac
 
+        if correlation is not None and correlation != self.correlation:
+            msg = f"correlation must be boolean, got: {correlation}"
+            assert isinstance(correlation, bool), msg
+            logger.warning(
+                "Overwriting `correlation` value. "
+                f"Was `{self.correlation}` at instantiation "
+                f"of NoisyChannels. Now setting to `{correlation}`."
+            )
+            self.correlation = correlation
+
         # NOTE: Bad-by-NaN/flat is already run during init, no need to re-run here
         self.find_bad_by_deviation()
         self.find_bad_by_hfnoise()
-        self.find_bad_by_correlation()
+        if self.correlation:
+            self.find_bad_by_correlation()
         self.find_bad_by_SNR()
         if self.ransac:
             self.find_bad_by_ransac(
@@ -509,7 +548,7 @@ class NoisyChannels:
         # Get names of bad-by-HF-noise and bad-by-correlation channels
         if not len(self._extra_info["bad_by_hf_noise"]) > 1:
             self.find_bad_by_hfnoise()
-        if not len(self._extra_info["bad_by_correlation"]):
+        if not len(self._extra_info["bad_by_correlation"]) and self.correlation:
             self.find_bad_by_correlation()
         bad_by_hf = set(self.bad_by_hf_noise)
         bad_by_corr = set(self.bad_by_correlation)
