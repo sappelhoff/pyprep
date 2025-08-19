@@ -116,8 +116,11 @@ class NoisyChannels:
         self.find_bad_by_nan_flat()
         bads_by_nan_flat = self.bad_by_nan + self.bad_by_flat
 
+        # unusable channels are also those manually marked as bad
+        bads_unusable = self.bad_by_manual + bads_by_nan_flat
+
         # Make a subset of the data containing only usable EEG channels
-        self.usable_idx = np.isin(ch_names, bads_by_nan_flat, invert=True)
+        self.usable_idx = np.isin(ch_names, bads_unusable, invert=True)
         self.EEGData = self.raw_mne.get_data(picks=ch_names[self.usable_idx])
         self.EEGFiltered = None
 
