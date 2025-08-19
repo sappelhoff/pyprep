@@ -29,7 +29,8 @@ class NoisyChannels:
     Parameters
     ----------
     raw : mne.io.Raw
-        An MNE Raw object to check for bad EEG channels.
+        An MNE Raw object to check for bad EEG channels. Channels set to bad
+        in ``raw.info["bads"]`` will not be used to find additional bad channels.
     do_detrend : bool, optional
         Whether or not low-frequency (<1.0 Hz) trends should be removed from the
         EEG signal prior to bad channel detection. This should always be set to
@@ -49,6 +50,10 @@ class NoisyChannels:
         to other methods. RANSAC can detect bad channels that other
         methods are unable to catch, but also slows down noisy channel
         detection considerably. Defaults to ``True``.
+    bad_by_manual : list of str
+        List of channels that are bad. These channels will be excluded when
+        trying to find additional bad channels. Note that the union of these channels
+        and those declared in ``raw.info["bads"]`` will be used.
 
     References
     ----------
@@ -66,13 +71,15 @@ class NoisyChannels:
         matlab_strict=False,
         *,
         ransac=True,
+        bad_by_manual=None,
     ):
         # Make sure that we got an MNE object
         assert isinstance(raw, mne.io.BaseRaw)
 
         raw.load_data()
         self.raw_mne = raw.copy()
-        self.bad_by_manual = raw.info["bads"]
+        bad_by_manual = bad_by_manual if bad_by_manual else []
+        self.bad_by_manual = list(set(bad_by_manual + raw.info["bads"]))
         self.raw_mne.pick("eeg")  # excludes bads
         self.sample_rate = raw.info["sfreq"]
         if do_detrend:
