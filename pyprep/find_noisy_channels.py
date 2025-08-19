@@ -548,7 +548,7 @@ class NoisyChannels:
         # Get names of bad-by-HF-noise and bad-by-correlation channels
         if not len(self._extra_info["bad_by_hf_noise"]) > 1:
             self.find_bad_by_hfnoise()
-        if not len(self._extra_info["bad_by_correlation"]):
+        if not len(self._extra_info["bad_by_correlation"]) and self.correlation:
             self.find_bad_by_correlation()
         bad_by_hf = set(self.bad_by_hf_noise)
         bad_by_corr = set(self.bad_by_correlation)
