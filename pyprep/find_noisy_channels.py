@@ -50,6 +50,9 @@ class NoisyChannels:
         to other methods. RANSAC can detect bad channels that other
         methods are unable to catch, but also slows down noisy channel
         detection considerably. Defaults to ``True``.
+    correlation : bool
+        Whether correlation should be used for bad channel detection, in addition
+        to other methods. Defaults to ``True``.
     bad_by_manual : list of str | None
         List of channels that are bad. These channels will be excluded when
         trying to find additional bad channels. Note that the union of these channels
@@ -71,6 +74,7 @@ class NoisyChannels:
         matlab_strict=False,
         *,
         ransac=True,
+        correlation=True,
         bad_by_manual=None,
     ):
         # Make sure that we got an MNE object
@@ -88,8 +92,13 @@ class NoisyChannels:
             )
         self.matlab_strict = matlab_strict
 
-        assert isinstance(ransac, bool), f"ransac must be boolean, got: {ransac}"
+        msg = f"ransac must be boolean, got: {ransac}"
+        assert isinstance(ransac, bool), msg
         self.ransac = ransac
+
+        msg = f"correlation must be boolean, got: {correlation}"
+        assert isinstance(correlation, bool), msg
+        self.correlation = correlation
 
         # Extra data for debugging
         self._extra_info = {
@@ -213,7 +222,9 @@ class NoisyChannels:
 
         return bads
 
-    def find_all_bads(self, ransac=None, channel_wise=False, max_chunk_size=None):
+    def find_all_bads(
+        self, *, ransac=None, channel_wise=False, max_chunk_size=None, correlation=None
+    ):
         """Call all the functions to detect bad channels.
 
         This function calls all the bad-channel detecting functions.
@@ -244,20 +255,38 @@ class NoisyChannels:
             other programs on the host system. If using window-wise RANSAC
             (the default) or not using RANSAC at all, this parameter has no
             effect. Defaults to ``None``.
+        correlation : bool | None
+            Whether correlation should be used for bad channel detection, in addition
+            to the other methods. If ``None`` (default), then the value at
+            instantiation of the ``NoisyChannels`` class is taken (defaults
+            to ``True``), else the instantiation value is overwritten.
 
         """
         if ransac is not None and ransac != self.ransac:
-            assert isinstance(ransac, bool), f"ransac must be boolean, got: {ransac}"
+            msg = f"ransac must be boolean, got: {ransac}"
+            assert isinstance(ransac, bool), msg
             logger.warning(
-                f"Overwriting `ransac` value. Was `{self.ransac}` at instantiation "
+                "Overwriting `ransac` value. "
+                f"Was `{self.ransac}` at instantiation "
                 f"of NoisyChannels. Now setting to `{ransac}`."
             )
             self.ransac = ransac
 
+        if correlation is not None and correlation != self.correlation:
+            msg = f"correlation must be boolean, got: {correlation}"
+            assert isinstance(correlation, bool), msg
+            logger.warning(
+                "Overwriting `correlation` value. "
+                f"Was `{self.correlation}` at instantiation "
+                f"of NoisyChannels. Now setting to `{correlation}`."
+            )
+            self.correlation = correlation
+
         # NOTE: Bad-by-NaN/flat is already run during init, no need to re-run here
         self.find_bad_by_deviation()
         self.find_bad_by_hfnoise()
-        self.find_bad_by_correlation()
+        if self.correlation:
+            self.find_bad_by_correlation()
         self.find_bad_by_SNR()
         if self.ransac:
             self.find_bad_by_ransac(
