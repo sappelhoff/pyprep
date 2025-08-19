@@ -31,17 +31,17 @@ class NoisyChannels:
     raw : mne.io.Raw
         An MNE Raw object to check for bad EEG channels. Channels set to bad
         in ``raw.info["bads"]`` will not be used to find additional bad channels.
-    do_detrend : bool, optional
+    do_detrend : bool
         Whether or not low-frequency (<1.0 Hz) trends should be removed from the
         EEG signal prior to bad channel detection. This should always be set to
         ``True`` unless the signal has already had low-frequency trends removed.
         Defaults to ``True``.
-    random_state : {int, None, np.random.RandomState}, optional
+    random_state : {int, None, np.random.RandomState} | None
         The seed to use for random number generation within RANSAC. This can be
         ``None``, an integer, or a :class:`~numpy.random.RandomState` object.
         If ``None``, a random seed will be obtained from the operating system.
         Defaults to ``None``.
-    matlab_strict : bool, optional
+    matlab_strict : bool
         Whether or not PyPREP should strictly follow MATLAB PREP's internal
         math, ignoring any improvements made in PyPREP over the original code
         (see :ref:`matlab-diffs` for more details). Defaults to ``False``.
@@ -50,10 +50,10 @@ class NoisyChannels:
         to other methods. RANSAC can detect bad channels that other
         methods are unable to catch, but also slows down noisy channel
         detection considerably. Defaults to ``True``.
-    bad_by_manual : list of str
+    bad_by_manual : list of str | None
         List of channels that are bad. These channels will be excluded when
         trying to find additional bad channels. Note that the union of these channels
-        and those declared in ``raw.info["bads"]`` will be used.
+        and those declared in ``raw.info["bads"]`` will be used. Defaults to ``None``.
 
     References
     ----------
