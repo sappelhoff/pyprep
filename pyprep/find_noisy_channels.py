@@ -29,18 +29,19 @@ class NoisyChannels:
     Parameters
     ----------
     raw : mne.io.Raw
-        An MNE Raw object to check for bad EEG channels.
-    do_detrend : bool, optional
+        An MNE Raw object to check for bad EEG channels. Channels set to bad
+        in ``raw.info["bads"]`` will not be used to find additional bad channels.
+    do_detrend : bool
         Whether or not low-frequency (<1.0 Hz) trends should be removed from the
         EEG signal prior to bad channel detection. This should always be set to
         ``True`` unless the signal has already had low-frequency trends removed.
         Defaults to ``True``.
-    random_state : {int, None, np.random.RandomState}, optional
+    random_state : {int, None, np.random.RandomState} | None
         The seed to use for random number generation within RANSAC. This can be
         ``None``, an integer, or a :class:`~numpy.random.RandomState` object.
         If ``None``, a random seed will be obtained from the operating system.
         Defaults to ``None``.
-    matlab_strict : bool, optional
+    matlab_strict : bool
         Whether or not PyPREP should strictly follow MATLAB PREP's internal
         math, ignoring any improvements made in PyPREP over the original code
         (see :ref:`matlab-diffs` for more details). Defaults to ``False``.
@@ -49,6 +50,10 @@ class NoisyChannels:
         to other methods. RANSAC can detect bad channels that other
         methods are unable to catch, but also slows down noisy channel
         detection considerably. Defaults to ``True``.
+    bad_by_manual : list of str | None
+        List of channels that are bad. These channels will be excluded when
+        trying to find additional bad channels. Note that the union of these channels
+        and those declared in ``raw.info["bads"]`` will be used. Defaults to ``None``.
 
     References
     ----------
@@ -66,13 +71,15 @@ class NoisyChannels:
         matlab_strict=False,
         *,
         ransac=True,
+        bad_by_manual=None,
     ):
         # Make sure that we got an MNE object
         assert isinstance(raw, mne.io.BaseRaw)
 
         raw.load_data()
         self.raw_mne = raw.copy()
-        self.bad_by_manual = raw.info["bads"]
+        bad_by_manual = bad_by_manual if bad_by_manual else []
+        self.bad_by_manual = list(set(bad_by_manual + raw.info["bads"]))
         self.raw_mne.pick("eeg")  # excludes bads
         self.sample_rate = raw.info["sfreq"]
         if do_detrend:
@@ -116,8 +123,11 @@ class NoisyChannels:
         self.find_bad_by_nan_flat()
         bads_by_nan_flat = self.bad_by_nan + self.bad_by_flat
 
+        # unusable channels are also those manually marked as bad
+        bads_unusable = self.bad_by_manual + bads_by_nan_flat
+
         # Make a subset of the data containing only usable EEG channels
-        self.usable_idx = np.isin(ch_names, bads_by_nan_flat, invert=True)
+        self.usable_idx = np.isin(ch_names, bads_unusable, invert=True)
         self.EEGData = self.raw_mne.get_data(picks=ch_names[self.usable_idx])
         self.EEGFiltered = None
 
