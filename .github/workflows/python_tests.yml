@@ -89,7 +89,7 @@ jobs:
 
     - name: Upload docs build artifacts
       if: ${{ matrix.platform == 'ubuntu-latest' && matrix.mne-version == 'mne-stable' }}
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: docs-artifact
         path: docs/_build/html
