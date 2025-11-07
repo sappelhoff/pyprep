@@ -661,7 +661,9 @@ class NoisyChannels:
             self.EEGFiltered,
             self.sample_rate,
             self.ch_names_new,
-            self.raw_mne._get_channel_positions()[self.usable_idx, :],
+            self.raw_mne._get_channel_positions(self.raw_mne.ch_names)[
+                self.usable_idx, :
+            ],
             exclude_from_ransac,
             n_samples,
             sample_prop,

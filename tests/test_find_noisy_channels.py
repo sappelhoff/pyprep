@@ -237,6 +237,7 @@ def test_find_bad_by_ransac(raw_tmp):
     }
     bads = {}
     corr = {}
+    raw_tmp.info["bads"] = ["Pz"]
     for name, args in test_matrix.items():
         nd = NoisyChannels(
             raw_tmp, do_detrend=False, random_state=ransac_rng, matlab_strict=args[0]
