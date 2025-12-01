@@ -39,6 +39,7 @@ Changelog
 - :meth:`~pyprep.NoisyChannels.find_bad_by_nan_flat` now accepts a ``flat_threshold`` argument, by `Nabil Alibou`_ (:gh:`144`)
 - replaced an internal implementation of the MAD algorithm with :func:`scipy.stats.median_abs_deviation`, by `Ayush Agarwal`_ (:gh:`153`) and `Stefan Appelhoff`_ (:gh:`155`)
 - The :class:`~pyprep.NoisyChannels` class now accepts a `ransac` boolean argument at instantiation that is carried over to :meth:`~pyprep.NoisyChannels.find_all_bads`, by `Stefan Appelhoff`_ (:gh:`164`)
+- Python 3.10 or higher is now required.
 
 Bug
 ~~~

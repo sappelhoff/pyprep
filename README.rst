@@ -48,7 +48,7 @@ for EEG data, working with `MNE-Python <https://mne.tools>`_.
 Installation
 ============
 
-``pyprep`` runs on Python version 3.9 or higher.
+``pyprep`` runs on Python version 3.10 or higher.
 
 We recommend to run ``pyprep`` in a dedicated virtual environment
 (for example using `conda <https://docs.conda.io/en/latest/miniconda.html>`_).
