@@ -233,6 +233,32 @@ MATLAB PREP, PyPREP will use a Python reimplementation of ``eeg_interp`` instead
 when the ``matlab_strict`` parameter is set to ``True``.
 
 
+Annotation-Based Segment Rejection
+----------------------------------
+
+PyPREP supports the ``reject_by_annotation`` parameter in
+:class:`~pyprep.PrepPipeline`, :class:`~pyprep.Reference`, and
+:class:`~pyprep.NoisyChannels`, which allows excluding BAD-annotated time
+segments from channel quality assessment. This is useful when recordings
+contain breaks, movement artifacts, or other periods that shouldn't influence
+channel rejection decisions.
+
+MATLAB PREP does not have this feature. In fact, MATLAB PREP explicitly warns
+against using PREP on data with discontinuities (such as boundary markers from
+paused/resumed recordings). However, the ``reject_by_annotation`` feature in
+PyPREP is designed for a different use case: temporarily excluding known-bad
+segments (e.g., participant movement during breaks) from *statistical analysis*
+while preserving the original continuous data structure in the output.
+
+When ``reject_by_annotation`` is set to ``'omit'``, MNE's
+:meth:`~mne.io.Raw.get_data` is used to concatenate non-BAD segments for
+computing channel quality metrics. The final processed output retains the
+original continuous structure with all time points intact.
+
+This parameter has no equivalent in MATLAB PREP and is not affected by the
+``matlab_strict`` setting.
+
+
 References
 ----------
 
