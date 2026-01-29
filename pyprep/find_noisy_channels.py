@@ -197,10 +197,10 @@ class NoisyChannels:
 
         Parameters
         ----------
-        verbose : bool, optional
+        verbose : bool | None
             If ``True``, a summary of the channels currently flagged as by bad per
             category is printed. Defaults to ``False``.
-        as_dict: bool, optional
+        as_dict: bool | None
             If ``True``, this method will return a dict of the channels currently
             flagged as bad by each individual bad channel type. If ``False``, this
             method will return a list of all unique bad channels detected so far.
@@ -268,7 +268,7 @@ class NoisyChannels:
             detection considerably. If ``None`` (default), then the value at
             instantiation of the ``NoisyChannels`` class is taken (defaults
             to ``True``), else the instantiation value is overwritten.
-        channel_wise : bool, optional
+        channel_wise : bool | None
             Whether RANSAC should predict signals for chunks of channels over the
             entire signal length ("channel-wise RANSAC", see `max_chunk_size`
             parameter). If ``False``, RANSAC will instead predict signals for all
@@ -278,7 +278,7 @@ class NoisyChannels:
             (especially if `max_chunk_size` is ``None``), but can be faster on
             systems with lots of RAM to spare. Has no effect if not using RANSAC.
             Defaults to ``False``.
-        max_chunk_size : {int, None}, optional
+        max_chunk_size : {int, None} | None
             The maximum number of channels to predict at once during
             channel-wise RANSAC. If ``None``, RANSAC will use the largest chunk
             size that will fit into the available RAM, which may slow down
@@ -345,7 +345,7 @@ class NoisyChannels:
 
         Parameters
         ----------
-        flat_threshold : float, optional
+        flat_threshold : float | None
             The lowest standard deviation or MAD value for a channel to be
             considered bad-by-flat. Defaults to ``1e-15`` volts (corresponds to
             10e-10 µV in MATLAB PREP).
@@ -382,7 +382,7 @@ class NoisyChannels:
 
         Parameters
         ----------
-        deviation_threshold : float, optional
+        deviation_threshold : float | None
             The minimum absolute z-score of a channel for it to be considered
             bad-by-deviation. Defaults to ``5.0``.
 
@@ -428,7 +428,7 @@ class NoisyChannels:
 
         Parameters
         ----------
-        HF_zscore_threshold : float, optional
+        HF_zscore_threshold : float | None
             The minimum noisiness z-score of a channel for it to be considered
             bad-by-high-frequency-noise. Defaults to ``5.0``.
 
@@ -493,12 +493,12 @@ class NoisyChannels:
 
         Parameters
         ----------
-        correlation_secs : float, optional
+        correlation_secs : float | None
             The length (in seconds) of each correlation window. Defaults to ``1.0``.
-        correlation_threshold : float, optional
+        correlation_threshold : float | None
             The lowest maximum inter-channel correlation for a channel to be
             considered "bad" within a given window. Defaults to ``0.4``.
-        frac_bad : float, optional
+        frac_bad : float | None
             The minimum proportion of bad windows for a channel to be considered
             "bad-by-correlation" or "bad-by-dropout". Defaults to ``0.01`` (1% of
             all windows).
@@ -637,26 +637,26 @@ class NoisyChannels:
 
         Parameters
         ----------
-        n_samples : int, optional
+        n_samples : int | None
             Number of random channel samples to use for RANSAC. Defaults
             to ``50``.
-        sample_prop : float, optional
+        sample_prop : float | None
             Proportion of total channels to use for signal prediction per RANSAC
             sample. This needs to be in the range [0, 1], where 0 would mean no
             channels would be used and 1 would mean all channels would be used
             (neither of which would be useful values). Defaults to ``0.25``
             (e.g., 16 channels per sample for a 64-channel dataset).
-        corr_thresh : float, optional
+        corr_thresh : float | None
             The minimum predicted vs. actual signal correlation for a channel to
             be considered good within a given RANSAC window. Defaults
             to ``0.75``.
-        frac_bad : float, optional
+        frac_bad : float | None
             The minimum fraction of bad (i.e., below-threshold) RANSAC windows
             for a channel to be considered bad-by-RANSAC. Defaults to ``0.4``.
-        corr_window_secs : float, optional
+        corr_window_secs : float | None
             The duration (in seconds) of each RANSAC correlation window. Defaults
             to 5 seconds.
-        channel_wise : bool, optional
+        channel_wise : bool | None
             Whether RANSAC should predict signals for chunks of channels over the
             entire signal length ("channel-wise RANSAC", see `max_chunk_size`
             parameter). If ``False``, RANSAC will instead predict signals for all
@@ -665,7 +665,7 @@ class NoisyChannels:
             RANSAC generally has higher RAM demands than window-wise RANSAC
             (especially if `max_chunk_size` is ``None``), but can be faster on
             systems with lots of RAM to spare. Defaults to ``False``.
-        max_chunk_size : {int, None}, optional
+        max_chunk_size : {int, None} | None
             The maximum number of channels to predict at once during
             channel-wise RANSAC. If ``None``, RANSAC will use the largest chunk
             size that will fit into the available RAM, which may slow down

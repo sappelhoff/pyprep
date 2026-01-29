@@ -60,24 +60,24 @@ def find_bad_by_ransac(
     exclude : list
         Labels of channels to exclude as signal predictors during RANSAC
         (i.e., channels already flagged as bad by metrics other than HF noise).
-    n_samples : int, optional
+    n_samples : int | None
         Number of random channel samples to use for RANSAC. Defaults to ``50``.
-    sample_prop : float, optional
+    sample_prop : float | None
         Proportion of total channels to use for signal prediction per RANSAC
         sample. This needs to be in the range [0, 1], where 0 would mean no
         channels would be used and 1 would mean all channels would be used
         (neither of which would be useful values). Defaults to ``0.25`` (e.g.,
         16 channels per sample for a 64-channel dataset).
-    corr_thresh : float, optional
+    corr_thresh : float | None
         The minimum predicted vs. actual signal correlation for a channel to
         be considered good within a given RANSAC window. Defaults to ``0.75``.
-    frac_bad : float, optional
+    frac_bad : float | None
         The minimum fraction of bad (i.e., below-threshold) RANSAC windows for a
         channel to be considered bad-by-RANSAC. Defaults to ``0.4``.
-    corr_window_secs : float, optional
+    corr_window_secs : float | None
         The duration (in seconds) of each RANSAC correlation window. Defaults to
         5 seconds.
-    channel_wise : bool, optional
+    channel_wise : bool | None
         Whether RANSAC should predict signals for chunks of channels over the
         entire signal length ("channel-wise RANSAC", see `max_chunk_size`
         parameter). If ``False``, RANSAC will instead predict signals for all
@@ -86,18 +86,18 @@ def find_bad_by_ransac(
         RANSAC generally has higher RAM demands than window-wise RANSAC
         (especially if `max_chunk_size` is ``None``), but can be faster on
         systems with lots of RAM to spare. Defaults to ``False``.
-    max_chunk_size : {int, None}, optional
+    max_chunk_size : {int, None} | None
         The maximum number of channels to predict at once during channel-wise
         RANSAC. If ``None``, RANSAC will use the largest chunk size that will
         fit into the available RAM, which may slow down other programs on the
         host system. If using window-wise RANSAC (the default), this parameter
         has no effect. Defaults to ``None``.
-    random_state : {int, None, np.random.RandomState}, optional
+    random_state : {int, None, np.random.RandomState} | None
         The random seed with which to generate random samples of channels during
         RANSAC. If random_state is an int, it will be used as a seed for RandomState.
         If ``None``, the seed will be obtained from the operating system
         (see RandomState for details). Defaults to ``None``.
-    matlab_strict : bool, optional
+    matlab_strict : bool | None
         Whether or not RANSAC should strictly follow MATLAB PREP's internal
         math, ignoring any improvements made in PyPREP over the original code
         (see :ref:`matlab-diffs` for more details). Defaults to ``False``.

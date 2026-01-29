@@ -39,15 +39,15 @@ class PrepPipeline:
               For example, for 60Hz you may specify
               ``np.arange(60, sfreq / 2, 60)``. Specify an empty list to
               skip the line noise removal step.
-        - max_iterations : int, optional
+        - max_iterations : int | None
             - The maximum number of iterations of noisy channel removal to
               perform during robust referencing. Defaults to ``4``.
     montage : mne.channels.DigMontage
         Digital montage of EEG data.
-    ransac : bool, optional
+    ransac : bool | None
         Whether or not to use RANSAC for noisy channel detection in addition to
         the other methods in :class:`~pyprep.NoisyChannels`. Defaults to True.
-    channel_wise : bool, optional
+    channel_wise : bool | None
         Whether RANSAC should predict signals for chunks of channels over the
         entire signal length ("channel-wise RANSAC", see `max_chunk_size`
         parameter). If ``False``, RANSAC will instead predict signals for all
@@ -57,24 +57,24 @@ class PrepPipeline:
         (especially if `max_chunk_size` is ``None``), but can be faster on
         systems with lots of RAM to spare. Has no effect if not using RANSAC.
         Defaults to ``False``.
-    max_chunk_size : {int, None}, optional
+    max_chunk_size : {int, None} | None
         The maximum number of channels to predict at once during channel-wise
         RANSAC. If ``None``, RANSAC will use the largest chunk size that will
         fit into the available RAM, which may slow down other programs on the
         host system. If using window-wise RANSAC (the default) or not using
         RANSAC at all, this parameter has no effect. Defaults to ``None``.
-    random_state : {int, None, np.random.RandomState}, optional
+    random_state : {int, None, np.random.RandomState} | None
         The random seed at which to initialize the class. If random_state is
         an int, it will be used as a seed for RandomState.
         If None, the seed will be obtained from the operating system
         (see RandomState for details). Default is None.
-    filter_kwargs : {dict, None}, optional
+    filter_kwargs : {dict, None} | None
         Optional keywords arguments to be passed on to mne.filter.notch_filter.
         Do not set the "x", Fs", and "freqs" arguments via the filter_kwargs
         parameter, but use the "raw" and "prep_params" parameters instead.
         If None is passed, the pyprep default settings for filtering are used
         instead.
-    reject_by_annotation : {None, 'omit', 'NaN'}, optional
+    reject_by_annotation : {None, 'omit', 'NaN'} | None
         How to handle BAD-annotated time segments during channel quality
         assessment. If ``'omit'``, annotated segments are excluded from
         analysis (clean segments are concatenated). If ``'NaN'``, annotated
@@ -82,7 +82,7 @@ class PrepPipeline:
         are ignored and the full recording is used. This is useful when recordings
         contain breaks or movement artifacts that shouldn't influence channel
         rejection decisions.
-    matlab_strict : bool, optional
+    matlab_strict : bool | None
         Whether or not PyPREP should strictly follow MATLAB PREP's internal
         math, ignoring any improvements made in PyPREP over the original code
         (see :ref:`matlab-diffs` for more details). Defaults to False.

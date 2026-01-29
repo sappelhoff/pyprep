@@ -56,7 +56,7 @@ def _mat_quantile(arr, q, axis=None):
     q : float
         The quantile to calculate for the input data. Must be between 0 and 1,
         inclusive.
-    axis : {int, tuple of int, None}, optional
+    axis : {int, tuple of int, None} | None
         Axis along which quantile values should be calculated. Defaults to
         calculating the value at the given quantile for the entire array.
 
@@ -130,7 +130,7 @@ def _mat_iqr(arr, axis=None):
     ----------
     arr : np.ndarray
         Input array containing samples from the distribution to summarize.
-    axis : {int, tuple of int, None}, optional
+    axis : {int, tuple of int, None} | None
         Axis along which IQRs should be calculated. Defaults to calculating the
         IQR for the entire array.
 
@@ -435,7 +435,7 @@ def _correlate_arrays(a, b, matlab_strict=False):
         A 2-D array to correlate with `a`.
     b : np.ndarray
         A 2-D array to correlate with `b`.
-    matlab_strict : bool, optional
+    matlab_strict : bool | None
         Whether or not correlations should be calculated identically to MATLAB
         PREP (i.e., without mean subtraction) instead of by traditional Pearson
         product-moment correlation (see Notes for details). Defaults to
