@@ -233,6 +233,30 @@ MATLAB PREP, PyPREP will use a Python reimplementation of ``eeg_interp`` instead
 when the ``matlab_strict`` parameter is set to ``True``.
 
 
+PyPREP-Only Features
+--------------------
+
+The following features are available in PyPREP but are not present in the
+original MATLAB PREP implementation.
+
+
+Bad channel detection by PSD
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The :meth:`~pyprep.NoisyChannels.find_bad_by_PSD` method detects channels with
+abnormally high or low power spectral density (PSD) compared to other channels.
+This method is not part of the original MATLAB PREP pipeline.
+
+A channel is considered "bad-by-PSD" if its total PSD (computed using Welch's
+method over a configurable frequency range, defaulting to 1-45 Hz to exclude
+line noise) deviates considerably from the median channel PSD. The deviation
+is calculated using robust Z-scoring based on the median absolute deviation
+(MAD).
+
+This method is not called by :meth:`~pyprep.NoisyChannels.find_all_bads` by
+default and must be called explicitly if desired.
+
+
 Annotation-Based Segment Rejection
 ----------------------------------
 
