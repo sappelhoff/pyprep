@@ -304,3 +304,93 @@ def test_find_bad_by_ransac_err(raw_tmp):
     nd = NoisyChannels(raw_tmp, do_detrend=False)
     with pytest.raises(IOError):
         nd.find_bad_by_ransac()
+
+
+# Tests for reject_by_annotation functionality
+
+
+def test_reject_by_annotation_default(raw_tmp):
+    """Test that default behavior (None) doesn't change sample count."""
+    nd = NoisyChannels(raw_tmp, do_detrend=False, reject_by_annotation=None)
+    expected_samples = raw_tmp.get_data().shape[1]
+    assert nd.n_samples == expected_samples
+    assert nd.n_samples_original == expected_samples
+
+
+def test_reject_by_annotation_omit(raw_tmp):
+    """Test that 'omit' mode excludes annotated segments."""
+    # Add a BAD annotation covering 10% of the recording
+    duration = raw_tmp.times[-1]
+    raw_tmp.annotations.append(
+        onset=duration * 0.4,
+        duration=duration * 0.1,
+        description="BAD_test",
+    )
+
+    original_samples = raw_tmp.get_data().shape[1]
+
+    # With 'omit', sample count should be reduced
+    nd = NoisyChannels(raw_tmp, do_detrend=False, reject_by_annotation="omit")
+    assert nd.n_samples_original == original_samples
+    assert nd.n_samples < original_samples
+
+    # Without rejection, sample count should be unchanged
+    nd_no_reject = NoisyChannels(raw_tmp, do_detrend=False, reject_by_annotation=None)
+    assert nd_no_reject.n_samples == original_samples
+
+
+def test_reject_by_annotation_nan(raw_tmp):
+    """Test that 'NaN' mode replaces annotated samples with NaN."""
+    # Add a BAD annotation
+    duration = raw_tmp.times[-1]
+    raw_tmp.annotations.append(
+        onset=duration * 0.4,
+        duration=duration * 0.1,
+        description="BAD_test",
+    )
+
+    original_samples = raw_tmp.get_data().shape[1]
+
+    # With 'NaN', sample count should be preserved but data should have NaNs
+    nd = NoisyChannels(raw_tmp, do_detrend=False, reject_by_annotation="NaN")
+    assert nd.n_samples == original_samples
+    assert np.any(np.isnan(nd.EEGData))
+
+
+def test_reject_by_annotation_invalid(raw_tmp):
+    """Test that invalid reject_by_annotation values raise ValueError."""
+    with pytest.raises(ValueError, match="reject_by_annotation must be"):
+        NoisyChannels(raw_tmp, do_detrend=False, reject_by_annotation="invalid")
+
+    with pytest.raises(ValueError, match="reject_by_annotation must be"):
+        NoisyChannels(raw_tmp, do_detrend=False, reject_by_annotation="skip")
+
+
+def test_reject_by_annotation_data_extraction(raw_tmp):
+    """Test that reject_by_annotation correctly filters data for analysis."""
+    # Add a BAD annotation for the first 30% of the recording
+    duration = raw_tmp.times[-1]
+    bad_duration = duration * 0.3
+
+    raw_tmp.annotations.append(
+        onset=0.0,
+        duration=bad_duration,
+        description="BAD_movement",
+    )
+
+    # Create two NoisyChannels instances - one with and one without annotation rejection
+    nd_no_reject = NoisyChannels(raw_tmp.copy(), do_detrend=False)
+    nd_with_reject = NoisyChannels(
+        raw_tmp.copy(), do_detrend=False, reject_by_annotation="omit"
+    )
+
+    # With annotation rejection, the data should have fewer samples
+    assert nd_with_reject.n_samples < nd_no_reject.n_samples
+
+    # The reduction should be approximately 30% (the annotated portion)
+    expected_reduction = 0.3
+    actual_reduction = 1 - (nd_with_reject.n_samples / nd_no_reject.n_samples)
+    assert abs(actual_reduction - expected_reduction) < 0.05  # 5% tolerance
+
+    # Both should have the same original sample count stored
+    assert nd_no_reject.n_samples_original == nd_with_reject.n_samples_original
