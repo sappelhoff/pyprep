@@ -57,6 +57,14 @@ class NoisyChannels:
         List of channels that are bad. These channels will be excluded when
         trying to find additional bad channels. Note that the union of these channels
         and those declared in ``raw.info["bads"]`` will be used. Defaults to ``None``.
+    reject_by_annotation : {None, 'omit', 'NaN'} | None
+        How to handle BAD-annotated time segments during channel quality
+        assessment. If ``'omit'``, annotated segments are excluded from
+        analysis (clean segments are concatenated). If ``'NaN'``, annotated
+        samples are replaced with NaN values. If ``None`` (default), annotations
+        are ignored and the full recording is used. This is useful when recordings
+        contain breaks or movement artifacts that shouldn't influence channel
+        rejection decisions.
 
     References
     ----------
@@ -76,6 +84,7 @@ class NoisyChannels:
         ransac=True,
         correlation=True,
         bad_by_manual=None,
+        reject_by_annotation=None,
     ):
         # Make sure that we got an MNE object
         assert isinstance(raw, mne.io.BaseRaw)
@@ -99,6 +108,17 @@ class NoisyChannels:
         msg = f"correlation must be boolean, got: {correlation}"
         assert isinstance(correlation, bool), msg
         self.correlation = correlation
+
+        # Validate reject_by_annotation parameter
+        if reject_by_annotation is not None and reject_by_annotation not in (
+            "omit",
+            "NaN",
+        ):
+            raise ValueError(
+                f"reject_by_annotation must be None, 'omit', or 'NaN', "
+                f"got: {reject_by_annotation}"
+            )
+        self.reject_by_annotation = reject_by_annotation
 
         # Extra data for debugging
         self._extra_info = {
@@ -126,7 +146,7 @@ class NoisyChannels:
         ch_names = np.asarray(self.raw_mne.info["ch_names"])
         self.ch_names_original = ch_names
         self.n_chans_original = len(ch_names)
-        self.n_samples = raw.get_data().shape[1]
+        self.n_samples_original = raw.get_data().shape[1]
 
         # Before anything else, flag bad-by-NaNs and bad-by-flats
         self.find_bad_by_nan_flat()
@@ -137,7 +157,11 @@ class NoisyChannels:
 
         # Make a subset of the data containing only usable EEG channels
         self.usable_idx = np.isin(ch_names, bads_unusable, invert=True)
-        self.EEGData = self.raw_mne.get_data(picks=ch_names[self.usable_idx])
+        self.EEGData = self.raw_mne.get_data(
+            picks=ch_names[self.usable_idx],
+            reject_by_annotation=self.reject_by_annotation,
+        )
+        self.n_samples = self.EEGData.shape[1]
         self.EEGFiltered = None
 
         # Get usable EEG channel names & channel counts
@@ -223,7 +247,13 @@ class NoisyChannels:
         return bads
 
     def find_all_bads(
-        self, *, ransac=None, channel_wise=False, max_chunk_size=None, correlation=None
+        self,
+        *,
+        ransac=None,
+        channel_wise=False,
+        max_chunk_size=None,
+        correlation=None,
+        reject_by_annotation=None,
     ):
         """Call all the functions to detect bad channels.
 
@@ -260,8 +290,17 @@ class NoisyChannels:
             to the other methods. If ``None`` (default), then the value at
             instantiation of the ``NoisyChannels`` class is taken (defaults
             to ``True``), else the instantiation value is overwritten.
+        reject_by_annotation : {None, 'omit', 'NaN'} | None
+            This parameter is accepted for compatibility but is ignored here.
+            Annotation rejection is applied during ``NoisyChannels`` initialization,
+            not during ``find_all_bads``. To use annotation rejection, pass
+            ``reject_by_annotation`` to the ``NoisyChannels`` constructor.
 
         """
+        # Note: reject_by_annotation is accepted but ignored here - it's applied
+        # during __init__ when data is extracted. This parameter exists only for
+        # compatibility with ransac_settings dict unpacking.
+        del reject_by_annotation  # unused, applied in __init__
         if ransac is not None and ransac != self.ransac:
             msg = f"ransac must be boolean, got: {ransac}"
             assert isinstance(ransac, bool), msg
