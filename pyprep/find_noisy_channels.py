@@ -625,7 +625,7 @@ class NoisyChannels:
         # Flag channels bad by both HF noise and low correlation as bad by low SNR
         self.bad_by_SNR = list(bad_by_corr.intersection(bad_by_hf))
 
-    def find_bad_by_PSD(self, zscore_threshold=3.0):
+    def find_bad_by_PSD(self, zscore_threshold=3.0, fmin=1.0, fmax=45.0):
         """Detect channels with abnormally high or low power spectral density.
 
         This is a PyPREP-only method not present in the original MATLAB PREP.
@@ -634,13 +634,20 @@ class NoisyChannels:
         (PSD) deviates considerably from the median channel PSD, as calculated
         using a robust Z-scoring method and the given z-score threshold.
 
-        PSD is computed using Welch's method over the 1-50 Hz frequency range.
+        PSD is computed using Welch's method over the specified frequency range.
+        The default range (1-45 Hz) excludes line noise frequencies (50/60 Hz).
 
         Parameters
         ----------
         zscore_threshold : float, optional
             The minimum absolute z-score of a channel for it to be considered
             bad-by-psd. Defaults to ``3.0``.
+        fmin : float, optional
+            The lower frequency bound (in Hz) for PSD computation.
+            Defaults to ``1.0``.
+        fmax : float, optional
+            The upper frequency bound (in Hz) for PSD computation. The default
+            of ``45.0`` excludes 50/60 Hz line noise from the analysis.
 
         """
         MAD_TO_SD = 1.4826  # Scales units of MAD to units of SD, assuming normality
@@ -658,7 +665,7 @@ class NoisyChannels:
         raw_filtered = mne.io.RawArray(self.EEGFiltered, info, verbose=False)
 
         # Compute PSD using Welch method and convert to log scale (dB)
-        psd = raw_filtered.compute_psd(method="welch", fmin=1, fmax=50, verbose=False)
+        psd = raw_filtered.compute_psd(method="welch", fmin=fmin, fmax=fmax, verbose=False)
         log_psd = 10 * np.log10(psd.get_data())
 
         # Sum log PSD across frequencies for each channel to get total power
