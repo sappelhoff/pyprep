@@ -6,7 +6,8 @@
 import mne
 import numpy as np
 from mne.utils import check_random_state, logger
-from scipy import signal, stats
+from scipy import signal
+from scipy.stats import median_abs_deviation
 
 from pyprep.ransac import find_bad_by_ransac
 from pyprep.removeTrend import removeTrend
@@ -249,6 +250,7 @@ class NoisyChannels:
             "bad_by_correlation": self.bad_by_correlation,
             "bad_by_SNR": self.bad_by_SNR,
             "bad_by_dropout": self.bad_by_dropout,
+            "bad_by_psd": self.bad_by_psd,
             "bad_by_ransac": self.bad_by_ransac,
             "bad_by_manual": self.bad_by_manual,
         }
@@ -257,7 +259,7 @@ class NoisyChannels:
         for bad_chs in bads.values():
             all_bads.update(bad_chs)
 
-        name_map = {"nan": "NaN", "hf_noise": "HF noise", "ransac": "RANSAC"}
+        name_map = {"nan": "NaN", "hf_noise": "HF noise", "psd": "PSD", "ransac": "RANSAC"}
         if verbose:
             out = f"Found {len(all_bads)} uniquely bad channels:\n"
             for bad_type, bad_chs in bads.items():
@@ -624,41 +626,64 @@ class NoisyChannels:
         self.bad_by_SNR = list(bad_by_corr.intersection(bad_by_hf))
 
     def find_bad_by_PSD(self, zscore_threshold=3.0):
-        """
-        Detect channels with abnormally high or low overall power spectral density
-        (PSD) values.
+        """Detect channels with abnormally high or low power spectral density.
 
-        A channel is considered "bad-by-psd" if its psd value deviates
-        considerably from the median channel psd, as calculated using a
-        Z-scoring method and the given z-score threshold.
-        PSD calculation is done using the Welch method.
-        Uses the Welch method for PSD calculation
+        This is a PyPREP-only method not present in the original MATLAB PREP.
+
+        A channel is considered "bad-by-psd" if its total power spectral density
+        (PSD) deviates considerably from the median channel PSD, as calculated
+        using a robust Z-scoring method and the given z-score threshold.
+
+        PSD is computed using Welch's method over the 1-50 Hz frequency range.
 
         Parameters
         ----------
         zscore_threshold : float, optional
-            The minimum noisiness z-score of a channel for it to be considered
+            The minimum absolute z-score of a channel for it to be considered
             bad-by-psd. Defaults to ``3.0``.
+
         """
+        MAD_TO_SD = 1.4826  # Scales units of MAD to units of SD, assuming normality
+        # Reference: https://stat.ethz.ch/R-manual/R-devel/library/stats/html/mad.html
+
         if self.EEGFiltered is None:
             self.EEGFiltered = self._get_filtered_data()
-        psd = self.EEGFiltered.compute_psd(method='welch', fmin=1, fmax=50)
+
+        # Create a temporary Raw object from filtered data for PSD computation
+        info = mne.create_info(
+            ch_names=self.ch_names_new.tolist(),
+            sfreq=self.sample_rate,
+            ch_types="eeg",
+        )
+        raw_filtered = mne.io.RawArray(self.EEGFiltered, info, verbose=False)
+
+        # Compute PSD using Welch method and convert to log scale (dB)
+        psd = raw_filtered.compute_psd(method="welch", fmin=1, fmax=50, verbose=False)
         log_psd = 10 * np.log10(psd.get_data())
-        median_channel_psd = np.median(log_psd, axis=0)
 
-        #  # Calculate robust Z-scores for the channel amplitudes
+        # Sum log PSD across frequencies for each channel to get total power
+        total_log_psd = np.sum(log_psd, axis=1)
+
+        # Calculate robust Z-scores using MAD
+        psd_median = np.median(total_log_psd)
+        psd_mad = np.median(np.abs(total_log_psd - psd_median))
+        psd_sd = psd_mad * MAD_TO_SD
+
         psd_zscore = np.zeros(self.n_chans_original)
-        psd_zscore[self.usable_idx] = stats.zscore(np.sum(log_psd - median_channel_psd, axis=1))
+        if psd_sd > 0:
+            psd_zscore[self.usable_idx] = (total_log_psd - psd_median) / psd_sd
 
-        # Flag channels with unusually high or low PSD values compared to the median channel
-        psd_channel_mask = np.isnan(psd_zscore) | (psd_zscore > zscore_threshold)
+        # Flag channels with abnormally high OR low PSD values
+        abnormal_psd = np.abs(psd_zscore) > zscore_threshold
+        psd_channel_mask = np.isnan(psd_zscore) | abnormal_psd
         abnormal_psd_channels = self.ch_names_original[psd_channel_mask]
 
         # Update names of bad channels by abnormal PSD & save additional info
         self.bad_by_psd = abnormal_psd_channels.tolist()
         self._extra_info["bad_by_psd"].update(
             {
-                "median_channel_psd": median_channel_psd,
+                "median_channel_psd": psd_median,
+                "channel_psd_sd": psd_sd,
                 "psd_zscore": psd_zscore,
             }
         )
