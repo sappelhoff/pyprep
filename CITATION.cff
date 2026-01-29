@@ -55,6 +55,10 @@ authors:
       family-names: Veillette
       affiliation: 'Department of Psychology, University of Chicago, Chicago, IL, USA'
       orcid: 'https://orcid.org/0000-0002-0332-4372'
+    - given-names: Roy Eric
+      family-names: Wieske
+      affiliation: 'Biopsychology and Neuroergonomics, Technische Universität Berlin, Berlin, Germany'
+      orcid: 'https://orcid.org/0009-0006-2018-1074'
 type: software
 repository-code: 'https://github.com/sappelhoff/pyprep'
 license: MIT
