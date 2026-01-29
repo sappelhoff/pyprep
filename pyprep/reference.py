@@ -56,6 +56,10 @@ class Reference:
         an int, it will be used as a seed for RandomState.
         If None, the seed will be obtained from the operating system
         (see RandomState for details). Default is None.
+    reject_by_annotation : {None, 'omit', 'NaN'}, optional
+        How to handle BAD-annotated time segments during channel quality
+        assessment. If ``'omit'``, annotated segments are excluded. If ``'NaN'``,
+        annotated samples are replaced with NaN. Defaults to ``None`` (ignore).
     matlab_strict : bool, optional
         Whether or not PyPREP should strictly follow MATLAB PREP's internal
         math, ignoring any improvements made in PyPREP over the original code.
@@ -77,6 +81,7 @@ class Reference:
         channel_wise=False,
         max_chunk_size=None,
         random_state=None,
+        reject_by_annotation=None,
         matlab_strict=False,
     ):
         """Initialize the class."""
@@ -94,6 +99,7 @@ class Reference:
             "ransac": ransac,
             "channel_wise": channel_wise,
             "max_chunk_size": max_chunk_size,
+            "reject_by_annotation": reject_by_annotation,
         }
         self.random_state = check_random_state(random_state)
         self._extra_info = {}
@@ -142,7 +148,10 @@ class Reference:
         # Phase 2: Find the bad channels and interpolate
         self.raw._data = self.EEG
         noisy_detector = NoisyChannels(
-            self.raw, random_state=self.random_state, matlab_strict=self.matlab_strict
+            self.raw,
+            random_state=self.random_state,
+            matlab_strict=self.matlab_strict,
+            reject_by_annotation=self.ransac_settings.get("reject_by_annotation"),
         )
         noisy_detector.find_all_bads(**self.ransac_settings)
 
@@ -174,7 +183,10 @@ class Reference:
         # Still noisy channels after interpolation
         self.interpolated_channels = bad_channels
         noisy_detector = NoisyChannels(
-            self.raw, random_state=self.random_state, matlab_strict=self.matlab_strict
+            self.raw,
+            random_state=self.random_state,
+            matlab_strict=self.matlab_strict,
+            reject_by_annotation=self.ransac_settings.get("reject_by_annotation"),
         )
         noisy_detector.find_all_bads(**self.ransac_settings)
         self.still_noisy_channels = noisy_detector.get_bads()
@@ -216,6 +228,7 @@ class Reference:
             do_detrend=False,
             random_state=self.random_state,
             matlab_strict=self.matlab_strict,
+            reject_by_annotation=self.ransac_settings.get("reject_by_annotation"),
         )
         noisy_detector.find_all_bads(**self.ransac_settings)
         self.noisy_channels_original = noisy_detector.get_bads(as_dict=True)
@@ -265,6 +278,7 @@ class Reference:
                 do_detrend=False,
                 random_state=self.random_state,
                 matlab_strict=self.matlab_strict,
+                reject_by_annotation=self.ransac_settings.get("reject_by_annotation"),
             )
             # Detrend applied at the beginning of the function.
 
