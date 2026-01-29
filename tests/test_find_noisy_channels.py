@@ -217,6 +217,44 @@ def test_bad_by_SNR(raw_tmp):
     assert nd.bad_by_SNR == [raw_tmp.ch_names[low_snr_idx]]
 
 
+def test_bad_by_PSD(raw_tmp):
+    """Test detection of channels with abnormal power spectral density."""
+    # set scaling factors for high and low PSD test channels
+    low_psd_factor = 0.05
+    high_psd_factor = 20.0
+
+    # make the signal for a random channel have very high power (high PSD)
+    n_chans = raw_tmp.get_data().shape[0]
+    high_psd_idx = int(rng.integers(0, n_chans, 1)[0])
+    raw_tmp._data[high_psd_idx, :] *= high_psd_factor
+
+    # test detection of abnormally high-PSD channels
+    nd = NoisyChannels(raw_tmp, do_detrend=False)
+    nd.find_bad_by_PSD()
+    assert raw_tmp.ch_names[high_psd_idx] in nd.bad_by_psd
+
+    # verify that extra_info is populated correctly
+    assert "median_channel_psd" in nd._extra_info["bad_by_psd"]
+    assert "channel_psd_sd" in nd._extra_info["bad_by_psd"]
+    assert "psd_zscore" in nd._extra_info["bad_by_psd"]
+    assert len(nd._extra_info["bad_by_psd"]["psd_zscore"]) == n_chans
+
+    # make the signal for a different channel have very low power (low PSD)
+    low_psd_idx = (high_psd_idx - 1) if high_psd_idx > 0 else 1
+    raw_tmp._data[low_psd_idx, :] *= low_psd_factor
+
+    # test detection of both abnormally high and low PSD channels
+    nd = NoisyChannels(raw_tmp, do_detrend=False)
+    nd.find_bad_by_PSD()
+    assert raw_tmp.ch_names[high_psd_idx] in nd.bad_by_psd
+    assert raw_tmp.ch_names[low_psd_idx] in nd.bad_by_psd
+
+    # verify that bad_by_psd is included in get_bads() output
+    all_bads = nd.get_bads(as_dict=True)
+    assert "bad_by_psd" in all_bads
+    assert raw_tmp.ch_names[high_psd_idx] in all_bads["bad_all"]
+
+
 def test_find_bad_by_ransac(raw_tmp):
     """Test the RANSAC component of NoisyChannels."""
     # Set a consistent random seed for all RANSAC runs
