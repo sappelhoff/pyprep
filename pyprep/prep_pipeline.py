@@ -74,6 +74,14 @@ class PrepPipeline:
         parameter, but use the "raw" and "prep_params" parameters instead.
         If None is passed, the pyprep default settings for filtering are used
         instead.
+    reject_by_annotation : {None, 'omit', 'NaN'}, optional
+        How to handle BAD-annotated time segments during channel quality
+        assessment. If ``'omit'``, annotated segments are excluded from
+        analysis (clean segments are concatenated). If ``'NaN'``, annotated
+        samples are replaced with NaN values. If ``None`` (default), annotations
+        are ignored and the full recording is used. This is useful when recordings
+        contain breaks or movement artifacts that shouldn't influence channel
+        rejection decisions.
     matlab_strict : bool, optional
         Whether or not PyPREP should strictly follow MATLAB PREP's internal
         math, ignoring any improvements made in PyPREP over the original code
@@ -128,6 +136,7 @@ class PrepPipeline:
         max_chunk_size=None,
         random_state=None,
         filter_kwargs=None,
+        reject_by_annotation=None,
         matlab_strict=False,
     ):
         """Initialize PREP class."""
@@ -167,6 +176,7 @@ class PrepPipeline:
             "ransac": ransac,
             "channel_wise": channel_wise,
             "max_chunk_size": max_chunk_size,
+            "reject_by_annotation": reject_by_annotation,
         }
         self.random_state = check_random_state(random_state)
         self.filter_kwargs = filter_kwargs
