@@ -118,6 +118,13 @@ class NoisyChannels:
                 f"reject_by_annotation must be None, 'omit', or 'NaN', "
                 f"got: {reject_by_annotation}"
             )
+        # reject_by_annotation is not available in MATLAB PREP
+        if matlab_strict and reject_by_annotation is not None:
+            logger.warning(
+                "reject_by_annotation is not available in MATLAB PREP. "
+                f"Setting reject_by_annotation to None (was '{reject_by_annotation}')."
+            )
+            reject_by_annotation = None
         self.reject_by_annotation = reject_by_annotation
 
         # Extra data for debugging
