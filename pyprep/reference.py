@@ -251,6 +251,7 @@ class Reference:
             "bad_by_correlation": [],
             "bad_by_SNR": [],
             "bad_by_dropout": [],
+            "bad_by_psd": [],
             "bad_by_ransac": [],
             "bad_by_manual": self.bads_manual,
             "bad_all": [],
