@@ -233,11 +233,22 @@ def test_bad_by_PSD(raw_tmp):
     nd.find_bad_by_PSD()
     assert raw_tmp.ch_names[high_psd_idx] in nd.bad_by_psd
 
-    # verify that extra_info is populated correctly
-    assert "median_channel_psd" in nd._extra_info["bad_by_psd"]
-    assert "channel_psd_sd" in nd._extra_info["bad_by_psd"]
-    assert "psd_zscore" in nd._extra_info["bad_by_psd"]
-    assert len(nd._extra_info["bad_by_psd"]["psd_zscore"]) == n_chans
+    # verify that extra_info is populated correctly with band-based metrics
+    extra = nd._extra_info["bad_by_psd"]
+    assert "psd_zscore" in extra
+    assert len(extra["psd_zscore"]) == n_chans
+    # Check band power arrays
+    assert "band_power_low" in extra
+    assert "band_power_mid" in extra
+    assert "band_power_high" in extra
+    # Check per-band z-scores
+    assert "zscore_low" in extra
+    assert "zscore_mid" in extra
+    assert "zscore_high" in extra
+    # Check detection criteria flags
+    assert "bad_by_band" in extra
+    assert "bad_by_1f_violation" in extra
+    assert "bad_by_ratio" in extra
 
     # make the signal for a different channel have very low power (low PSD)
     low_psd_idx = (high_psd_idx - 1) if high_psd_idx > 0 else 1
@@ -253,6 +264,33 @@ def test_bad_by_PSD(raw_tmp):
     all_bads = nd.get_bads(as_dict=True)
     assert "bad_by_psd" in all_bads
     assert raw_tmp.ch_names[high_psd_idx] in all_bads["bad_all"]
+
+
+def test_bad_by_PSD_1f_violation(raw_tmp):
+    """Test detection of channels violating the 1/f spectral profile."""
+    n_chans = raw_tmp.get_data().shape[0]
+    bad_idx = int(rng.integers(0, n_chans, 1)[0])
+
+    # Replace channel with high-frequency dominated signal (violates 1/f)
+    # Normal EEG has more power in low frequencies than high frequencies
+    # This channel will have more power in 30-45 Hz than in 1-15 Hz
+    high_freq_signal = _generate_signal(32, 44, raw_tmp.times, fcount=10)
+    raw_tmp._data[bad_idx, :] = high_freq_signal * 50  # Strong high-freq signal
+
+    nd = NoisyChannels(raw_tmp, do_detrend=False)
+    nd.find_bad_by_PSD()
+
+    # Channel should be flagged due to 1/f violation
+    assert raw_tmp.ch_names[bad_idx] in nd.bad_by_psd
+
+    # Verify the 1/f violation was detected
+    extra = nd._extra_info["bad_by_psd"]
+    # Find the index in usable channels (convert boolean mask to int indices)
+    usable_int_idx = np.where(nd.usable_idx)[0]
+    usable_names = [raw_tmp.ch_names[i] for i in usable_int_idx]
+    if raw_tmp.ch_names[bad_idx] in usable_names:
+        usable_pos = usable_names.index(raw_tmp.ch_names[bad_idx])
+        assert extra["bad_by_1f_violation"][usable_pos]
 
 
 def test_find_bad_by_ransac(raw_tmp):
