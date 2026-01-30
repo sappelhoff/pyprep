@@ -641,9 +641,7 @@ class NoisyChannels:
         1. Its power in any frequency band (low: 1-15 Hz, mid: 15-30 Hz,
            high: 30-45 Hz) deviates considerably from other channels, OR
         2. Its high-frequency band has more power than its low-frequency band
-           (violating the typical 1/f spectral profile of EEG), OR
-        3. Any ratio between frequency bands is abnormal compared to other
-           channels (e.g., low/mid, low/high, mid/high).
+           (violating the typical 1/f spectral profile of EEG).
 
         PSD is computed using Welch's method over the specified frequency range.
         The default range (1-45 Hz) excludes line noise frequencies (50/60 Hz).
@@ -739,8 +737,10 @@ class NoisyChannels:
             | (np.abs(zscore_ratio_mid_high) > zscore_threshold)
         )
 
-        # Combine all criteria (bad if ANY criterion is met)
-        bad_by_psd_usable = bad_by_band | bad_by_1f_violation | bad_by_ratio
+        # Combine criteria (bad if ANY criterion is met)
+        # Note: bad_by_ratio is computed for diagnostics but not used in final
+        # decision as it tends to be overly sensitive and theoretically debatable
+        bad_by_psd_usable = bad_by_band | bad_by_1f_violation
 
         # Map back to original channel indices
         psd_channel_mask = np.zeros(self.n_chans_original, dtype=bool)
