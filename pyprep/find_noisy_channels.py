@@ -639,9 +639,12 @@ class NoisyChannels:
 
         A channel is considered "bad-by-psd" if:
         1. Its power in any frequency band (low: 1-15 Hz, mid: 15-30 Hz,
-           high: 30-45 Hz) deviates considerably from other channels, OR
+           high: 30-45 Hz) is abnormally HIGH compared to other channels, OR
         2. Its high-frequency band has more power than its low-frequency band
            (violating the typical 1/f spectral profile of EEG).
+
+        Note: Only excess power (positive z-scores) is flagged, as abnormally
+        low power could reflect normal topographic variation.
 
         PSD is computed using Welch's method over the specified frequency range.
         The default range (1-45 Hz) excludes line noise frequencies (50/60 Hz).
@@ -705,15 +708,17 @@ class NoisyChannels:
                 return (values - median) / sd
             return np.zeros_like(values)
 
-        # Criterion 1: Outlier in any single band
+        # Criterion 1: Outlier with abnormally HIGH power in any band
+        # Note: Only positive z-scores (excess power) are flagged, as low power
+        # could reflect normal topographic variation rather than a bad channel
         zscore_low = robust_zscore(band_power_low)
         zscore_mid = robust_zscore(band_power_mid)
         zscore_high = robust_zscore(band_power_high)
 
         bad_by_band = (
-            (np.abs(zscore_low) > zscore_threshold)
-            | (np.abs(zscore_mid) > zscore_threshold)
-            | (np.abs(zscore_high) > zscore_threshold)
+            (zscore_low > zscore_threshold)
+            | (zscore_mid > zscore_threshold)
+            | (zscore_high > zscore_threshold)
         )
 
         # Criterion 2: 1/f violation (high freq band has more power than low freq band)
