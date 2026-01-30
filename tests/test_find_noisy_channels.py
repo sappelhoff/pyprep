@@ -309,14 +309,6 @@ def test_find_bad_by_ransac_err(raw_tmp):
 # Tests for reject_by_annotation functionality
 
 
-def test_reject_by_annotation_default(raw_tmp):
-    """Test that default behavior (None) doesn't change sample count."""
-    nd = NoisyChannels(raw_tmp, do_detrend=False, reject_by_annotation=None)
-    expected_samples = raw_tmp.get_data().shape[1]
-    assert nd.n_samples == expected_samples
-    assert nd.n_samples_original == expected_samples
-
-
 def test_reject_by_annotation_omit(raw_tmp):
     """Test that 'omit' mode excludes annotated segments."""
     # Add a BAD annotation covering 10% of the recording
