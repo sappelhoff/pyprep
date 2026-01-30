@@ -258,7 +258,9 @@ def test_bad_by_PSD(raw_tmp):
     nd = NoisyChannels(raw_tmp, do_detrend=False)
     nd.find_bad_by_PSD()
     assert raw_tmp.ch_names[high_psd_idx] in nd.bad_by_psd
-    assert raw_tmp.ch_names[low_psd_idx] in nd.bad_by_psd
+    assert (
+        raw_tmp.ch_names[low_psd_idx] not in nd.bad_by_psd
+    )  # the low PSD criterion was ommitted
 
     # verify that bad_by_psd is included in get_bads() output
     all_bads = nd.get_bads(as_dict=True)
