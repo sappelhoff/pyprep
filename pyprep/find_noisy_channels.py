@@ -58,13 +58,13 @@ class NoisyChannels:
         trying to find additional bad channels. Note that the union of these channels
         and those declared in ``raw.info["bads"]`` will be used. Defaults to ``None``.
     reject_by_annotation : {None, 'omit', 'NaN'} | None
-        How to handle BAD-annotated time segments during channel quality
-        assessment. If ``'omit'``, annotated segments are excluded from
-        analysis (clean segments are concatenated). If ``'NaN'``, annotated
-        samples are replaced with NaN values. If ``None`` (default), annotations
-        are ignored and the full recording is used. This is useful when recordings
-        contain breaks or movement artifacts that shouldn't influence channel
-        rejection decisions.
+        How to handle BAD-annotated time segments (annotations starting with
+        "BAD" or "bad") during channel quality assessment. If ``'omit'``,
+        annotated segments are excluded from analysis (clean segments are
+        concatenated). If ``'NaN'``, annotated samples are replaced with NaN
+        values. If ``None`` (default), annotations are ignored and the full
+        recording is used. This is useful when recordings contain breaks or
+        movement artifacts that shouldn't influence channel rejection decisions.
 
     References
     ----------
@@ -126,6 +126,29 @@ class NoisyChannels:
             )
             reject_by_annotation = None
         self.reject_by_annotation = reject_by_annotation
+
+        # Warn if many small BAD segments are present (potential edge effects)
+        if reject_by_annotation is not None:
+            bad_annots = [
+                a
+                for a in raw.annotations
+                if a["description"].startswith(("BAD", "bad"))
+            ]
+            n_bad_segments = len(bad_annots)
+            if n_bad_segments > 0:
+                total_bad_time = sum(a["duration"] for a in bad_annots)
+                recording_length = raw.times[-1]
+                bad_percentage = (total_bad_time / recording_length) * 100
+                mean_duration = total_bad_time / n_bad_segments
+                if bad_percentage > 10 and mean_duration < 5.0:
+                    logger.warning(
+                        f"Found {n_bad_segments} BAD segments covering "
+                        f"{bad_percentage:.1f}% of the recording with mean duration "
+                        f"{mean_duration:.1f}s. Using reject_by_annotation with many "
+                        "short segments may introduce edge effects from concatenation. "
+                        "This feature is intended for excluding a small number of "
+                        "longer segments (e.g., recording breaks)."
+                    )
 
         # Extra data for debugging
         self._extra_info = {
