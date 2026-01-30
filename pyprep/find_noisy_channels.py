@@ -57,14 +57,14 @@ class NoisyChannels:
         List of channels that are bad. These channels will be excluded when
         trying to find additional bad channels. Note that the union of these channels
         and those declared in ``raw.info["bads"]`` will be used. Defaults to ``None``.
-    reject_by_annotation : {None, 'omit', 'NaN'} | None
+    reject_by_annotation : {None, 'omit'} | None
         How to handle BAD-annotated time segments (annotations starting with
         "BAD" or "bad") during channel quality assessment. If ``'omit'``,
         annotated segments are excluded from analysis (clean segments are
-        concatenated). If ``'NaN'``, annotated samples are replaced with NaN
-        values. If ``None`` (default), annotations are ignored and the full
-        recording is used. This is useful when recordings contain breaks or
-        movement artifacts that shouldn't influence channel rejection decisions.
+        concatenated). If ``None`` (default), annotations are ignored and the
+        full recording is used. This is useful when recordings contain breaks
+        or movement artifacts that shouldn't influence channel rejection
+        decisions.
 
     References
     ----------
@@ -110,12 +110,9 @@ class NoisyChannels:
         self.correlation = correlation
 
         # Validate reject_by_annotation parameter
-        if reject_by_annotation is not None and reject_by_annotation not in (
-            "omit",
-            "NaN",
-        ):
+        if reject_by_annotation is not None and reject_by_annotation != "omit":
             raise ValueError(
-                f"reject_by_annotation must be None, 'omit', or 'NaN', "
+                f"reject_by_annotation must be None or 'omit', "
                 f"got: {reject_by_annotation}"
             )
         # reject_by_annotation is not available in MATLAB PREP
@@ -320,7 +317,7 @@ class NoisyChannels:
             to the other methods. If ``None`` (default), then the value at
             instantiation of the ``NoisyChannels`` class is taken (defaults
             to ``True``), else the instantiation value is overwritten.
-        reject_by_annotation : {None, 'omit', 'NaN'} | None
+        reject_by_annotation : {None, 'omit'} | None
             This parameter is accepted for compatibility but is ignored here.
             Annotation rejection is applied during ``NoisyChannels`` initialization,
             not during ``find_all_bads``. To use annotation rejection, pass
