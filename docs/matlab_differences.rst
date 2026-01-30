@@ -256,8 +256,9 @@ line noise) deviates considerably from the median channel PSD. The deviation
 is calculated using robust Z-scoring based on the median absolute deviation
 (MAD).
 
-This method is not called by :meth:`~pyprep.NoisyChannels.find_all_bads` by
-default and must be called explicitly if desired.
+This method is called by :meth:`~pyprep.NoisyChannels.find_all_bads` by default,
+but is skipped when ``matlab_strict=True`` to maintain equivalence with the
+original MATLAB PREP pipeline.
 
 
 Annotation-Based Segment Rejection

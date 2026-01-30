@@ -362,6 +362,8 @@ class NoisyChannels:
         if self.correlation:
             self.find_bad_by_correlation()
         self.find_bad_by_SNR()
+        if not self.matlab_strict:
+            self.find_bad_by_PSD()
         if self.ransac:
             self.find_bad_by_ransac(
                 channel_wise=channel_wise, max_chunk_size=max_chunk_size
