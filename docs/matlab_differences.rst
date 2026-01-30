@@ -245,7 +245,10 @@ Bad channel detection by PSD
 
 The :meth:`~pyprep.NoisyChannels.find_bad_by_PSD` method detects channels with
 abnormally high or low power spectral density (PSD) compared to other channels.
-This method is not part of the original MATLAB PREP pipeline.
+This method is not part of the original MATLAB PREP pipeline, but can be
+considered a refinement of the ``bad_by_hfnoise`` detection in MATLAB PREP,
+which flags channels based on the ratio of high-frequency power (>50 Hz) to
+total power.
 
 A channel is considered "bad-by-PSD" if its total PSD (computed using Welch's
 method over a configurable frequency range, defaulting to 1-45 Hz to exclude
