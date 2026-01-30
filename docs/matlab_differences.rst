@@ -255,8 +255,7 @@ When ``reject_by_annotation`` is set to ``'omit'``, MNE's
 computing channel quality metrics. The final processed output retains the
 original continuous structure with all time points intact.
 
-This parameter has no equivalent in MATLAB PREP and is not affected by the
-``matlab_strict`` setting.
+This parameter has no equivalent in MATLAB PREP. When ``matlab_strict`` is set to ``True``, ``reject_by_annotation`` is automatically set to ``None``.
 
 
 References
