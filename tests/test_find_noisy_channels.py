@@ -331,24 +331,6 @@ def test_reject_by_annotation_omit(raw_tmp):
     assert nd_no_reject.n_samples == original_samples
 
 
-def test_reject_by_annotation_nan(raw_tmp):
-    """Test that 'NaN' mode replaces annotated samples with NaN."""
-    # Add a BAD annotation
-    duration = raw_tmp.times[-1]
-    raw_tmp.annotations.append(
-        onset=duration * 0.4,
-        duration=duration * 0.1,
-        description="BAD_test",
-    )
-
-    original_samples = raw_tmp.get_data().shape[1]
-
-    # With 'NaN', sample count should be preserved but data should have NaNs
-    nd = NoisyChannels(raw_tmp, do_detrend=False, reject_by_annotation="NaN")
-    assert nd.n_samples == original_samples
-    assert np.any(np.isnan(nd.EEGData))
-
-
 def test_reject_by_annotation_invalid(raw_tmp):
     """Test that invalid reject_by_annotation values raise ValueError."""
     with pytest.raises(ValueError, match="reject_by_annotation must be"):

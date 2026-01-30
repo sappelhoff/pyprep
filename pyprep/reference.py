@@ -56,10 +56,10 @@ class Reference:
         an int, it will be used as a seed for RandomState.
         If None, the seed will be obtained from the operating system
         (see RandomState for details). Default is None.
-    reject_by_annotation : {None, 'omit', 'NaN'} | None
-        How to handle BAD-annotated time segments during channel quality
-        assessment. If ``'omit'``, annotated segments are excluded. If ``'NaN'``,
-        annotated samples are replaced with NaN. Defaults to ``None`` (ignore).
+    reject_by_annotation : {None, 'omit'} | None
+        How to handle BAD-annotated time segments (annotations starting with
+        "BAD" or "bad") during channel quality assessment. If ``'omit'``,
+        annotated segments are excluded. Defaults to ``None`` (ignore).
     matlab_strict : bool | None
         Whether or not PyPREP should strictly follow MATLAB PREP's internal
         math, ignoring any improvements made in PyPREP over the original code.
