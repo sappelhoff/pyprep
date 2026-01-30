@@ -259,7 +259,12 @@ class NoisyChannels:
         for bad_chs in bads.values():
             all_bads.update(bad_chs)
 
-        name_map = {"nan": "NaN", "hf_noise": "HF noise", "psd": "PSD", "ransac": "RANSAC"}
+        name_map = {
+            "nan": "NaN",
+            "hf_noise": "HF noise",
+            "psd": "PSD",
+            "ransac": "RANSAC",
+        }
         if verbose:
             out = f"Found {len(all_bads)} uniquely bad channels:\n"
             for bad_type, bad_chs in bads.items():
@@ -630,9 +635,13 @@ class NoisyChannels:
 
         This is a PyPREP-only method not present in the original MATLAB PREP.
 
-        A channel is considered "bad-by-psd" if its total power spectral density
-        (PSD) deviates considerably from the median channel PSD, as calculated
-        using a robust Z-scoring method and the given z-score threshold.
+        A channel is considered "bad-by-psd" if:
+        1. Its power in any frequency band (low: 1-15 Hz, mid: 15-30 Hz,
+           high: 30-45 Hz) deviates considerably from other channels, OR
+        2. Its high-frequency band has more power than its low-frequency band
+           (violating the typical 1/f spectral profile of EEG), OR
+        3. Any ratio between frequency bands is abnormal compared to other
+           channels (e.g., low/mid, low/high, mid/high).
 
         PSD is computed using Welch's method over the specified frequency range.
         The default range (1-45 Hz) excludes line noise frequencies (50/60 Hz).
@@ -653,6 +662,11 @@ class NoisyChannels:
         MAD_TO_SD = 1.4826  # Scales units of MAD to units of SD, assuming normality
         # Reference: https://stat.ethz.ch/R-manual/R-devel/library/stats/html/mad.html
 
+        # Define frequency bands (in Hz)
+        BAND_LOW = (fmin, 15.0)  # ~ delta, theta, alpha
+        BAND_MID = (15.0, 30.0)  # ~ beta
+        BAND_HIGH = (30.0, fmax)  # ~ gamma
+
         if self.EEGFiltered is None:
             self.EEGFiltered = self._get_filtered_data()
 
@@ -665,33 +679,93 @@ class NoisyChannels:
         raw_filtered = mne.io.RawArray(self.EEGFiltered, info, verbose=False)
 
         # Compute PSD using Welch method and convert to log scale (dB)
-        psd = raw_filtered.compute_psd(method="welch", fmin=fmin, fmax=fmax, verbose=False)
-        log_psd = 10 * np.log10(psd.get_data())
+        psd = raw_filtered.compute_psd(
+            method="welch", fmin=fmin, fmax=fmax, verbose=False
+        )
+        psd_data = psd.get_data()
+        freqs = psd.freqs
+        log_psd = 10 * np.log10(psd_data)
 
-        # Sum log PSD across frequencies for each channel to get total power
-        total_log_psd = np.sum(log_psd, axis=1)
+        # Get frequency indices for each band
+        idx_low = (freqs >= BAND_LOW[0]) & (freqs < BAND_LOW[1])
+        idx_mid = (freqs >= BAND_MID[0]) & (freqs < BAND_MID[1])
+        idx_high = (freqs >= BAND_HIGH[0]) & (freqs <= BAND_HIGH[1])
 
-        # Calculate robust Z-scores using MAD
-        psd_median = np.median(total_log_psd)
-        psd_mad = np.median(np.abs(total_log_psd - psd_median))
-        psd_sd = psd_mad * MAD_TO_SD
+        # Compute band power (sum of log PSD within each band) for each channel
+        band_power_low = np.sum(log_psd[:, idx_low], axis=1)
+        band_power_mid = np.sum(log_psd[:, idx_mid], axis=1)
+        band_power_high = np.sum(log_psd[:, idx_high], axis=1)
 
-        psd_zscore = np.zeros(self.n_chans_original)
-        if psd_sd > 0:
-            psd_zscore[self.usable_idx] = (total_log_psd - psd_median) / psd_sd
+        def robust_zscore(values):
+            """Compute robust z-scores using MAD."""
+            median = np.median(values)
+            mad = np.median(np.abs(values - median))
+            sd = mad * MAD_TO_SD
+            if sd > 0:
+                return (values - median) / sd
+            return np.zeros_like(values)
 
-        # Flag channels with abnormally high OR low PSD values
-        abnormal_psd = np.abs(psd_zscore) > zscore_threshold
-        psd_channel_mask = np.isnan(psd_zscore) | abnormal_psd
+        # Criterion 1: Outlier in any single band
+        zscore_low = robust_zscore(band_power_low)
+        zscore_mid = robust_zscore(band_power_mid)
+        zscore_high = robust_zscore(band_power_high)
+
+        bad_by_band = (
+            (np.abs(zscore_low) > zscore_threshold)
+            | (np.abs(zscore_mid) > zscore_threshold)
+            | (np.abs(zscore_high) > zscore_threshold)
+        )
+
+        # Criterion 2: 1/f violation (high freq band has more power than low freq band)
+        # This is unusual for normal EEG and suggests muscle artifact or bad contact
+        bad_by_1f_violation = band_power_high > band_power_low
+
+        # Criterion 3: Abnormal band ratios compared to other channels
+        # Use small epsilon to avoid division by zero
+        eps = np.finfo(float).eps
+        ratio_low_mid = band_power_low / (band_power_mid + eps)
+        ratio_low_high = band_power_low / (band_power_high + eps)
+        ratio_mid_high = band_power_mid / (band_power_high + eps)
+
+        zscore_ratio_low_mid = robust_zscore(ratio_low_mid)
+        zscore_ratio_low_high = robust_zscore(ratio_low_high)
+        zscore_ratio_mid_high = robust_zscore(ratio_mid_high)
+
+        bad_by_ratio = (
+            (np.abs(zscore_ratio_low_mid) > zscore_threshold)
+            | (np.abs(zscore_ratio_low_high) > zscore_threshold)
+            | (np.abs(zscore_ratio_mid_high) > zscore_threshold)
+        )
+
+        # Combine all criteria (bad if ANY criterion is met)
+        bad_by_psd_usable = bad_by_band | bad_by_1f_violation | bad_by_ratio
+
+        # Map back to original channel indices
+        psd_channel_mask = np.zeros(self.n_chans_original, dtype=bool)
+        psd_channel_mask[self.usable_idx] = bad_by_psd_usable
         abnormal_psd_channels = self.ch_names_original[psd_channel_mask]
+
+        # Compute combined z-score for reporting (max absolute z-score across bands)
+        psd_zscore = np.zeros(self.n_chans_original)
+        max_band_zscore = np.maximum(
+            np.abs(zscore_low), np.maximum(np.abs(zscore_mid), np.abs(zscore_high))
+        )
+        psd_zscore[self.usable_idx] = max_band_zscore
 
         # Update names of bad channels by abnormal PSD & save additional info
         self.bad_by_psd = abnormal_psd_channels.tolist()
         self._extra_info["bad_by_psd"].update(
             {
-                "median_channel_psd": psd_median,
-                "channel_psd_sd": psd_sd,
                 "psd_zscore": psd_zscore,
+                "band_power_low": band_power_low,
+                "band_power_mid": band_power_mid,
+                "band_power_high": band_power_high,
+                "zscore_low": zscore_low,
+                "zscore_mid": zscore_mid,
+                "zscore_high": zscore_high,
+                "bad_by_band": bad_by_band,
+                "bad_by_1f_violation": bad_by_1f_violation,
+                "bad_by_ratio": bad_by_ratio,
             }
         )
 
