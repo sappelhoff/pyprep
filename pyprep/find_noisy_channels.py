@@ -140,7 +140,7 @@ class NoisyChannels:
                 recording_length = raw.times[-1]
                 bad_percentage = (total_bad_time / recording_length) * 100
                 mean_duration = total_bad_time / n_bad_segments
-                if bad_percentage > 10 and mean_duration < 5.0:
+                if bad_percentage > 15 and mean_duration < 5.0:
                     logger.warning(
                         f"Found {n_bad_segments} BAD segments covering "
                         f"{bad_percentage:.1f}% of the recording with mean duration "
