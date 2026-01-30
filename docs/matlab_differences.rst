@@ -239,7 +239,9 @@ Annotation-Based Segment Rejection
 PyPREP supports the ``reject_by_annotation`` parameter in
 :class:`~pyprep.PrepPipeline`, :class:`~pyprep.Reference`, and
 :class:`~pyprep.NoisyChannels`, which allows excluding BAD-annotated time
-segments from channel quality assessment. This is useful when recordings
+segments from channel quality assessment. BAD segments are any MNE annotations
+with descriptions starting with "BAD" or "bad" (see
+:ref:`mne:tut-reject-data-spans` for details). This is useful when recordings
 contain breaks, movement artifacts, or other periods that shouldn't influence
 channel rejection decisions.
 
@@ -254,6 +256,16 @@ When ``reject_by_annotation`` is set to ``'omit'``, MNE's
 :meth:`~mne.io.Raw.get_data` is used to concatenate non-BAD segments for
 computing channel quality metrics. The final processed output retains the
 original continuous structure with all time points intact.
+
+.. note::
+
+   This feature is intended for excluding a small number of longer segments
+   (e.g., recording breaks). Using it with many short BAD segments (e.g., from
+   automated muscle artifact detection via
+   :func:`mne.preprocessing.annotate_muscle_zscore`) may introduce edge effects
+   at concatenation boundaries, particularly for methods that apply filtering
+   to the concatenated data. PyPREP will emit a warning if many small BAD
+   segments are detected.
 
 This parameter has no equivalent in MATLAB PREP. When ``matlab_strict`` is set
 to ``True``, ``reject_by_annotation`` is automatically set to ``None``.
