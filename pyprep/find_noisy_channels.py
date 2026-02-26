@@ -153,6 +153,7 @@ class NoisyChannels:
             "bad_by_hf_noise": {},
             "bad_by_correlation": {},
             "bad_by_dropout": {},
+            "bad_by_psd": {},
             "bad_by_ransac": {},
         }
 
@@ -167,6 +168,7 @@ class NoisyChannels:
         self.bad_by_correlation = []
         self.bad_by_SNR = []
         self.bad_by_dropout = []
+        self.bad_by_psd = []
         self.bad_by_ransac = []
 
         # Get original EEG channel names, channel count & samples
@@ -248,6 +250,7 @@ class NoisyChannels:
             "bad_by_correlation": self.bad_by_correlation,
             "bad_by_SNR": self.bad_by_SNR,
             "bad_by_dropout": self.bad_by_dropout,
+            "bad_by_psd": self.bad_by_psd,
             "bad_by_ransac": self.bad_by_ransac,
             "bad_by_manual": self.bad_by_manual,
         }
@@ -256,7 +259,12 @@ class NoisyChannels:
         for bad_chs in bads.values():
             all_bads.update(bad_chs)
 
-        name_map = {"nan": "NaN", "hf_noise": "HF noise", "ransac": "RANSAC"}
+        name_map = {
+            "nan": "NaN",
+            "hf_noise": "HF noise",
+            "psd": "PSD",
+            "ransac": "RANSAC",
+        }
         if verbose:
             out = f"Found {len(all_bads)} uniquely bad channels:\n"
             for bad_type, bad_chs in bads.items():
@@ -354,6 +362,8 @@ class NoisyChannels:
         if self.correlation:
             self.find_bad_by_correlation()
         self.find_bad_by_SNR()
+        if not self.matlab_strict:
+            self.find_bad_by_PSD()
         if self.ransac:
             self.find_bad_by_ransac(
                 channel_wise=channel_wise, max_chunk_size=max_chunk_size
@@ -621,6 +631,150 @@ class NoisyChannels:
 
         # Flag channels bad by both HF noise and low correlation as bad by low SNR
         self.bad_by_SNR = list(bad_by_corr.intersection(bad_by_hf))
+
+    def find_bad_by_PSD(self, zscore_threshold=3.0, fmin=1.0, fmax=45.0):
+        """Detect channels with abnormally high or low power spectral density.
+
+        This is a PyPREP-only method not present in the original MATLAB PREP.
+
+        A channel is considered "bad-by-psd" if:
+        1. Its power in any frequency band (low: 1-15 Hz, mid: 15-30 Hz,
+           high: 30-45 Hz) is abnormally HIGH compared to other channels, OR
+        2. Its high-frequency band has more power than its low-frequency band
+           (violating the typical 1/f spectral profile of EEG).
+
+        Note: Only excess power (positive z-scores) is flagged, as abnormally
+        low power could reflect normal topographic variation.
+
+        PSD is computed using Welch's method over the specified frequency range.
+        The default range (1-45 Hz) excludes line noise frequencies (50/60 Hz).
+
+        Parameters
+        ----------
+        zscore_threshold : float, optional
+            The minimum absolute z-score of a channel for it to be considered
+            bad-by-psd. Defaults to ``3.0``.
+        fmin : float, optional
+            The lower frequency bound (in Hz) for PSD computation.
+            Defaults to ``1.0``.
+        fmax : float, optional
+            The upper frequency bound (in Hz) for PSD computation. The default
+            of ``45.0`` excludes 50/60 Hz line noise from the analysis.
+
+        """
+        MAD_TO_SD = 1.4826  # Scales units of MAD to units of SD, assuming normality
+        # Reference: https://stat.ethz.ch/R-manual/R-devel/library/stats/html/mad.html
+
+        # Define frequency bands (in Hz)
+        BAND_LOW = (fmin, 15.0)  # ~ delta, theta, alpha
+        BAND_MID = (15.0, 30.0)  # ~ beta
+        BAND_HIGH = (30.0, fmax)  # ~ gamma
+
+        if self.EEGFiltered is None:
+            self.EEGFiltered = self._get_filtered_data()
+
+        # Create a temporary Raw object from filtered data for PSD computation
+        info = mne.create_info(
+            ch_names=self.ch_names_new.tolist(),
+            sfreq=self.sample_rate,
+            ch_types="eeg",
+        )
+        raw_filtered = mne.io.RawArray(self.EEGFiltered, info, verbose=False)
+
+        # Compute PSD using Welch method and convert to log scale (dB)
+        psd = raw_filtered.compute_psd(
+            method="welch", fmin=fmin, fmax=fmax, verbose=False
+        )
+        psd_data = psd.get_data()
+        freqs = psd.freqs
+        log_psd = 10 * np.log10(psd_data)
+
+        # Get frequency indices for each band
+        idx_low = (freqs >= BAND_LOW[0]) & (freqs < BAND_LOW[1])
+        idx_mid = (freqs >= BAND_MID[0]) & (freqs < BAND_MID[1])
+        idx_high = (freqs >= BAND_HIGH[0]) & (freqs <= BAND_HIGH[1])
+
+        # Compute band power (sum of log PSD within each band) for each channel
+        band_power_low = np.sum(log_psd[:, idx_low], axis=1)
+        band_power_mid = np.sum(log_psd[:, idx_mid], axis=1)
+        band_power_high = np.sum(log_psd[:, idx_high], axis=1)
+
+        def robust_zscore(values):
+            """Compute robust z-scores using MAD."""
+            median = np.median(values)
+            mad = np.median(np.abs(values - median))
+            sd = mad * MAD_TO_SD
+            if sd > 0:
+                return (values - median) / sd
+            return np.zeros_like(values)
+
+        # Criterion 1: Outlier with abnormally HIGH power in any band
+        # Note: Only positive z-scores (excess power) are flagged, as low power
+        # could reflect normal topographic variation rather than a bad channel
+        zscore_low = robust_zscore(band_power_low)
+        zscore_mid = robust_zscore(band_power_mid)
+        zscore_high = robust_zscore(band_power_high)
+
+        bad_by_band = (
+            (zscore_low > zscore_threshold)
+            | (zscore_mid > zscore_threshold)
+            | (zscore_high > zscore_threshold)
+        )
+
+        # Criterion 2: 1/f violation (high freq band has more power than low freq band)
+        # This is unusual for normal EEG and suggests muscle artifact or bad contact
+        bad_by_1f_violation = band_power_high > band_power_low
+
+        # Criterion 3: Abnormal band ratios compared to other channels
+        # Use small epsilon to avoid division by zero
+        eps = np.finfo(float).eps
+        ratio_low_mid = band_power_low / (band_power_mid + eps)
+        ratio_low_high = band_power_low / (band_power_high + eps)
+        ratio_mid_high = band_power_mid / (band_power_high + eps)
+
+        zscore_ratio_low_mid = robust_zscore(ratio_low_mid)
+        zscore_ratio_low_high = robust_zscore(ratio_low_high)
+        zscore_ratio_mid_high = robust_zscore(ratio_mid_high)
+
+        bad_by_ratio = (
+            (np.abs(zscore_ratio_low_mid) > zscore_threshold)
+            | (np.abs(zscore_ratio_low_high) > zscore_threshold)
+            | (np.abs(zscore_ratio_mid_high) > zscore_threshold)
+        )
+
+        # Combine criteria (bad if ANY criterion is met)
+        # Note: bad_by_ratio is computed for diagnostics but not used in final
+        # decision as it tends to be overly sensitive and theoretically debatable
+        bad_by_psd_usable = bad_by_band | bad_by_1f_violation
+
+        # Map back to original channel indices
+        psd_channel_mask = np.zeros(self.n_chans_original, dtype=bool)
+        psd_channel_mask[self.usable_idx] = bad_by_psd_usable
+        abnormal_psd_channels = self.ch_names_original[psd_channel_mask]
+
+        # Compute combined z-score for reporting (max absolute z-score across bands)
+        psd_zscore = np.zeros(self.n_chans_original)
+        max_band_zscore = np.maximum(
+            np.abs(zscore_low), np.maximum(np.abs(zscore_mid), np.abs(zscore_high))
+        )
+        psd_zscore[self.usable_idx] = max_band_zscore
+
+        # Update names of bad channels by abnormal PSD & save additional info
+        self.bad_by_psd = abnormal_psd_channels.tolist()
+        self._extra_info["bad_by_psd"].update(
+            {
+                "psd_zscore": psd_zscore,
+                "band_power_low": band_power_low,
+                "band_power_mid": band_power_mid,
+                "band_power_high": band_power_high,
+                "zscore_low": zscore_low,
+                "zscore_mid": zscore_mid,
+                "zscore_high": zscore_high,
+                "bad_by_band": bad_by_band,
+                "bad_by_1f_violation": bad_by_1f_violation,
+                "bad_by_ratio": bad_by_ratio,
+            }
+        )
 
     def find_bad_by_ransac(
         self,

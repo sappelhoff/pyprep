@@ -217,6 +217,84 @@ def test_bad_by_SNR(raw_tmp):
     assert nd.bad_by_SNR == [raw_tmp.ch_names[low_snr_idx]]
 
 
+def test_bad_by_PSD(raw_tmp):
+    """Test detection of channels with abnormal power spectral density."""
+    # set scaling factors for high and low PSD test channels
+    low_psd_factor = 0.05
+    high_psd_factor = 20.0
+
+    # make the signal for a random channel have very high power (high PSD)
+    n_chans = raw_tmp.get_data().shape[0]
+    high_psd_idx = int(rng.integers(0, n_chans, 1)[0])
+    raw_tmp._data[high_psd_idx, :] *= high_psd_factor
+
+    # test detection of abnormally high-PSD channels
+    nd = NoisyChannels(raw_tmp, do_detrend=False)
+    nd.find_bad_by_PSD()
+    assert raw_tmp.ch_names[high_psd_idx] in nd.bad_by_psd
+
+    # verify that extra_info is populated correctly with band-based metrics
+    extra = nd._extra_info["bad_by_psd"]
+    assert "psd_zscore" in extra
+    assert len(extra["psd_zscore"]) == n_chans
+    # Check band power arrays
+    assert "band_power_low" in extra
+    assert "band_power_mid" in extra
+    assert "band_power_high" in extra
+    # Check per-band z-scores
+    assert "zscore_low" in extra
+    assert "zscore_mid" in extra
+    assert "zscore_high" in extra
+    # Check detection criteria flags
+    assert "bad_by_band" in extra
+    assert "bad_by_1f_violation" in extra
+    assert "bad_by_ratio" in extra
+
+    # make the signal for a different channel have very low power (low PSD)
+    low_psd_idx = (high_psd_idx - 1) if high_psd_idx > 0 else 1
+    raw_tmp._data[low_psd_idx, :] *= low_psd_factor
+
+    # test detection of both abnormally high and low PSD channels
+    nd = NoisyChannels(raw_tmp, do_detrend=False)
+    nd.find_bad_by_PSD()
+    assert raw_tmp.ch_names[high_psd_idx] in nd.bad_by_psd
+    assert (
+        raw_tmp.ch_names[low_psd_idx] not in nd.bad_by_psd
+    )  # the low PSD criterion was ommitted
+
+    # verify that bad_by_psd is included in get_bads() output
+    all_bads = nd.get_bads(as_dict=True)
+    assert "bad_by_psd" in all_bads
+    assert raw_tmp.ch_names[high_psd_idx] in all_bads["bad_all"]
+
+
+def test_bad_by_PSD_1f_violation(raw_tmp):
+    """Test detection of channels violating the 1/f spectral profile."""
+    n_chans = raw_tmp.get_data().shape[0]
+    bad_idx = int(rng.integers(0, n_chans, 1)[0])
+
+    # Replace channel with high-frequency dominated signal (violates 1/f)
+    # Normal EEG has more power in low frequencies than high frequencies
+    # This channel will have more power in 30-45 Hz than in 1-15 Hz
+    high_freq_signal = _generate_signal(32, 44, raw_tmp.times, fcount=10)
+    raw_tmp._data[bad_idx, :] = high_freq_signal * 50  # Strong high-freq signal
+
+    nd = NoisyChannels(raw_tmp, do_detrend=False)
+    nd.find_bad_by_PSD()
+
+    # Channel should be flagged due to 1/f violation
+    assert raw_tmp.ch_names[bad_idx] in nd.bad_by_psd
+
+    # Verify the 1/f violation was detected
+    extra = nd._extra_info["bad_by_psd"]
+    # Find the index in usable channels (convert boolean mask to int indices)
+    usable_int_idx = np.where(nd.usable_idx)[0]
+    usable_names = [raw_tmp.ch_names[i] for i in usable_int_idx]
+    if raw_tmp.ch_names[bad_idx] in usable_names:
+        usable_pos = usable_names.index(raw_tmp.ch_names[bad_idx])
+        assert extra["bad_by_1f_violation"][usable_pos]
+
+
 def test_find_bad_by_ransac(raw_tmp):
     """Test the RANSAC component of NoisyChannels."""
     # Set a consistent random seed for all RANSAC runs
