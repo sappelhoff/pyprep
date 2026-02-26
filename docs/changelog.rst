@@ -26,6 +26,7 @@ Version 0.6.0 (unreleased)
 
 Changelog
 ~~~~~~~~~
+- Added ``reject_by_annotation`` parameter to :class:`~pyprep.PrepPipeline`, :class:`~pyprep.Reference`, and :class:`~pyprep.NoisyChannels` to exclude BAD-annotated time segments from channel quality assessment, by `Roy Eric Wieske`_ (:gh:`180`)
 - Users can now determine whether or not to use ``correlation`` as a method for finding bad channels in :meth:`~pyprep.NoisyChannels.find_all_bads` (defaults to True), by `Stefan Appelhoff`_ (:gh:`169`)
 - Manually marked bad channels are ignored for finding further bads (just like NaN and flat channels) in :meth:`~pyprep.NoisyChannels.find_all_bads`, by `Stefan Appelhoff`_ (:gh:`168`)
 

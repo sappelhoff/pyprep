@@ -11,3 +11,4 @@
 .. _Victor Xiang: https://github.com/Nick3151
 .. _Yorguin Mantilla: https://github.com/yjmantilla
 .. _John Veillette: https://github.com/john-veillette
+.. _Roy Eric Wieske: https://github.com/Randomidous

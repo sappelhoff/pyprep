@@ -27,16 +27,16 @@ def removeTrend(
         A 2-D array of EEG data to detrend.
     sample_rate : float
         The sample rate (in Hz) of the input EEG data.
-    detrendType : str, optional
+    detrendType : str | None
         Type of detrending to be performed: must be one of 'high pass',
         'high pass sinc, or 'local detrend'. Defaults to 'high pass'.
-    detrendCutoff : float, optional
+    detrendCutoff : float | None
         The high-pass cutoff frequency (in Hz) to use for detrending. Defaults
         to 1.0 Hz.
-    detrendChannels : {list, None}, optional
+    detrendChannels : {list, None} | None
         List of the indices of all channels that require detrending/filtering.
         If ``None``, all channels are used (default).
-    matlab_strict : bool, optional
+    matlab_strict : bool | None
         Whether or not detrending should strictly follow MATLAB PREP's internal
         math, ignoring any improvements made in PyPREP over the original code
         (see :ref:`matlab-diffs` for more details). Defaults to ``False``.

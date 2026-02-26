@@ -57,6 +57,14 @@ class NoisyChannels:
         List of channels that are bad. These channels will be excluded when
         trying to find additional bad channels. Note that the union of these channels
         and those declared in ``raw.info["bads"]`` will be used. Defaults to ``None``.
+    reject_by_annotation : {None, 'omit'} | None
+        How to handle BAD-annotated time segments (annotations starting with
+        "BAD" or "bad") during channel quality assessment. If ``'omit'``,
+        annotated segments are excluded from analysis (clean segments are
+        concatenated). If ``None`` (default), annotations are ignored and the
+        full recording is used. This is useful when recordings contain breaks
+        or movement artifacts that shouldn't influence channel rejection
+        decisions.
 
     References
     ----------
@@ -76,6 +84,7 @@ class NoisyChannels:
         ransac=True,
         correlation=True,
         bad_by_manual=None,
+        reject_by_annotation=None,
     ):
         # Make sure that we got an MNE object
         assert isinstance(raw, mne.io.BaseRaw)
@@ -99,6 +108,44 @@ class NoisyChannels:
         msg = f"correlation must be boolean, got: {correlation}"
         assert isinstance(correlation, bool), msg
         self.correlation = correlation
+
+        # Validate reject_by_annotation parameter
+        if reject_by_annotation is not None and reject_by_annotation != "omit":
+            raise ValueError(
+                f"reject_by_annotation must be None or 'omit', "
+                f"got: {reject_by_annotation}"
+            )
+        # reject_by_annotation is not available in MATLAB PREP
+        if matlab_strict and reject_by_annotation is not None:
+            logger.warning(
+                "reject_by_annotation is not available in MATLAB PREP. "
+                f"Setting reject_by_annotation to None (was '{reject_by_annotation}')."
+            )
+            reject_by_annotation = None
+        self.reject_by_annotation = reject_by_annotation
+
+        # Warn if many small BAD segments are present (potential edge effects)
+        if reject_by_annotation is not None:
+            bad_annots = [
+                a
+                for a in raw.annotations
+                if a["description"].startswith(("BAD", "bad"))
+            ]
+            n_bad_segments = len(bad_annots)
+            if n_bad_segments > 0:
+                total_bad_time = sum(a["duration"] for a in bad_annots)
+                recording_length = raw.times[-1]
+                bad_percentage = (total_bad_time / recording_length) * 100
+                mean_duration = total_bad_time / n_bad_segments
+                if bad_percentage > 15 and mean_duration < 5.0:
+                    logger.warning(
+                        f"Found {n_bad_segments} BAD segments covering "
+                        f"{bad_percentage:.1f}% of the recording with mean duration "
+                        f"{mean_duration:.1f}s. Using reject_by_annotation with many "
+                        "short segments may introduce edge effects from concatenation. "
+                        "This feature is intended for excluding a small number of "
+                        "longer segments (e.g., recording breaks)."
+                    )
 
         # Extra data for debugging
         self._extra_info = {
@@ -126,7 +173,7 @@ class NoisyChannels:
         ch_names = np.asarray(self.raw_mne.info["ch_names"])
         self.ch_names_original = ch_names
         self.n_chans_original = len(ch_names)
-        self.n_samples = raw.get_data().shape[1]
+        self.n_samples_original = raw.get_data().shape[1]
 
         # Before anything else, flag bad-by-NaNs and bad-by-flats
         self.find_bad_by_nan_flat()
@@ -137,7 +184,11 @@ class NoisyChannels:
 
         # Make a subset of the data containing only usable EEG channels
         self.usable_idx = np.isin(ch_names, bads_unusable, invert=True)
-        self.EEGData = self.raw_mne.get_data(picks=ch_names[self.usable_idx])
+        self.EEGData = self.raw_mne.get_data(
+            picks=ch_names[self.usable_idx],
+            reject_by_annotation=self.reject_by_annotation,
+        )
+        self.n_samples = self.EEGData.shape[1]
         self.EEGFiltered = None
 
         # Get usable EEG channel names & channel counts
@@ -173,10 +224,10 @@ class NoisyChannels:
 
         Parameters
         ----------
-        verbose : bool, optional
+        verbose : bool | None
             If ``True``, a summary of the channels currently flagged as by bad per
             category is printed. Defaults to ``False``.
-        as_dict: bool, optional
+        as_dict: bool | None
             If ``True``, this method will return a dict of the channels currently
             flagged as bad by each individual bad channel type. If ``False``, this
             method will return a list of all unique bad channels detected so far.
@@ -223,7 +274,13 @@ class NoisyChannels:
         return bads
 
     def find_all_bads(
-        self, *, ransac=None, channel_wise=False, max_chunk_size=None, correlation=None
+        self,
+        *,
+        ransac=None,
+        channel_wise=False,
+        max_chunk_size=None,
+        correlation=None,
+        reject_by_annotation=None,
     ):
         """Call all the functions to detect bad channels.
 
@@ -238,7 +295,7 @@ class NoisyChannels:
             detection considerably. If ``None`` (default), then the value at
             instantiation of the ``NoisyChannels`` class is taken (defaults
             to ``True``), else the instantiation value is overwritten.
-        channel_wise : bool, optional
+        channel_wise : bool | None
             Whether RANSAC should predict signals for chunks of channels over the
             entire signal length ("channel-wise RANSAC", see `max_chunk_size`
             parameter). If ``False``, RANSAC will instead predict signals for all
@@ -248,7 +305,7 @@ class NoisyChannels:
             (especially if `max_chunk_size` is ``None``), but can be faster on
             systems with lots of RAM to spare. Has no effect if not using RANSAC.
             Defaults to ``False``.
-        max_chunk_size : {int, None}, optional
+        max_chunk_size : {int, None} | None
             The maximum number of channels to predict at once during
             channel-wise RANSAC. If ``None``, RANSAC will use the largest chunk
             size that will fit into the available RAM, which may slow down
@@ -260,8 +317,17 @@ class NoisyChannels:
             to the other methods. If ``None`` (default), then the value at
             instantiation of the ``NoisyChannels`` class is taken (defaults
             to ``True``), else the instantiation value is overwritten.
+        reject_by_annotation : {None, 'omit'} | None
+            This parameter is accepted for compatibility but is ignored here.
+            Annotation rejection is applied during ``NoisyChannels`` initialization,
+            not during ``find_all_bads``. To use annotation rejection, pass
+            ``reject_by_annotation`` to the ``NoisyChannels`` constructor.
 
         """
+        # Note: reject_by_annotation is accepted but ignored here - it's applied
+        # during __init__ when data is extracted. This parameter exists only for
+        # compatibility with ransac_settings dict unpacking.
+        del reject_by_annotation  # unused, applied in __init__
         if ransac is not None and ransac != self.ransac:
             msg = f"ransac must be boolean, got: {ransac}"
             assert isinstance(ransac, bool), msg
@@ -306,7 +372,7 @@ class NoisyChannels:
 
         Parameters
         ----------
-        flat_threshold : float, optional
+        flat_threshold : float | None
             The lowest standard deviation or MAD value for a channel to be
             considered bad-by-flat. Defaults to ``1e-15`` volts (corresponds to
             10e-10 µV in MATLAB PREP).
@@ -343,7 +409,7 @@ class NoisyChannels:
 
         Parameters
         ----------
-        deviation_threshold : float, optional
+        deviation_threshold : float | None
             The minimum absolute z-score of a channel for it to be considered
             bad-by-deviation. Defaults to ``5.0``.
 
@@ -389,7 +455,7 @@ class NoisyChannels:
 
         Parameters
         ----------
-        HF_zscore_threshold : float, optional
+        HF_zscore_threshold : float | None
             The minimum noisiness z-score of a channel for it to be considered
             bad-by-high-frequency-noise. Defaults to ``5.0``.
 
@@ -454,12 +520,12 @@ class NoisyChannels:
 
         Parameters
         ----------
-        correlation_secs : float, optional
+        correlation_secs : float | None
             The length (in seconds) of each correlation window. Defaults to ``1.0``.
-        correlation_threshold : float, optional
+        correlation_threshold : float | None
             The lowest maximum inter-channel correlation for a channel to be
             considered "bad" within a given window. Defaults to ``0.4``.
-        frac_bad : float, optional
+        frac_bad : float | None
             The minimum proportion of bad windows for a channel to be considered
             "bad-by-correlation" or "bad-by-dropout". Defaults to ``0.01`` (1% of
             all windows).
@@ -598,26 +664,26 @@ class NoisyChannels:
 
         Parameters
         ----------
-        n_samples : int, optional
+        n_samples : int | None
             Number of random channel samples to use for RANSAC. Defaults
             to ``50``.
-        sample_prop : float, optional
+        sample_prop : float | None
             Proportion of total channels to use for signal prediction per RANSAC
             sample. This needs to be in the range [0, 1], where 0 would mean no
             channels would be used and 1 would mean all channels would be used
             (neither of which would be useful values). Defaults to ``0.25``
             (e.g., 16 channels per sample for a 64-channel dataset).
-        corr_thresh : float, optional
+        corr_thresh : float | None
             The minimum predicted vs. actual signal correlation for a channel to
             be considered good within a given RANSAC window. Defaults
             to ``0.75``.
-        frac_bad : float, optional
+        frac_bad : float | None
             The minimum fraction of bad (i.e., below-threshold) RANSAC windows
             for a channel to be considered bad-by-RANSAC. Defaults to ``0.4``.
-        corr_window_secs : float, optional
+        corr_window_secs : float | None
             The duration (in seconds) of each RANSAC correlation window. Defaults
             to 5 seconds.
-        channel_wise : bool, optional
+        channel_wise : bool | None
             Whether RANSAC should predict signals for chunks of channels over the
             entire signal length ("channel-wise RANSAC", see `max_chunk_size`
             parameter). If ``False``, RANSAC will instead predict signals for all
@@ -626,7 +692,7 @@ class NoisyChannels:
             RANSAC generally has higher RAM demands than window-wise RANSAC
             (especially if `max_chunk_size` is ``None``), but can be faster on
             systems with lots of RAM to spare. Defaults to ``False``.
-        max_chunk_size : {int, None}, optional
+        max_chunk_size : {int, None} | None
             The maximum number of channels to predict at once during
             channel-wise RANSAC. If ``None``, RANSAC will use the largest chunk
             size that will fit into the available RAM, which may slow down

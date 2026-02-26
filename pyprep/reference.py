@@ -32,10 +32,10 @@ class Reference:
         Parameters of PREP which include at least the following keys:
         - ``ref_chs``
         - ``reref_chs``
-    ransac : bool, optional
+    ransac : bool | None
         Whether or not to use RANSAC for noisy channel detection in addition to
         the other methods in :class:`~pyprep.NoisyChannels`. Defaults to True.
-    channel_wise : bool, optional
+    channel_wise : bool | None
         Whether RANSAC should predict signals for chunks of channels over the
         entire signal length ("channel-wise RANSAC", see `max_chunk_size`
         parameter). If ``False``, RANSAC will instead predict signals for all
@@ -45,18 +45,22 @@ class Reference:
         (especially if `max_chunk_size` is ``None``), but can be faster on
         systems with lots of RAM to spare. Has no effect if not using RANSAC.
         Defaults to ``False``.
-    max_chunk_size : {int, None}, optional
+    max_chunk_size : {int, None} | None
         The maximum number of channels to predict at once during channel-wise
         RANSAC. If ``None``, RANSAC will use the largest chunk size that will
         fit into the available RAM, which may slow down other programs on the
         host system. If using window-wise RANSAC (the default) or not using
         RANSAC at all, this parameter has no effect. Defaults to ``None``.
-    random_state : {int, None, np.random.RandomState}, optional
+    random_state : {int, None, np.random.RandomState} | None
         The random seed at which to initialize the class. If random_state is
         an int, it will be used as a seed for RandomState.
         If None, the seed will be obtained from the operating system
         (see RandomState for details). Default is None.
-    matlab_strict : bool, optional
+    reject_by_annotation : {None, 'omit'} | None
+        How to handle BAD-annotated time segments (annotations starting with
+        "BAD" or "bad") during channel quality assessment. If ``'omit'``,
+        annotated segments are excluded. Defaults to ``None`` (ignore).
+    matlab_strict : bool | None
         Whether or not PyPREP should strictly follow MATLAB PREP's internal
         math, ignoring any improvements made in PyPREP over the original code.
         Defaults to False.
@@ -77,6 +81,7 @@ class Reference:
         channel_wise=False,
         max_chunk_size=None,
         random_state=None,
+        reject_by_annotation=None,
         matlab_strict=False,
     ):
         """Initialize the class."""
@@ -94,6 +99,7 @@ class Reference:
             "ransac": ransac,
             "channel_wise": channel_wise,
             "max_chunk_size": max_chunk_size,
+            "reject_by_annotation": reject_by_annotation,
         }
         self.random_state = check_random_state(random_state)
         self._extra_info = {}
@@ -104,7 +110,7 @@ class Reference:
 
         Parameters
         ----------
-        max_iterations : int, optional
+        max_iterations : int | None
             The maximum number of iterations of noisy channel removal to perform
             during robust referencing. Defaults to ``4``.
 
@@ -142,7 +148,10 @@ class Reference:
         # Phase 2: Find the bad channels and interpolate
         self.raw._data = self.EEG
         noisy_detector = NoisyChannels(
-            self.raw, random_state=self.random_state, matlab_strict=self.matlab_strict
+            self.raw,
+            random_state=self.random_state,
+            matlab_strict=self.matlab_strict,
+            reject_by_annotation=self.ransac_settings.get("reject_by_annotation"),
         )
         noisy_detector.find_all_bads(**self.ransac_settings)
 
@@ -174,7 +183,10 @@ class Reference:
         # Still noisy channels after interpolation
         self.interpolated_channels = bad_channels
         noisy_detector = NoisyChannels(
-            self.raw, random_state=self.random_state, matlab_strict=self.matlab_strict
+            self.raw,
+            random_state=self.random_state,
+            matlab_strict=self.matlab_strict,
+            reject_by_annotation=self.ransac_settings.get("reject_by_annotation"),
         )
         noisy_detector.find_all_bads(**self.ransac_settings)
         self.still_noisy_channels = noisy_detector.get_bads()
@@ -192,7 +204,7 @@ class Reference:
 
         Parameters
         ----------
-        max_iterations : int, optional
+        max_iterations : int | None
             The maximum number of iterations of noisy channel removal to perform
             during robust referencing. Defaults to ``4``.
 
@@ -216,6 +228,7 @@ class Reference:
             do_detrend=False,
             random_state=self.random_state,
             matlab_strict=self.matlab_strict,
+            reject_by_annotation=self.ransac_settings.get("reject_by_annotation"),
         )
         noisy_detector.find_all_bads(**self.ransac_settings)
         self.noisy_channels_original = noisy_detector.get_bads(as_dict=True)
@@ -265,6 +278,7 @@ class Reference:
                 do_detrend=False,
                 random_state=self.random_state,
                 matlab_strict=self.matlab_strict,
+                reject_by_annotation=self.ransac_settings.get("reject_by_annotation"),
             )
             # Detrend applied at the beginning of the function.
 
@@ -338,7 +352,7 @@ class Reference:
             The original EEG signal.
         reference : np.ndarray, shape(times,)
             The reference signal.
-        index : {list, None}, optional
+        index : {list, None} | None
             A list of channel indices from which the reference signal should be
             subtracted. Defaults to all channels in `signal`.
 
