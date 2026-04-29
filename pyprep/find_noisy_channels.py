@@ -175,7 +175,7 @@ class NoisyChannels:
         ch_names = np.asarray(self.raw_mne.info["ch_names"])
         self.ch_names_original = ch_names
         self.n_chans_original = len(ch_names)
-        self.n_samples_original = raw.get_data().shape[1]
+        self.n_samples_original = raw.n_times
 
         # Before anything else, flag bad-by-NaNs and bad-by-flats
         self.find_bad_by_nan_flat()
@@ -378,7 +378,9 @@ class NoisyChannels:
 
         This method is run automatically when a ``NoisyChannels`` object is
         initialized, preventing flat or NaN-containing channels from interfering
-        with the detection of other types of bad channels.
+        with the detection of other types of bad channels. The
+        ``reject_by_annotation`` setting of the :class:`NoisyChannels` instance
+        is respected when retrieving the data.
 
         Parameters
         ----------
@@ -388,7 +390,7 @@ class NoisyChannels:
             10e-10 µV in MATLAB PREP).
         """
         # Get all EEG channels from original copy of data
-        EEGData = self.raw_mne.get_data()
+        EEGData = self.raw_mne.get_data(reject_by_annotation=self.reject_by_annotation)
 
         # Detect channels containing any NaN values
         nan_channel_mask = np.isnan(np.sum(EEGData, axis=1))
