@@ -378,7 +378,9 @@ class NoisyChannels:
 
         This method is run automatically when a ``NoisyChannels`` object is
         initialized, preventing flat or NaN-containing channels from interfering
-        with the detection of other types of bad channels.
+        with the detection of other types of bad channels. The
+        ``reject_by_annotation`` setting of the :class:`NoisyChannels` instance
+        is respected when retrieving the data.
 
         Parameters
         ----------
