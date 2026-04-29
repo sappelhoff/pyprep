@@ -388,7 +388,7 @@ class NoisyChannels:
             10e-10 µV in MATLAB PREP).
         """
         # Get all EEG channels from original copy of data
-        EEGData = self.raw_mne.get_data()
+        EEGData = self.raw_mne.get_data(reject_by_annotation=self.reject_by_annotation)
 
         # Detect channels containing any NaN values
         nan_channel_mask = np.isnan(np.sum(EEGData, axis=1))
