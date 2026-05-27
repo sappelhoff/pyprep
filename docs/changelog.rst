@@ -28,6 +28,10 @@ Changelog
 ~~~~~~~~~
 - :meth:`~pyprep.NoisyChannels.find_bad_by_nan_flat` now respects the ``reject_by_annotation`` setting of the :class:`~pyprep.NoisyChannels` instance, consistent with all other detection methods, by `Roy Eric Wieske`_ (:gh:`185`)
 
+Bug
+~~~
+- ``pyprep`` no longer calls :func:`logging.basicConfig` at import time (in :mod:`pyprep.reference`), which previously reconfigured the root logger of any downstream application that imported ``pyprep``, by `Stefan Appelhoff`_
+
 .. _changes_0_6_0:
 
 Version 0.6.0 (2026-02-26)
