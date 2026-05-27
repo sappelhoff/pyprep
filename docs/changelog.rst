@@ -28,6 +28,10 @@ Changelog
 ~~~~~~~~~
 - nothing yet
 
+Bug
+~~~
+- ``pyprep`` no longer calls :func:`logging.basicConfig` at import time (in :mod:`pyprep.reference`), which previously reconfigured the root logger of any downstream application that imported ``pyprep``, by `Stefan Appelhoff`_
+
 .. _changes_0_6_0:
 
 Version 0.6.0 (2026-02-26)

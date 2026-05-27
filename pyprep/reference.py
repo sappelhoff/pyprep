@@ -12,9 +12,6 @@ from pyprep.find_noisy_channels import NoisyChannels
 from pyprep.removeTrend import removeTrend
 from pyprep.utils import _eeglab_interpolate_bads, _set_diff, _union
 
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
 logger = logging.getLogger(__name__)
 
 
