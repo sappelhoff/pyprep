@@ -10,14 +10,17 @@ from urllib.error import URLError
 from urllib.request import Request, urlopen
 from zipfile import ZipFile
 
+from mne.datasets import eegbci
+
 
 def download(url, dest, retries=5, timeout=60):
     """Download ``url`` to ``dest``, retrying on transient network errors.
 
-    A single ``urlopen`` with no timeout is fragile in CI: a momentary
-    runner-to-host connectivity blip (e.g. an IPv6 route that blackholes the
-    connection) hangs for the full kernel timeout and then kills the build. So
-    bound each attempt with a timeout and retry a few times with backoff. A
+    Used for the EEGLAB/PREP software archives (the EEG recording itself is
+    fetched via MNE's ``eegbci`` loader). A single ``urlopen`` with no timeout
+    is fragile in CI: a momentary connectivity blip (e.g. an IPv6 route that
+    blackholes the connection) hangs for the full kernel timeout and then kills
+    the build. So bound each attempt with a timeout and retry with backoff. A
     browser-like ``User-Agent`` is sent because some servers reject the default
     ``Python-urllib`` agent.
 
@@ -60,17 +63,20 @@ download_dir.mkdir(exist_ok=True)
 package_dir.mkdir(exist_ok=True)
 artifact_dir.mkdir(exist_ok=True)
 
-# Download test EEG data (currently using S004R01 from the BCI2000 dataset)
+# Download test EEG data (S004R01 from the BCI2000 / EEGBCI dataset).
+#
+# Fetched via MNE's eegbci loader rather than a raw download: it is pooch-backed
+# (retries on transient failures and verifies the bytes against MNE's hash
+# registry) and pulls the recording from the same PhysioNet source the rest of
+# pyprep's test suite uses, so both sides see the identical file.
 
-subject = "S004"
-run = "R01"
-eeg_filename = f"{subject}{run}.edf"
-eeg_url = (
-    f"https://www.physionet.org/files/eegmmidb/1.0.0/{subject}/{eeg_filename}?download"
-)
+subject = 4
+run = 1
+eeg_filename = f"S{subject:03d}R{run:02d}.edf"
 
 print("* Downloading EEG test data...")
-download(eeg_url, eeg_filename)
+eeg_paths = eegbci.load_data(subject, run, path=str(package_dir), update_path=False)
+shutil.copy(eeg_paths[0], eeg_filename)
 
 # Download and extract EEGLAB and MATLAB PREP.
 #
