@@ -4,10 +4,51 @@
 #          Stefan Appelhoff
 
 import shutil
+import time
 from pathlib import Path
-from urllib.error import HTTPError, URLError
-from urllib.request import urlopen
+from urllib.error import URLError
+from urllib.request import Request, urlopen
 from zipfile import ZipFile
+
+
+def download(url, dest, retries=5, timeout=60):
+    """Download ``url`` to ``dest``, retrying on transient network errors.
+
+    A single ``urlopen`` with no timeout is fragile in CI: a momentary
+    runner-to-host connectivity blip (e.g. an IPv6 route that blackholes the
+    connection) hangs for the full kernel timeout and then kills the build. So
+    bound each attempt with a timeout and retry a few times with backoff. A
+    browser-like ``User-Agent`` is sent because some servers reject the default
+    ``Python-urllib`` agent.
+
+    Parameters
+    ----------
+    url : str
+        The URL to download.
+    dest : str | pathlib.Path
+        Local path to write the downloaded bytes to.
+    retries : int
+        Maximum number of attempts before giving up.
+    timeout : int
+        Per-attempt socket timeout, in seconds.
+
+    """
+    req = Request(url, headers={"User-Agent": "Mozilla/5.0 (pyprep CI)"})
+    last_err = None
+    for attempt in range(1, retries + 1):
+        try:
+            with urlopen(req, timeout=timeout) as resp, open(dest, "wb") as out:
+                shutil.copyfileobj(resp, out)
+            return
+        except (URLError, TimeoutError, ConnectionError) as err:
+            last_err = err
+            print(f"  attempt {attempt}/{retries} failed ({err})")
+            if attempt < retries:
+                time.sleep(2**attempt)
+    raise RuntimeError(
+        f"Failed to download '{url}' after {retries} attempts: {last_err}"
+    )
+
 
 # Initialize required directories
 
@@ -24,15 +65,12 @@ artifact_dir.mkdir(exist_ok=True)
 subject = "S004"
 run = "R01"
 eeg_filename = f"{subject}{run}.edf"
-eeg_url = f"https://www.physionet.org/files/eegmmidb/1.0.0/{subject}/{eeg_filename}?download"
+eeg_url = (
+    f"https://www.physionet.org/files/eegmmidb/1.0.0/{subject}/{eeg_filename}?download"
+)
 
 print("* Downloading EEG test data...")
-try:
-    mod_http = urlopen(eeg_url)
-    with open(eeg_filename, "wb") as out:
-        out.write(mod_http.read())
-except (URLError, HTTPError):
-    raise RuntimeError(f"Failed to download '{eeg_filename}'")
+download(eeg_url, eeg_filename)
 
 # Download and extract EEGLAB and MATLAB PREP.
 #
@@ -58,12 +96,7 @@ for name, url in pkgs.items():
 
     # Download .zip to temporary folder
     download_path = download_dir / f"{name}.zip"
-    try:
-        mod_http = urlopen(url)
-        with open(download_path, "wb") as out:
-            out.write(mod_http.read())
-    except (URLError, HTTPError):
-        raise RuntimeError(f"Failed to download '{url}'")
+    download(url, download_path)
 
     # Unzip downloaded file to MATLAB package directory
     with ZipFile(download_path, "r") as z:
