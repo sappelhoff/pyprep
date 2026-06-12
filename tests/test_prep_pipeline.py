@@ -78,3 +78,8 @@ def test_prep_pipeline_filter_kwargs(raw, montage):
         raw_copy, prep_params, montage, random_state=42, filter_kwargs=filter_kwargs
     )
     prep.fit()
+
+    # The input is purely EEG, so there are no non-EEG channels to split off
+    # and the `raw` property returns the EEG data unchanged.
+    assert prep.raw_non_eeg is None
+    assert prep.raw.ch_names == prep.raw_eeg.ch_names
