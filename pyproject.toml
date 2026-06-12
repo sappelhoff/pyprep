@@ -86,8 +86,7 @@ exclude = [
   "/.github/**",
   "/docs",
   "/examples",
-  "matprep_artifacts",
-  "matprep_artifacts/**",
+  "/tools",
   "tests/**",
 ]
 
@@ -101,11 +100,6 @@ source = "vcs"
 [tool.pytest.ini_options]
 addopts = """. --cov=pyprep/ --cov-report=xml --cov-config=pyproject.toml --verbose -s"""
 filterwarnings = [
-]
-
-[tool.ruff]
-extend-exclude = [
-  "matprep_artifacts/**",
 ]
 
 [tool.ruff.lint]
