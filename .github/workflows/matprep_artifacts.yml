@@ -38,6 +38,11 @@ jobs:
       with:
         python-version: '3.12'
 
+    - name: Install Python dependencies
+      # mne (eegbci loader) is used only to fetch the test recording; it does
+      # not touch the artifact values -- MATLAB PREP does all the processing.
+      run: python -m pip install --upgrade pip mne
+
     - name: Download MATLAB packages and test data
       run: python config/pipeline_setup.py
 
