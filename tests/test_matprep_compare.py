@@ -26,8 +26,14 @@ def matprep_artifacts(tmpdir_factory):
     to each artifact in a {name: path} dict. The temporary folder will be
     automatically cleaned up by pytest once all tests have completed.
 
+    The artifacts are produced by the ``matprep_artifacts`` GitHub Actions
+    workflow (which runs the MATLAB PREP pipeline in ``tools/matprep``) and
+    published to the rolling ``matprep-artifacts`` pre-release.
+
     """
-    base_url = "https://github.com/a-hurst/matprep_artifacts/releases/latest/download/"
+    base_url = (
+        "https://github.com/sappelhoff/pyprep/releases/download/matprep-artifacts/"
+    )
     artifacts = [
         "1_matprep_raw.set",
         "2_matprep_removetrend.set",

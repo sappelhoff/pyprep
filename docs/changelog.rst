@@ -29,6 +29,7 @@ Changelog
 - :meth:`~pyprep.NoisyChannels.find_bad_by_nan_flat` now respects the ``reject_by_annotation`` setting of the :class:`~pyprep.NoisyChannels` instance, consistent with all other detection methods, by `Roy Eric Wieske`_ (:gh:`185`)
 - Removed the unmaintained, non-asserting matplotlib-based PREP tests and the ``run_full_prep`` example (along with its committed MATLAB ``.mat`` artifacts); PyPREP's fidelity to MATLAB PREP is validated by ``tests/test_matprep_compare.py`` instead, by `Stefan Appelhoff`_ (:gh:`163`)
 - Added a new ``run_full_prep`` example demonstrating how to run the full pipeline on a noisy recording, inspect the detected bad channels, and compare the data before and after cleaning, by `Stefan Appelhoff`_ (:gh:`188`)
+- The MATLAB PREP artifact-generation scripts (previously the external ``matprep_artifacts`` git submodule) are now vendored in ``tools/matprep/`` and run by a new ``matprep_artifacts`` GitHub Actions workflow that publishes the reference artifacts used by ``tests/test_matprep_compare.py``; the EEGLAB and MATLAB PREP versions are now pinned for reproducibility, by `Stefan Appelhoff`_ (:gh:`160`)
 
 Bug
 ~~~
