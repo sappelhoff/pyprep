@@ -27,6 +27,7 @@ Version 0.7.0 (unreleased)
 Changelog
 ~~~~~~~~~
 - :meth:`~pyprep.NoisyChannels.find_bad_by_nan_flat` now respects the ``reject_by_annotation`` setting of the :class:`~pyprep.NoisyChannels` instance, consistent with all other detection methods, by `Roy Eric Wieske`_ (:gh:`185`)
+- Removed the unmaintained, non-asserting matplotlib-based PREP tests and the ``run_full_prep`` example (along with its committed MATLAB ``.mat`` artifacts); PyPREP's fidelity to MATLAB PREP is validated by ``tests/test_matprep_compare.py`` instead, by `Stefan Appelhoff`_ (:gh:`163`)
 
 Bug
 ~~~
