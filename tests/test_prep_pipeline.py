@@ -112,9 +112,7 @@ def test_prep_pipeline_stages_match_fit(raw, montage):
     prep_staged.robust_reference()
 
     # The processed signals and detected bad channels should be identical
-    np.testing.assert_allclose(
-        prep_fit.raw.get_data(), prep_staged.raw.get_data()
-    )
+    np.testing.assert_allclose(prep_fit.raw.get_data(), prep_staged.raw.get_data())
     assert prep_fit.bad_before_interpolation == prep_staged.bad_before_interpolation
     assert prep_fit.interpolated_channels == prep_staged.interpolated_channels
     assert prep_fit.still_noisy_channels == prep_staged.still_noisy_channels
@@ -181,9 +179,7 @@ def test_robust_reference_warns_without_line_noise(raw, montage):
         with warnings.catch_warnings(record=True) as record:
             warnings.simplefilter("always")
             prep2.fit()
-        assert not any(
-            "without prior line-noise" in str(w.message) for w in record
-        )
+        assert not any("without prior line-noise" in str(w.message) for w in record)
 
 
 @pytest.mark.usefixtures("raw", "montage")
@@ -202,6 +198,4 @@ def test_fit_without_line_freqs_does_not_warn(raw, montage):
         with warnings.catch_warnings(record=True) as record:
             warnings.simplefilter("always")
             prep.fit()
-        assert not any(
-            "without prior line-noise" in str(w.message) for w in record
-        )
+        assert not any("without prior line-noise" in str(w.message) for w in record)

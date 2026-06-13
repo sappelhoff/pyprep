@@ -110,7 +110,9 @@ class Reference:
         self.still_noisy_channels = None
         self.noisy_channels_after_interpolation = None
         self._extra_info = {
-            "initial_bad": None, "interpolated": None, "remaining_bad": None
+            "initial_bad": None,
+            "interpolated": None,
+            "remaining_bad": None,
         }
 
     def perform_reference(self, max_iterations=4, interpolate_bads=True):
@@ -220,7 +222,7 @@ class Reference:
             self.EEG, reference_correct, rereferenced_index
         )
         self.reference_signal_new = self.reference_signal + reference_correct
-        self.raw._data = self.EEG # Update the MNE Raw object
+        self.raw._data = self.EEG  # Update the MNE Raw object
 
         # Detect any remaining noisy channels following interpolation
         self.interpolated_channels = bad_channels
