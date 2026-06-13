@@ -3,6 +3,9 @@
 # Authors: The PyPREP developers
 # SPDX-License-Identifier: MIT
 
+import warnings
+from unittest import mock
+
 import numpy as np
 import pytest
 
@@ -83,3 +86,116 @@ def test_prep_pipeline_filter_kwargs(raw, montage):
     # and the `raw` property returns the EEG data unchanged.
     assert prep.raw_non_eeg is None
     assert prep.raw.ch_names == prep.raw_eeg.ch_names
+
+
+@pytest.mark.usefixtures("raw", "montage")
+def test_prep_pipeline_stages_match_fit(raw, montage):
+    """Running the stages manually should be identical to calling fit()."""
+    sfreq = raw.info["sfreq"]
+    prep_params = {
+        "ref_chs": "eeg",
+        "reref_chs": "eeg",
+        "line_freqs": np.arange(60, sfreq / 2, 60),
+    }
+
+    # The all-in-one fit() path
+    prep_fit = PrepPipeline(
+        raw.copy(), prep_params, montage, ransac=False, random_state=42
+    )
+    prep_fit.fit()
+
+    # The equivalent manual, staged path
+    prep_staged = PrepPipeline(
+        raw.copy(), prep_params, montage, ransac=False, random_state=42
+    )
+    prep_staged.remove_line_noise()
+    prep_staged.robust_reference()
+
+    # The processed signals and detected bad channels should be identical
+    np.testing.assert_allclose(prep_fit.raw.get_data(), prep_staged.raw.get_data())
+    assert prep_fit.bad_before_interpolation == prep_staged.bad_before_interpolation
+    assert prep_fit.interpolated_channels == prep_staged.interpolated_channels
+    assert prep_fit.still_noisy_channels == prep_staged.still_noisy_channels
+
+
+@pytest.mark.usefixtures("raw", "montage")
+def test_prep_pipeline_skip_interpolation(raw, montage):
+    """Robust referencing with interpolate_bads=False should skip interpolation."""
+    sfreq = raw.info["sfreq"]
+    prep_params = {
+        "ref_chs": "eeg",
+        "reref_chs": "eeg",
+        "line_freqs": np.arange(60, sfreq / 2, 60),
+    }
+
+    # Full pipeline (with interpolation) for reference
+    prep_full = PrepPipeline(
+        raw.copy(), prep_params, montage, ransac=False, random_state=42
+    )
+    prep_full.fit()
+
+    # Same pipeline, but with the final interpolation disabled
+    prep_noint = PrepPipeline(
+        raw.copy(), prep_params, montage, ransac=False, random_state=42
+    )
+    prep_noint.remove_line_noise()
+    prep_noint.robust_reference(interpolate_bads=False)
+
+    # Bad channels detected post-reference are the same (interpolation is later)
+    assert prep_noint.bad_before_interpolation == prep_full.bad_before_interpolation
+    assert prep_noint.reference_before_interpolation is not None
+    assert prep_noint.EEG_before_interpolation is not None
+
+    # The post-interpolation outputs were never computed
+    assert prep_noint.interpolated_channels is None
+    assert prep_noint.still_noisy_channels is None
+    assert prep_noint.reference_after_interpolation is None
+    assert prep_noint.noisy_channels_after_interpolation is None
+
+
+@pytest.mark.usefixtures("raw", "montage")
+def test_robust_reference_warns_without_line_noise(raw, montage):
+    """robust_reference warns if line noise was not removed first, fit() does not."""
+    sfreq = raw.info["sfreq"]
+    prep_params = {
+        "ref_chs": "eeg",
+        "reref_chs": "eeg",
+        "line_freqs": np.arange(60, sfreq / 2, 60),
+    }
+
+    # Detection results are irrelevant here, so skip them for speed
+    with mock.patch("pyprep.NoisyChannels.find_all_bads", return_value=True):
+        # Calling robust_reference directly, out of order, warns
+        prep = PrepPipeline(
+            raw.copy(), prep_params, montage, ransac=False, random_state=42
+        )
+        with pytest.warns(UserWarning, match="without prior line-noise"):
+            prep.robust_reference(interpolate_bads=False)
+
+        # Running the full pipeline through fit() must not emit that warning
+        prep2 = PrepPipeline(
+            raw.copy(), prep_params, montage, ransac=False, random_state=42
+        )
+        with warnings.catch_warnings(record=True) as record:
+            warnings.simplefilter("always")
+            prep2.fit()
+        assert not any("without prior line-noise" in str(w.message) for w in record)
+
+
+@pytest.mark.usefixtures("raw", "montage")
+def test_fit_without_line_freqs_does_not_warn(raw, montage):
+    """An empty line_freqs is a deliberate skip and must not trigger a warning."""
+    prep_params = {
+        "ref_chs": "eeg",
+        "reref_chs": "eeg",
+        "line_freqs": [],
+    }
+
+    with mock.patch("pyprep.NoisyChannels.find_all_bads", return_value=True):
+        prep = PrepPipeline(
+            raw.copy(), prep_params, montage, ransac=False, random_state=42
+        )
+        with warnings.catch_warnings(record=True) as record:
+            warnings.simplefilter("always")
+            prep.fit()
+        assert not any("without prior line-noise" in str(w.message) for w in record)

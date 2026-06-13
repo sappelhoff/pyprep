@@ -36,6 +36,30 @@ def test_basic_input(raw, montage):
 
 
 @pytest.mark.usefixtures("raw_clean")
+def test_interpolate_bads_guards(raw_clean):
+    """Test the guard rails on Reference.interpolate_bads."""
+    ch_names = raw_clean.info["ch_names"]
+    params = {"ref_chs": ch_names, "reref_chs": ch_names}
+
+    # Detection results are irrelevant here, so skip them for speed
+    with mock.patch("pyprep.NoisyChannels.find_all_bads", return_value=True):
+        # Interpolating before robust referencing has run should fail
+        reference = Reference(raw_clean, params, ransac=False)
+        with pytest.raises(RuntimeError, match="must be performed"):
+            reference.interpolate_bads()
+
+        # After referencing without interpolation, a single call works...
+        reference.perform_reference(interpolate_bads=False)
+        assert reference.interpolated_channels is None
+        reference.interpolate_bads()
+        assert reference.interpolated_channels is not None
+
+        # ...but interpolating a second time should fail
+        with pytest.raises(RuntimeError, match="more than once"):
+            reference.interpolate_bads()
+
+
+@pytest.mark.usefixtures("raw_clean")
 def test_clean_input(raw_clean):
     """Test robust referencing with a clean input signal."""
     ch_names = raw_clean.info["ch_names"]
