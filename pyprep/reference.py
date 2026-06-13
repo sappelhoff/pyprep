@@ -189,12 +189,12 @@ class Reference:
         be run more than once per instance of :class:`~pyprep.Reference`.
 
         """
-        if not self.bad_before_interpolation:
+        if self.bad_before_interpolation is None:
             raise RuntimeError(
                 "Robust referencing must be performed before remaining bad channels "
                 "can be interpolated."
             )
-        elif self.interpolated_channels:
+        elif self.interpolated_channels is not None:
             raise RuntimeError(
                 "Bad channel interpolation cannot be performed more than once - "
                 "interpolating signals using other interpolated signals is likely "

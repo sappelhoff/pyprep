@@ -3,6 +3,8 @@
 # Authors: The PyPREP developers
 # SPDX-License-Identifier: MIT
 
+import warnings
+
 import mne
 from mne.utils import check_random_state
 
@@ -182,6 +184,7 @@ class PrepPipeline:
         self.matlab_strict = matlab_strict
 
         # Initialize attributes to be filled in later
+        self._line_noise_removed = False
         self.noisy_channels_original = None
         self.noisy_channels_before_interpolation = None
         self.noisy_channels_after_interpolation = None
@@ -201,48 +204,59 @@ class PrepPipeline:
         else:
             return full_raw.add_channels([self.raw_non_eeg], force_update_info=True)
 
-    def remove_line_noise(self, line_freqs):
-        """Remove line noise from all EEG channels using multi-taper decomposition.
+    def remove_line_noise(self, line_freqs=None):
+        """Remove line noise from all EEG channels.
 
-        This filtering method attempts to isolate and remove line noise from the
-        signal while preserving unrelated background signal in the same frequency
-        ranges. This is done to minimize distortions in the power-spectral density
-        curves due to line noise removal.
+        Line noise is removed by detrending the signal, applying a notch filter,
+        and adding the slow drifts back. By default the notch filter uses MNE's
+        ``spectrum_fit`` method, which attempts to isolate and remove line noise
+        while preserving unrelated background signal in the same frequency ranges
+        (to minimize distortions in the power-spectral density). The filter can be
+        configured via the ``filter_kwargs`` argument of :class:`PrepPipeline`.
 
         Parameters
         ----------
-        line_freqs: {np.ndarray, list}
+        line_freqs : {np.ndarray, list, None}, optional
             A list of the frequencies (in Hz) at which line noise should be removed
             (e.g., ``np.arange(60, sfreq / 2, 60)`` for a recording with a powerline
-            noise of 60 Hz).
+            noise of 60 Hz). If ``None`` (default), the ``"line_freqs"`` entry of the
+            ``prep_params`` passed to :class:`PrepPipeline` is used.
 
         """
-        # Define default settings for filter and apply any kwargs overrides
-        settings = {
-            "method": "spectrum_fit",
-            "mt_bandwidth": 2,
-            "p_value": 0.01,
-            "filter_length": "10s"
-        }
-        if isinstance(self.filter_kwargs, dict):
-            settings.update(self.filter_kwargs)
+        if line_freqs is None:
+            line_freqs = self.prep_params["line_freqs"]
 
         # Remove slow drifts from the recording prior to filtering
-        eeg_detrended = removeTrend(
+        self.EEG_new = removeTrend(
             self.EEG_raw, self.sfreq, matlab_strict=self.matlab_strict
         )
 
-        # Remove line noise and add the removed slow drifts back
-        eeg_cleaned = mne.filter.notch_filter(
-            eeg_detrended,
-            Fs=self.sfreq,
-            freqs=line_freqs,
-            **settings,
-        )
-        self.EEG_filtered = (self.EEG_raw - eeg_detrended) + eeg_cleaned
-        self.raw_eeg._data = self.EEG_filtered
+        # Remove line noise. When no filter kwargs are given, fall back to PREP's
+        # default ``spectrum_fit`` settings; otherwise use the provided kwargs as-is.
+        if self.filter_kwargs is None:
+            self.EEG_clean = mne.filter.notch_filter(
+                self.EEG_new,
+                Fs=self.sfreq,
+                freqs=line_freqs,
+                method="spectrum_fit",
+                mt_bandwidth=2,
+                p_value=0.01,
+                filter_length="10s",
+            )
+        else:
+            self.EEG_clean = mne.filter.notch_filter(
+                self.EEG_new,
+                Fs=self.sfreq,
+                freqs=line_freqs,
+                **self.filter_kwargs,
+            )
 
-    def robust_reference(self, max_iterations=4, interpolate_bads=True):
+        # Add the slow drifts back
+        self.EEG = self.EEG_raw - self.EEG_new + self.EEG_clean
+        self.raw_eeg._data = self.EEG
+        self._line_noise_removed = True
+
+    def robust_reference(self, max_iterations=None, interpolate_bads=True):
         """Perform robust referencing on the EEG signal and detect bad channels.
 
         This method uses an iterative approach to estimate a robust average
@@ -258,14 +272,27 @@ class PrepPipeline:
 
         Parameters
         ----------
-        max_iterations : int, optional
+        max_iterations : {int, None}, optional
             The maximum number of iterations of noisy channel removal to perform
-            during robust referencing. Defaults to ``4``.
+            during robust referencing. If ``None`` (default), the ``"max_iterations"``
+            entry of the ``prep_params`` passed to :class:`PrepPipeline` is used.
         interpolate_bads : bool, optional
             Whether or not any remaining bad channels following robust referencing
             should be interpolated. Defaults to ``True``.
 
         """
+        if max_iterations is None:
+            max_iterations = self.prep_params["max_iterations"]
+
+        if not self._line_noise_removed:
+            warnings.warn(
+                "Robust referencing is being performed without prior line-noise "
+                "removal. If this is intentional, you can safely ignore this "
+                "warning; otherwise, call `remove_line_noise` first or use `fit`.",
+                UserWarning,
+                stacklevel=2,
+            )
+
         # Perform robust referencing on the signal
         reference = Reference(
             self.raw_eeg,
@@ -296,6 +323,10 @@ class PrepPipeline:
         # Step 1: Adaptive line noise removal
         if len(self.prep_params["line_freqs"]) != 0:
             self.remove_line_noise(self.prep_params["line_freqs"])
+        else:
+            # No line noise to remove: mark the stage as deliberately skipped so
+            # that `robust_reference` does not emit a spurious warning.
+            self._line_noise_removed = True
 
         # Step 2: Robust Referencing
         self.robust_reference(self.prep_params["max_iterations"])
