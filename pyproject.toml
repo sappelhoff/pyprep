@@ -95,7 +95,7 @@ exclude = [
 allow-direct-references = true  # allow specifying URLs in our dependencies
 
 [tool.hatch.version]
-raw-options = {version_scheme = "release-branch-semver"}
+raw-options = {local_scheme = "node-and-date", version_scheme = "no-guess-dev"}
 source = "vcs"
 
 [tool.pytest.ini_options]
