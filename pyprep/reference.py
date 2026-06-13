@@ -141,10 +141,11 @@ class Reference:
         # more than what we later actually account for (in interpolated channels).
         dummy = self.raw.copy()
         dummy.info["bads"] = self.noisy_channels["bad_all"]
-        if self.matlab_strict:
-            _eeglab_interpolate_bads(dummy)
-        else:
-            dummy.interpolate_bads()
+        if len(dummy.info["bads"]) > 0:
+            if self.matlab_strict:
+                _eeglab_interpolate_bads(dummy)
+            else:
+                dummy.interpolate_bads()
         self.reference_signal = np.nanmean(
             dummy.get_data(picks=self.reference_channels), axis=0
         )
@@ -205,10 +206,11 @@ class Reference:
 
         # Interpolate any channels flagged as bad following robust referencing
         bad_channels = self.raw.info["bads"]
-        if self.matlab_strict:
-            _eeglab_interpolate_bads(self.raw)
-        else:
-            self.raw.interpolate_bads()
+        if len(bad_channels) > 0:
+            if self.matlab_strict:
+                _eeglab_interpolate_bads(self.raw)
+            else:
+                self.raw.interpolate_bads()
 
         # Calculate and remove the new average reference following interpolation
         reference_correct = np.nanmean(

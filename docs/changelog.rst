@@ -35,6 +35,11 @@ Changelog
 Bug
 ~~~
 - ``pyprep`` no longer calls :func:`logging.basicConfig` at import time (in :mod:`pyprep.reference`), which previously reconfigured the root logger of any downstream application that imported ``pyprep``, by `Stefan Appelhoff`_
+- :class:`~pyprep.Reference` no longer emits a spurious "No bad channels to interpolate" warning during robust referencing when there are no bad channels to interpolate, by `Stefan Appelhoff`_ (:gh:`192`)
+
+Code health
+~~~~~~~~~~~
+- Added support for Python 3.14 to the test matrix and package metadata, and bumped the pre-commit hooks and GitHub Actions used for development and CI, by `Stefan Appelhoff`_ (:gh:`192`)
 
 .. _changes_0_6_0:
 
