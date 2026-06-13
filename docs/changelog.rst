@@ -26,6 +26,7 @@ Version 0.7.0 (unreleased)
 
 Changelog
 ~~~~~~~~~
+- :class:`~pyprep.PrepPipeline` can now be run in stages: the new :meth:`~pyprep.PrepPipeline.remove_line_noise` and :meth:`~pyprep.PrepPipeline.robust_reference` methods expose the individual PREP stages that :meth:`~pyprep.PrepPipeline.fit` runs in sequence, and final bad-channel interpolation can be skipped via the new ``interpolate_bads`` argument of :meth:`~pyprep.PrepPipeline.robust_reference` (and the matching :meth:`pyprep.Reference.perform_reference` / :meth:`pyprep.Reference.interpolate_bads` methods). These additions are fully backward compatible: :meth:`~pyprep.PrepPipeline.fit` and all existing attributes are unchanged, by `Austin Hurst`_ and `Stefan Appelhoff`_ (:gh:`73`)
 - :meth:`~pyprep.NoisyChannels.find_bad_by_nan_flat` now respects the ``reject_by_annotation`` setting of the :class:`~pyprep.NoisyChannels` instance, consistent with all other detection methods, by `Roy Eric Wieske`_ (:gh:`185`)
 - Removed the unmaintained, non-asserting matplotlib-based PREP tests and the ``run_full_prep`` example (along with its committed MATLAB ``.mat`` artifacts); PyPREP's fidelity to MATLAB PREP is validated by ``tests/test_matprep_compare.py`` instead, by `Stefan Appelhoff`_ (:gh:`163`)
 - Added a new ``run_full_prep`` example demonstrating how to run the full pipeline on a noisy recording, inspect the detected bad channels, and compare the data before and after cleaning, by `Stefan Appelhoff`_ (:gh:`188`)
