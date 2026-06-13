@@ -640,6 +640,7 @@ class NoisyChannels:
         This is a PyPREP-only method not present in the original MATLAB PREP.
 
         A channel is considered "bad-by-psd" if:
+
         1. Its power in any frequency band (low: 1-15 Hz, mid: 15-30 Hz,
            high: 30-45 Hz) is abnormally HIGH compared to other channels, OR
         2. Its high-frequency band has more power than its low-frequency band

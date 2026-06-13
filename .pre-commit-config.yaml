@@ -14,7 +14,7 @@ repos:
       - id: check-docstring-first
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.15.2
+    rev: v0.15.17
     hooks:
       - id: ruff
         name: ruff check --fix
@@ -25,7 +25,7 @@ repos:
         files: ^(pyprep/|examples/|tests/)
 
   - repo: https://github.com/pappasam/toml-sort
-    rev: v0.24.3
+    rev: v0.24.4
     hooks:
       - id: toml-sort-fix
         files: pyproject.toml
