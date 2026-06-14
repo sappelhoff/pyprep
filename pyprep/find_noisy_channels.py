@@ -212,11 +212,7 @@ class NoisyChannels:
             amp=np.array([1, 1, 0, 0]),
             freq=np.array([0, 90 / self.sample_rate, 100 / self.sample_rate, 1]),
         )
-        EEG_filt = np.zeros_like(self.EEGData)
-        for i in range(EEG_filt.shape[0]):
-            EEG_filt[i, :] = signal.filtfilt(bandpass_filter, 1, self.EEGData[i, :])
-
-        return EEG_filt
+        return signal.filtfilt(bandpass_filter, 1, self.EEGData, axis=1)
 
     def get_bads(self, verbose=False, as_dict=False):
         """Get the names of all channels currently flagged as bad.
