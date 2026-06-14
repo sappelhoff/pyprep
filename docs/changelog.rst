@@ -26,7 +26,7 @@ Version 0.8.0 (unreleased)
 
 Changelog
 ~~~~~~~~~
-- nothing yet
+- Sped up the windowed loop in :meth:`~pyprep.NoisyChannels.find_bad_by_correlation` by computing the median absolute deviation directly with NumPy instead of via SciPy, with bit-identical output, by `Stefan Appelhoff`_ (:gh:`197`)
 
 .. _changes_0_7_0:
 
