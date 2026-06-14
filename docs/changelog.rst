@@ -26,7 +26,7 @@ Version 0.8.0 (unreleased)
 
 Changelog
 ~~~~~~~~~
-- nothing yet
+- :meth:`~pyprep.NoisyChannels.find_bad_by_correlation` (and any other method that uses the internally band-pass-filtered signal) is now substantially faster: ``NoisyChannels._get_filtered_data`` filters all channels at once instead of channel-by-channel, with bit-identical output, by `Stefan Appelhoff`_ (:gh:`195`)
 
 .. _changes_0_7_0:
 
