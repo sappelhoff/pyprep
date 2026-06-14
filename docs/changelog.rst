@@ -26,7 +26,7 @@ Version 0.8.0 (unreleased)
 
 Changelog
 ~~~~~~~~~
-- nothing yet
+- :class:`~pyprep.NoisyChannels` now detrends the EEG signal in place during initialization, avoiding two transient full-size copies of the recording; :func:`pyprep.removeTrend.removeTrend` gained a ``copy`` keyword argument (default ``True``, preserving the previous behavior) to support this, by `Stefan Appelhoff`_ (:gh:`196`)
 
 .. _changes_0_7_0:
 
