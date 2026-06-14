@@ -571,7 +571,8 @@ class NoisyChannels:
             channel_amplitudes[w, usable] = _mat_iqr(eeg_raw, axis=1) * IQR_TO_SD
 
             # Check for any channel dropouts (flat signal) within the window
-            eeg_amplitude = median_abs_deviation(eeg_filtered, axis=1)
+            med = np.median(eeg_filtered, axis=1, keepdims=True)
+            eeg_amplitude = np.median(np.abs(eeg_filtered - med), axis=1)
             dropout[w, usable] = eeg_amplitude == 0
 
             # Exclude any dropout chans from further calculations (avoids div-by-zero)
@@ -581,7 +582,10 @@ class NoisyChannels:
             eeg_amplitude = eeg_amplitude[eeg_amplitude > 0]
 
             # Get high-frequency noise ratios for the window
-            high_freq_amplitude = median_abs_deviation(eeg_raw - eeg_filtered, axis=1)
+            hf = eeg_raw - eeg_filtered
+            high_freq_amplitude = np.median(
+                np.abs(hf - np.median(hf, axis=1, keepdims=True)), axis=1
+            )
             noiselevels[w, usable] = high_freq_amplitude / eeg_amplitude
 
             # Get inter-channel correlations for the window
