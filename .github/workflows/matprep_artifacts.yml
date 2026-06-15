@@ -59,7 +59,7 @@ jobs:
         command: "cd('tools/matprep');warning('off');run('generate_artifacts.m');exit;"
 
     - name: Upload artifacts to workflow run
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: matprep-artifacts
         path: tools/matprep/artifacts/*
