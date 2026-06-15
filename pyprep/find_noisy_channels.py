@@ -97,7 +97,10 @@ class NoisyChannels:
         self.sample_rate = raw.info["sfreq"]
         if do_detrend:
             self.raw_mne._data = removeTrend(
-                self.raw_mne.get_data(), self.sample_rate, matlab_strict=matlab_strict
+                self.raw_mne._data,
+                self.sample_rate,
+                matlab_strict=matlab_strict,
+                copy=False,
             )
         self.matlab_strict = matlab_strict
 
