@@ -26,6 +26,7 @@ Version 0.8.0 (unreleased)
 
 Changelog
 ~~~~~~~~~
+- Unified all median absolute deviation (MAD) computations in :class:`~pyprep.NoisyChannels` behind a single direct-NumPy helper (``pyprep.utils._mad``), replacing the previous mix of :func:`scipy.stats.median_abs_deviation` calls and inline implementations. This keeps the speedup of the windowed loop in :meth:`~pyprep.NoisyChannels.find_bad_by_correlation` while producing bit-identical output, by `Stefan Appelhoff`_ (:gh:`197`)
 - :class:`~pyprep.NoisyChannels` now detrends the EEG signal in place during initialization, avoiding two transient full-size copies of the recording; :func:`pyprep.removeTrend.removeTrend` gained a ``copy`` keyword argument (default ``True``, preserving the previous behavior) to support this, by `Stefan Appelhoff`_ (:gh:`196`)
 - :meth:`~pyprep.NoisyChannels.find_bad_by_correlation` (and any other method that uses the internally band-pass-filtered signal) is now substantially faster: ``NoisyChannels._get_filtered_data`` filters all channels at once instead of channel-by-channel, with bit-identical output, by `Stefan Appelhoff`_ (:gh:`195`)
 

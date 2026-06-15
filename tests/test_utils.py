@@ -5,11 +5,13 @@
 
 import numpy as np
 import pytest
+from scipy.stats import median_abs_deviation
 
 from pyprep.utils import (
     _correlate_arrays,
     _eeglab_create_highpass,
     _get_random_subset,
+    _mad,
     _mat_iqr,
     _mat_quantile,
     _mat_round,
@@ -153,3 +155,29 @@ def test_eeglab_create_highpass():
     expected_val = 0.9961
     actual_val = vals[len(vals) // 2]
     assert np.isclose(expected_val, actual_val, atol=0.001)
+
+
+def test_mad():
+    """Test the median absolute deviation from the median (MAD) function."""
+    # Generate test data
+    tst = np.array([[1, 2, 3, 4, 8], [80, 10, 20, 30, 40], [100, 200, 800, 300, 400]])
+    expected = np.asarray([1, 10, 100])
+
+    # Compare output to expected results
+    assert all(np.equal(_mad(tst, axis=1), expected))
+    assert all(np.equal(_mad(tst.T, axis=0), expected))
+    assert _mad(tst) == 28  # Matches robust.mad from statsmodels
+
+    # _mad must stay numerically identical to the scipy function it replaces
+    # (scale=1, nan_policy="propagate"), which is what keeps its output
+    # bit-identical while avoiding scipy's per-call overhead.
+    rng = np.random.default_rng(42)
+    data = rng.standard_normal((8, 200))
+    assert np.array_equal(_mad(data, axis=1), median_abs_deviation(data, axis=1))
+    assert np.array_equal(_mad(data, axis=0), median_abs_deviation(data, axis=0))
+    assert _mad(data) == median_abs_deviation(data, axis=None)
+
+    # A NaN propagates along the reduction axis, matching scipy's default policy
+    data[0, 0] = np.nan
+    assert np.isnan(_mad(data, axis=1)[0])
+    assert not np.isnan(_mad(data, axis=1)[1])

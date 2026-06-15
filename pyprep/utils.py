@@ -474,6 +474,39 @@ def _correlate_arrays(a, b, matlab_strict=False):
         return np.diag(np.corrcoef(a, b)[:n_chan, n_chan:])
 
 
+def _mad(x, axis=None):
+    """Calculate the median absolute deviation from the median (MAD).
+
+    This is a direct NumPy implementation that is numerically identical to
+    :func:`scipy.stats.median_abs_deviation` with its default ``scale=1`` and
+    ``nan_policy="propagate"`` (i.e. any ``NaN`` along ``axis`` propagates to
+    the output). It is used in place of the SciPy function because the latter
+    performs per-call input validation and a full ``NaN`` scan of the input,
+    which is a measurable overhead when the MAD is computed repeatedly inside
+    the windowed loop of
+    :meth:`~pyprep.NoisyChannels.find_bad_by_correlation`.
+
+    Parameters
+    ----------
+    x : np.ndarray
+        A numeric array to summarize.
+    axis : int | None
+        Axis along which the MAD is calculated. If ``None``, the MAD is
+        calculated over the flattened array. Defaults to ``None``.
+
+    Returns
+    -------
+    mad : scalar | np.ndarray
+        If ``axis`` is ``None``, the MAD of the full array as a single value.
+        Otherwise, an :class:`~numpy.ndarray` with the MAD for each slice along
+        the specified axis.
+
+    """
+    x = np.asarray(x)
+    median = np.median(x, axis=axis, keepdims=True)
+    return np.median(np.abs(x - median), axis=axis)
+
+
 def _filter_design(N_order, amp, freq):
     """Create FIR low-pass filter for EEG data using frequency sampling method.
 
