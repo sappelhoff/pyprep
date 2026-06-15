@@ -53,7 +53,7 @@ jobs:
         products: Signal_Processing_Toolbox Statistics_and_Machine_Learning_Toolbox
 
     - name: Run MATLAB PREP
-      uses: matlab-actions/run-command@v2
+      uses: matlab-actions/run-command@v3
       with:
         # run-command starts MATLAB at the repo root, so cd into the tools dir first
         command: "cd('tools/matprep');warning('off');run('generate_artifacts.m');exit;"
