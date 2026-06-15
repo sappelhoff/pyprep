@@ -47,7 +47,7 @@ jobs:
       run: python config/pipeline_setup.py
 
     - name: Install MATLAB
-      uses: matlab-actions/setup-matlab@v2
+      uses: matlab-actions/setup-matlab@v3
       with:
         release: latest
         products: Signal_Processing_Toolbox Statistics_and_Machine_Learning_Toolbox
