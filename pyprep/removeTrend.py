@@ -18,6 +18,7 @@ def removeTrend(
     detrendCutoff=1.0,
     detrendChannels=None,
     matlab_strict=False,
+    copy=True,
 ):
     """Remove trends (i.e., slow drifts in baseline) from an array of EEG data.
 
@@ -40,6 +41,12 @@ def removeTrend(
         Whether or not detrending should strictly follow MATLAB PREP's internal
         math, ignoring any improvements made in PyPREP over the original code
         (see :ref:`matlab-diffs` for more details). Defaults to ``False``.
+    copy : bool
+        Whether to operate on a copy of the input data (``True``) or to filter
+        the input array in place (``False``). Filtering in place avoids
+        allocating a second full-size copy of the data, but modifies the input.
+        Only affects the (default) ``'high pass'`` non-``matlab_strict`` path.
+        Defaults to ``True``.
 
     Returns
     -------
@@ -75,6 +82,7 @@ def removeTrend(
                 l_freq=detrendCutoff,
                 h_freq=None,
                 picks=detrendChannels,
+                copy=copy,
             )
 
     elif detrendType.lower() == "high pass sinc":
