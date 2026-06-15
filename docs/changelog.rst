@@ -26,7 +26,7 @@ Version 0.8.0 (unreleased)
 
 Changelog
 ~~~~~~~~~
-- Sped up the windowed loop in :meth:`~pyprep.NoisyChannels.find_bad_by_correlation` by computing the median absolute deviation directly with NumPy instead of via SciPy, with bit-identical output, by `Stefan Appelhoff`_ (:gh:`197`)
+- Unified all median absolute deviation (MAD) computations in :class:`~pyprep.NoisyChannels` behind a single direct-NumPy helper (``pyprep.utils._mad``), replacing the previous mix of :func:`scipy.stats.median_abs_deviation` calls and inline implementations. This keeps the speedup of the windowed loop in :meth:`~pyprep.NoisyChannels.find_bad_by_correlation` while producing bit-identical output, by `Stefan Appelhoff`_ (:gh:`197`)
 
 .. _changes_0_7_0:
 
