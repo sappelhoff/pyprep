@@ -6,6 +6,7 @@
 import numpy as np
 import pytest
 
+import pyprep.gpu as gpu
 from pyprep.find_noisy_channels import NoisyChannels
 from pyprep.ransac import find_bad_by_ransac
 from pyprep.removeTrend import removeTrend
@@ -137,6 +138,43 @@ def test_bad_by_deviation(raw_tmp):
     nd.find_bad_by_deviation(deviation_threshold=3.29)
     bad_by_dev_idx = [low_dev_idx, high_dev_idx]
     assert nd.bad_by_deviation == [raw_tmp.ch_names[i] for i in bad_by_dev_idx]
+
+
+def test_auto_device_falls_back_to_cpu_without_torch(raw_tmp, monkeypatch):
+    """Automatic acceleration falls back to the CPU algorithm without PyTorch."""
+    monkeypatch.setattr(gpu, "HAS_TORCH", False)
+    auto_detector = NoisyChannels(raw_tmp.copy(), do_detrend=False, device="auto")
+    cpu_detector = NoisyChannels(raw_tmp.copy(), do_detrend=False)
+
+    auto_detector.find_bad_by_deviation()
+    cpu_detector.find_bad_by_deviation()
+
+    assert auto_detector.bad_by_deviation == cpu_detector.bad_by_deviation
+
+
+@pytest.mark.skipif(not gpu.HAS_TORCH, reason="PyTorch is not installed")
+def test_auto_device_matches_cpu_for_deviation(raw_tmp):
+    """Automatic acceleration preserves bad-by-deviation channel decisions."""
+    auto_detector = NoisyChannels(raw_tmp.copy(), do_detrend=False, device="auto")
+    cpu_detector = NoisyChannels(raw_tmp.copy(), do_detrend=False)
+
+    auto_detector.find_bad_by_deviation()
+    cpu_detector.find_bad_by_deviation()
+
+    assert auto_detector.bad_by_deviation == cpu_detector.bad_by_deviation
+
+
+@pytest.mark.skipif(not gpu.HAS_TORCH, reason="PyTorch is not installed")
+def test_auto_device_matches_cpu_for_correlation(raw_tmp):
+    """Automatic acceleration preserves correlation and dropout channel decisions."""
+    auto_detector = NoisyChannels(raw_tmp.copy(), do_detrend=False, device="auto")
+    cpu_detector = NoisyChannels(raw_tmp.copy(), do_detrend=False)
+
+    auto_detector.find_bad_by_correlation()
+    cpu_detector.find_bad_by_correlation()
+
+    assert auto_detector.bad_by_correlation == cpu_detector.bad_by_correlation
+    assert auto_detector.bad_by_dropout == cpu_detector.bad_by_dropout
 
 
 def test_bad_by_hf_noise(raw_tmp):

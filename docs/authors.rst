@@ -4,6 +4,7 @@
 .. _Ayush Agarwal: https://github.com/Ayush-Devs
 .. _Christian O'Reilly: https://github.com/christian-oreilly
 .. _Jonte Dancker: https://github.com/joDancker/
+.. _Kanav Dhanda: https://github.com/kanavdhanda
 .. _Mathieu Scheltienne: https://github.com/mscheltienne
 .. _Nabil Alibou: https://github.com/nabilalibou
 .. _Ole Bialas: https://github.com/OleBialas

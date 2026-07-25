@@ -87,6 +87,11 @@ class PrepPipeline:
         Whether or not PyPREP should strictly follow MATLAB PREP's internal
         math, ignoring any improvements made in PyPREP over the original code
         (see :ref:`matlab-diffs` for more details). Defaults to False.
+    device : {None, 'auto', str, torch.device} | None
+        Hardware device used for optional PyTorch acceleration of bad-channel
+        deviation and correlation assessments. ``'auto'`` selects the best
+        available accelerator; without PyTorch, PyPREP uses its standard NumPy
+        implementation. Defaults to ``None``.
 
     Attributes
     ----------
@@ -139,6 +144,7 @@ class PrepPipeline:
         filter_kwargs=None,
         reject_by_annotation=None,
         matlab_strict=False,
+        device=None,
     ):
         """Initialize PREP class."""
         raw.load_data()
@@ -182,6 +188,7 @@ class PrepPipeline:
         self.random_state = check_random_state(random_state)
         self.filter_kwargs = filter_kwargs
         self.matlab_strict = matlab_strict
+        self.device = device
 
         # Initialize attributes to be filled in later
         self._line_noise_removed = False
@@ -299,6 +306,7 @@ class PrepPipeline:
             self.prep_params,
             random_state=self.random_state,
             matlab_strict=self.matlab_strict,
+            device=self.device,
             **self.ransac_settings,
         )
         reference.perform_reference(max_iterations, interpolate_bads)

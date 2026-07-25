@@ -47,7 +47,7 @@ readme = {content-type = "text/x-rst", file = "README.rst"}
 requires-python = ">=3.10"
 
 [project.optional-dependencies]
-dev = ["ipykernel", "ipython", "pyprep[test,docs]"]
+dev = ["ipykernel", "ipython", "pyprep[test,docs,gpu]"]
 docs = [
   "intersphinx_registry",
   "matplotlib",
@@ -56,6 +56,9 @@ docs = [
   "sphinx",
   "sphinx-copybutton",
   "sphinx_gallery",
+]
+gpu = [
+  "torch>=2.0.0",
 ]
 test = [
   "build",

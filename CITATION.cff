@@ -59,6 +59,8 @@ authors:
       family-names: Wieske
       affiliation: 'Biopsychology and Neuroergonomics, Technische Universität Berlin, Berlin, Germany'
       orcid: 'https://orcid.org/0009-0006-2018-1074'
+    - given-names: Kanav
+      family-names: Dhanda
 type: software
 repository-code: 'https://github.com/sappelhoff/pyprep'
 license: MIT

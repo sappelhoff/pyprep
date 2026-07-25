@@ -72,6 +72,13 @@ autodoc_default_options = {
 # This patterns also effect to html_static_path and html_extra_path
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
+# Suppress known Sphinx-Gallery cross-reference warning for sg_execution_times.
+# This occurs because sg_execution_times.rst is generated before gallery labels
+# are resolved, and is a known upstream sphinx-gallery issue.
+suppress_warnings = [
+    "ref.ref",  # sg_execution_times.rst: gallery label not yet resolved
+]
+
 # HTML options (e.g., theme)
 # see: https://sphinx-bootstrap-theme.readthedocs.io/en/latest/README.html
 # Clean up sidebar: Do not show "Source" link

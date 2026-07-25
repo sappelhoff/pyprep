@@ -76,8 +76,41 @@ all required dependencies automatically.
 The dependencies are defined in the ``pyproject.toml`` file under the
 ``dependencies`` and ``project.optional-dependencies`` sections.
 
+GPU Acceleration
+================
+
+``pyprep`` includes optional PyTorch-based acceleration for bad-channel
+deviation and correlation assessments. Install the optional dependency with
+``pip``:
+
+.. code-block:: bash
+
+   python -m pip install "pyprep[gpu]"
+
+The regular ``python -m pip install pyprep`` installation remains sufficient
+for CPU preprocessing. With the GPU extra, pass ``device="auto"`` to select
+CUDA, Apple Silicon MPS, Intel XPU, Habana HPU, or CPU in that order:
+
+.. code-block:: python
+
+   import mne
+   from pyprep.prep_pipeline import PrepPipeline
+
+   raw = mne.io.read_raw_edf("sample.edf", preload=True)
+   montage = mne.channels.make_standard_montage("standard_1005")
+   raw.set_montage(montage)
+
+   prep_params = {
+       "ref_chs": "eeg",
+       "reref_chs": "eeg",
+       "line_freqs": [],
+   }
+   prep = PrepPipeline(raw, prep_params, montage, device="auto")
+   prep.fit()
+
 Contributing
 ============
+
 
 The development of ``pyprep`` is taking place on
 `GitHub <https://github.com/sappelhoff/pyprep>`_.

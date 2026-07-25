@@ -64,6 +64,10 @@ raw_before = raw.copy()
 # https://numpy.org/doc/stable/reference/random/index.html
 random_state = 466171092
 
+# ``device="auto"`` selects the fastest PyTorch accelerator available (CUDA,
+# Apple Silicon MPS, Intel XPU, Habana HPU, or CPU). If PyTorch is not installed,
+# the full pipeline continues with PyPREP's standard NumPy implementation.
+
 sfreq = raw.info["sfreq"]
 prep_params = {
     "ref_chs": "eeg",
@@ -71,7 +75,13 @@ prep_params = {
     "line_freqs": np.arange(60, sfreq / 2, 60),
 }
 
-prep = PrepPipeline(raw, prep_params, montage, random_state=random_state)
+prep = PrepPipeline(
+    raw,
+    prep_params,
+    montage,
+    random_state=random_state,
+    device="auto",
+)
 prep.fit()
 
 ###############################################################################

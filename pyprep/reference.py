@@ -61,6 +61,9 @@ class Reference:
         Whether or not PyPREP should strictly follow MATLAB PREP's internal
         math, ignoring any improvements made in PyPREP over the original code.
         Defaults to False.
+    device : {None, 'auto', str, torch.device} | None
+        Hardware device used for optional PyTorch acceleration. ``'auto'``
+        selects the best available accelerator. Defaults to ``None``.
 
     References
     ----------
@@ -80,6 +83,7 @@ class Reference:
         random_state=None,
         reject_by_annotation=None,
         matlab_strict=False,
+        device=None,
     ):
         """Initialize the class."""
         raw.load_data()
@@ -100,6 +104,7 @@ class Reference:
         }
         self.random_state = check_random_state(random_state)
         self.matlab_strict = matlab_strict
+        self.device = device
 
         # Initialize attributes that get filled in during referencing
         self.bad_before_interpolation = None
@@ -166,6 +171,7 @@ class Reference:
             random_state=self.random_state,
             matlab_strict=self.matlab_strict,
             reject_by_annotation=self.ransac_settings.get("reject_by_annotation"),
+            device=self.device,
         )
         noisy_detector.find_all_bads(**self.ransac_settings)
         self.bad_before_interpolation = noisy_detector.get_bads(verbose=True)
@@ -233,6 +239,7 @@ class Reference:
             random_state=self.random_state,
             matlab_strict=self.matlab_strict,
             reject_by_annotation=self.ransac_settings.get("reject_by_annotation"),
+            device=self.device,
         )
         noisy_detector.find_all_bads(**self.ransac_settings)
         self.still_noisy_channels = noisy_detector.get_bads()
@@ -275,6 +282,7 @@ class Reference:
             random_state=self.random_state,
             matlab_strict=self.matlab_strict,
             reject_by_annotation=self.ransac_settings.get("reject_by_annotation"),
+            device=self.device,
         )
         noisy_detector.find_all_bads(**self.ransac_settings)
         self.noisy_channels_original = noisy_detector.get_bads(as_dict=True)
@@ -326,6 +334,7 @@ class Reference:
                 random_state=self.random_state,
                 matlab_strict=self.matlab_strict,
                 reject_by_annotation=self.ransac_settings.get("reject_by_annotation"),
+                device=self.device,
             )
             # Detrend applied at the beginning of the function.
 

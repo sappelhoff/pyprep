@@ -12,6 +12,11 @@ from pyprep.ransac import find_bad_by_ransac
 from pyprep.removeTrend import removeTrend
 from pyprep.utils import _filter_design, _mad, _mat_iqr, _mat_quantile
 
+try:
+    import pyprep.gpu as gpu
+except ImportError:  # pragma: no cover
+    gpu = None  # pragma: no cover
+
 
 class NoisyChannels:
     """Detect bad channels in an EEG recording using a range of methods.
@@ -64,6 +69,11 @@ class NoisyChannels:
         full recording is used. This is useful when recordings contain breaks
         or movement artifacts that shouldn't influence channel rejection
         decisions.
+    device : {None, 'auto', str, torch.device} | None
+        Hardware device used for optional PyTorch acceleration of the deviation
+        and correlation assessments. ``'auto'`` selects the best available
+        accelerator. If PyTorch is not installed, PyPREP uses its standard
+        NumPy implementation. Defaults to ``None``.
 
     References
     ----------
@@ -84,6 +94,7 @@ class NoisyChannels:
         correlation=True,
         bad_by_manual=None,
         reject_by_annotation=None,
+        device=None,
     ):
         # Make sure that we got an MNE object
         assert isinstance(raw, mne.io.BaseRaw)
@@ -102,6 +113,8 @@ class NoisyChannels:
                 copy=False,
             )
         self.matlab_strict = matlab_strict
+        self.device = device
+        self._use_gpu = device is not None and gpu is not None and gpu.HAS_TORCH
 
         msg = f"ransac must be boolean, got: {ransac}"
         assert isinstance(ransac, bool), msg
@@ -434,7 +447,14 @@ class NoisyChannels:
 
         # Calculate robust Z-scores for the channel amplitudes
         amplitude_zscore = np.zeros(self.n_chans_original)
-        amplitude_zscore[self.usable_idx] = (chan_amplitudes - amp_median) / amp_sd
+        if self._use_gpu:
+            amplitude_zscore[self.usable_idx] = gpu.find_bad_by_deviation_gpu(
+                self.EEGData,
+                deviation_threshold=deviation_threshold,
+                device=self.device,
+            )
+        else:
+            amplitude_zscore[self.usable_idx] = (chan_amplitudes - amp_median) / amp_sd
 
         # Flag channels with amplitudes that deviate excessively from the median
         abnormal_amplitude = np.abs(amplitude_zscore) > deviation_threshold
@@ -550,6 +570,15 @@ class NoisyChannels:
         if self.EEGFiltered is None:
             self.EEGFiltered = self._get_filtered_data()
 
+        gpu_correlations = None
+        if self._use_gpu:
+            gpu_correlations = gpu.correlate_windows_gpu(
+                self.EEGFiltered,
+                sfreq=self.sample_rate,
+                win_len_sec=correlation_secs,
+                device=self.device,
+            )
+
         # Determine the number and size (in frames) of correlation windows
         win_size = int(correlation_secs * self.sample_rate)
         win_offsets = np.arange(1, (self.n_samples - win_size), win_size)
@@ -573,20 +602,24 @@ class NoisyChannels:
 
             # Check for any channel dropouts (flat signal) within the window
             eeg_amplitude = _mad(eeg_filtered, axis=1)
-            dropout[w, usable] = eeg_amplitude == 0
+            non_dropout = eeg_amplitude > 0
+            dropout[w, usable] = ~non_dropout
 
             # Exclude any dropout chans from further calculations (avoids div-by-zero)
-            usable[usable] = eeg_amplitude > 0
-            eeg_raw = eeg_raw[eeg_amplitude > 0, :]
-            eeg_filtered = eeg_filtered[eeg_amplitude > 0, :]
-            eeg_amplitude = eeg_amplitude[eeg_amplitude > 0]
+            usable[usable] = non_dropout
+            eeg_raw = eeg_raw[non_dropout, :]
+            eeg_filtered = eeg_filtered[non_dropout, :]
+            eeg_amplitude = eeg_amplitude[non_dropout]
 
             # Get high-frequency noise ratios for the window
             high_freq_amplitude = _mad(eeg_raw - eeg_filtered, axis=1)
             noiselevels[w, usable] = high_freq_amplitude / eeg_amplitude
 
             # Get inter-channel correlations for the window
-            win_correlations = np.corrcoef(eeg_filtered)
+            if gpu_correlations is None:
+                win_correlations = np.corrcoef(eeg_filtered)
+            else:
+                win_correlations = gpu_correlations[w][non_dropout][:, non_dropout]
             abs_corr = np.abs(win_correlations - np.diag(np.diag(win_correlations)))
             max_correlations[w, usable] = _mat_quantile(abs_corr, 0.98, axis=0)
             max_correlations[w, dropout[w, :]] = 0  # Set dropout correlations to 0
