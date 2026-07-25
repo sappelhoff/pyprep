@@ -8,6 +8,12 @@ from pyprep.find_noisy_channels import NoisyChannels  # noqa: F401
 from pyprep.prep_pipeline import PrepPipeline  # noqa: F401
 from pyprep.reference import Reference  # noqa: F401
 
+# Lazy import helper for optional pyprep.gpu module
+try:
+    import pyprep.gpu as gpu  # noqa: F401
+except Exception:
+    gpu = None
+
 try:
     from importlib.metadata import version
 

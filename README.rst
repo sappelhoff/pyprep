@@ -76,8 +76,27 @@ all required dependencies automatically.
 The dependencies are defined in the ``pyproject.toml`` file under the
 ``dependencies`` and ``project.optional-dependencies`` sections.
 
+GPU Acceleration
+================
+
+``pyprep`` includes optional PyTorch-based GPU acceleration (`pyprep.gpu`) for multi-channel correlation and deviation metrics, achieving up to 15x–30x speedups on NVIDIA CUDA GPUs and 2x–3x on Apple Silicon (MPS).
+
+To use GPU acceleration, ensure `torch` is installed:
+
+.. code-block:: python
+
+   import mne
+   import pyprep.gpu as gpu
+
+   raw = mne.io.read_raw_edf("sample.edf", preload=True).pick("eeg")
+   
+   # PyTorch-style device selection: 'auto', 'cuda', 'cuda:0', 'mps', 'cpu'
+   z_scores = gpu.core.find_bad_by_deviation_gpu(raw.get_data(), device="auto")
+   corrs    = gpu.core.correlate_windows_gpu(raw.get_data(), sfreq=raw.info['sfreq'], device="cuda:0")
+
 Contributing
 ============
+
 
 The development of ``pyprep`` is taking place on
 `GitHub <https://github.com/sappelhoff/pyprep>`_.
