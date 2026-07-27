@@ -234,6 +234,19 @@ class TestCompareNoisyChannels:
         # Compare names of bad-by-flat channels
         assert pyprep_noisy.bad_by_flat == matprep_noisy["bads"]["by_flat"]
 
+    def test_auto_backend_matches_cpu_on_matprep_input(self, matprep_artifacts):
+        """Optional acceleration must preserve CPU channel decisions on PREP data."""
+        preref_path = matprep_artifacts["4_matprep_pre_reference"]
+        raw = mne.io.read_raw_eeglab(preref_path, preload=True)
+        kwargs = dict(do_detrend=False, random_state=435656, matlab_strict=True)
+        cpu = NoisyChannels(raw.copy(), backend="cpu", **kwargs)
+        auto = NoisyChannels(raw.copy(), backend="auto", device="auto", **kwargs)
+
+        cpu.find_all_bads()
+        auto.find_all_bads()
+
+        assert auto.get_bads(as_dict=True) == cpu.get_bads(as_dict=True)
+
     def test_bad_by_deviation(self, pyprep_noisy, matprep_noisy):
         """Compare bad-by-deviation results between PyPREP and MatPREP."""
         # Gather PyPREP deviation info and MATLAB equivalents

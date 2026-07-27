@@ -8,9 +8,10 @@ import logging
 import numpy as np
 from mne.utils import check_random_state
 
+from pyprep import gpu
 from pyprep.find_noisy_channels import NoisyChannels
 from pyprep.removeTrend import removeTrend
-from pyprep.utils import _eeglab_interpolate_bads, _set_diff, _union
+from pyprep.utils import _eeglab_interpolate_bads, _union
 
 logger = logging.getLogger(__name__)
 
@@ -61,9 +62,12 @@ class Reference:
         Whether or not PyPREP should strictly follow MATLAB PREP's internal
         math, ignoring any improvements made in PyPREP over the original code.
         Defaults to False.
-    device : {None, 'auto', str, torch.device} | None
-        Hardware device used for optional PyTorch acceleration. ``'auto'``
-        selects the best available accelerator. Defaults to ``None``.
+    backend : {'cpu', 'auto', 'torch'}
+        Computation backend forwarded to :class:`~pyprep.NoisyChannels`.
+        Defaults to ``'cpu'``.
+    device : {'auto', 'cpu', 'cuda', 'mps', 'xpu', 'hpu'} or torch.device
+        Device requested by an optional accelerator backend. Defaults to
+        ``'auto'``.
 
     References
     ----------
@@ -83,7 +87,8 @@ class Reference:
         random_state=None,
         reject_by_annotation=None,
         matlab_strict=False,
-        device=None,
+        device="auto",
+        backend="cpu",
     ):
         """Initialize the class."""
         raw.load_data()
@@ -104,6 +109,7 @@ class Reference:
         }
         self.random_state = check_random_state(random_state)
         self.matlab_strict = matlab_strict
+        self.backend = backend
         self.device = device
 
         # Initialize attributes that get filled in during referencing
@@ -147,10 +153,7 @@ class Reference:
         dummy = self.raw.copy()
         dummy.info["bads"] = self.noisy_channels["bad_all"]
         if len(dummy.info["bads"]) > 0:
-            if self.matlab_strict:
-                _eeglab_interpolate_bads(dummy)
-            else:
-                dummy.interpolate_bads()
+            _safe_interpolate_bads(dummy, self.matlab_strict)
         self.reference_signal = np.nanmean(
             dummy.get_data(picks=self.reference_channels), axis=0
         )
@@ -171,6 +174,7 @@ class Reference:
             random_state=self.random_state,
             matlab_strict=self.matlab_strict,
             reject_by_annotation=self.ransac_settings.get("reject_by_annotation"),
+            backend=self.backend,
             device=self.device,
         )
         noisy_detector.find_all_bads(**self.ransac_settings)
@@ -188,6 +192,7 @@ class Reference:
         if interpolate_bads:
             self.interpolate_bads()
 
+        gpu.clear_gpu_cache()
         return self
 
     def interpolate_bads(self):
@@ -213,10 +218,7 @@ class Reference:
         # Interpolate any channels flagged as bad following robust referencing
         bad_channels = self.raw.info["bads"]
         if len(bad_channels) > 0:
-            if self.matlab_strict:
-                _eeglab_interpolate_bads(self.raw)
-            else:
-                self.raw.interpolate_bads()
+            _safe_interpolate_bads(self.raw, self.matlab_strict)
 
         # Calculate and remove the new average reference following interpolation
         reference_correct = np.nanmean(
@@ -239,6 +241,7 @@ class Reference:
             random_state=self.random_state,
             matlab_strict=self.matlab_strict,
             reject_by_annotation=self.ransac_settings.get("reject_by_annotation"),
+            backend=self.backend,
             device=self.device,
         )
         noisy_detector.find_all_bads(**self.ransac_settings)
@@ -282,6 +285,7 @@ class Reference:
             random_state=self.random_state,
             matlab_strict=self.matlab_strict,
             reject_by_annotation=self.ransac_settings.get("reject_by_annotation"),
+            backend=self.backend,
             device=self.device,
         )
         noisy_detector.find_all_bads(**self.ransac_settings)
@@ -294,7 +298,21 @@ class Reference:
             noisy_detector.bad_by_nan + noisy_detector.bad_by_flat,
             noisy_detector.bad_by_SNR + self.bads_manual,
         )
-        reference_channels = _set_diff(self.reference_channels, self.unusable_channels)
+        reference_channels = [
+            ch
+            for ch in self.reference_channels
+            if ch in self.ch_names_eeg and ch not in self.unusable_channels
+        ]
+        if len(reference_channels) == 0:
+            logger.warning(
+                "All reference channels were flagged as unusable during initial "
+                "reference estimation. Falling back to using all reference channels."
+            )
+            reference_channels = [
+                ch for ch in self.reference_channels if ch in self.ch_names_eeg
+            ]
+            if len(reference_channels) == 0:
+                reference_channels = self.ch_names_eeg.copy()
 
         # Initialize channels to permanently flag as bad during referencing
         noisy = {
@@ -313,10 +331,12 @@ class Reference:
 
         # Get initial estimate of the reference by the specified method
         signal = raw.get_data()
-        self.reference_signal = np.nanmedian(
-            raw.get_data(picks=reference_channels), axis=0
-        )
-        reference_index = [self.ch_names_eeg.index(ch) for ch in reference_channels]
+        ref_picks = [ch for ch in reference_channels if ch in raw.ch_names]
+        if len(ref_picks) == 0:
+            ref_picks = self.ch_names_eeg.copy()
+
+        self.reference_signal = np.nanmedian(raw.get_data(picks=ref_picks), axis=0)
+        reference_index = [self.ch_names_eeg.index(ch) for ch in ref_picks]
         signal_tmp = self.remove_reference(
             signal, self.reference_signal, reference_index
         )
@@ -334,6 +354,7 @@ class Reference:
                 random_state=self.random_state,
                 matlab_strict=self.matlab_strict,
                 reject_by_annotation=self.ransac_settings.get("reject_by_annotation"),
+                backend=self.backend,
                 device=self.device,
             )
             # Detrend applied at the beginning of the function.
@@ -378,13 +399,14 @@ class Reference:
             if len(bad_chans) > 0:
                 raw_tmp._data = signal.copy()
                 raw_tmp.info["bads"] = list(bad_chans)
-                if self.matlab_strict:
-                    _eeglab_interpolate_bads(raw_tmp)
-                else:
-                    raw_tmp.interpolate_bads()
+                _safe_interpolate_bads(raw_tmp, self.matlab_strict)
+
+            ref_picks = [ch for ch in reference_channels if ch in raw_tmp.ch_names]
+            if len(ref_picks) == 0:
+                ref_picks = self.ch_names_eeg.copy()
 
             self.reference_signal = np.nanmean(
-                raw_tmp.get_data(picks=reference_channels), axis=0
+                raw_tmp.get_data(picks=ref_picks), axis=0
             )
 
             signal_tmp = self.remove_reference(
@@ -396,25 +418,24 @@ class Reference:
         return self.noisy_channels, self.reference_signal
 
     @staticmethod
-    def remove_reference(signal, reference, index=None):
+    def remove_reference(signal, reference, index=None, device="auto"):
         """Remove the reference signal from the original EEG signal.
-
-        This function implements the functionality of the `removeReference` function
-        as part of the PREP pipeline on mne raw object.
 
         Parameters
         ----------
-        signal : np.ndarray, shape(channels, times)
-            The original EEG signal.
-        reference : np.ndarray, shape(times,)
-            The reference signal.
-        index : {list, None} | None
-            A list of channel indices from which the reference signal should be
-            subtracted. Defaults to all channels in `signal`.
+        signal : np.ndarray
+            The original 2D EEG signal of shape ``(channels, times)``.
+        reference : np.ndarray
+            The 1D estimated reference signal of length ``times``.
+        index : list of int | None
+            Channel indices from which to subtract the reference signal.
+            If ``None`` (default), reference is subtracted from all channels.
+        device : str or torch.device
+            Hardware device for GPU acceleration. Default is ``"auto"``.
 
         Returns
         -------
-        np.ndarray, shape(channels, times)
+        signal_referenced : np.ndarray
             The referenced EEG signal.
 
         """
@@ -429,6 +450,27 @@ class Reference:
                 "RemoveReference: The second dimension of EEG signal must be "
                 "the same with the length of reference signal"
             )
+
+        import pyprep.gpu as gpu
+
+        dev = gpu.get_device(device) if gpu.HAS_TORCH else None
+        if gpu.HAS_TORCH and dev is not None and dev.type != "cpu":
+            t_signal = gpu._to_tensor(signal, device=dev)
+            t_ref = gpu._to_tensor(reference, device=dev)
+            if index is None:
+                t_res = t_signal - t_ref
+            else:
+                if not isinstance(index, list):
+                    raise TypeError(
+                        f"RemoveReference: Expected list, got {type(index)}"
+                    )
+                idx = gpu._to_tensor(
+                    np.asarray(index, dtype=np.int64), device=dev
+                ).long()
+                t_res = t_signal.clone()
+                t_res[idx, :] = t_signal[idx, :] - t_ref
+            return t_res.cpu().numpy().astype(signal.dtype)
+
         if index is None:
             signal_referenced = signal - reference
         else:
@@ -441,3 +483,14 @@ class Reference:
                 signal[np.asarray(index), :] - reference
             )
         return signal_referenced
+
+
+def _safe_interpolate_bads(raw_inst, matlab_strict=False):
+    """Safely interpolate bad channels ignoring channels with invalid positions."""
+    if matlab_strict:
+        _eeglab_interpolate_bads(raw_inst)
+    else:
+        try:
+            raw_inst.interpolate_bads(on_bad_position="ignore")
+        except (TypeError, ValueError):
+            raw_inst.interpolate_bads()

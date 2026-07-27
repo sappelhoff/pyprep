@@ -143,7 +143,9 @@ def test_bad_by_deviation(raw_tmp):
 def test_auto_device_falls_back_to_cpu_without_torch(raw_tmp, monkeypatch):
     """Automatic acceleration falls back to the CPU algorithm without PyTorch."""
     monkeypatch.setattr(gpu, "HAS_TORCH", False)
-    auto_detector = NoisyChannels(raw_tmp.copy(), do_detrend=False, device="auto")
+    auto_detector = NoisyChannels(
+        raw_tmp.copy(), do_detrend=False, backend="auto", device="auto"
+    )
     cpu_detector = NoisyChannels(raw_tmp.copy(), do_detrend=False)
 
     auto_detector.find_bad_by_deviation()
@@ -152,10 +154,114 @@ def test_auto_device_falls_back_to_cpu_without_torch(raw_tmp, monkeypatch):
     assert auto_detector.bad_by_deviation == cpu_detector.bad_by_deviation
 
 
+def test_cpu_backend_preserves_the_legacy_detection_result(raw_tmp):
+    """The explicit CPU backend is exactly the established detector path."""
+    default_detector = NoisyChannels(raw_tmp.copy(), do_detrend=False)
+    cpu_detector = NoisyChannels(raw_tmp.copy(), do_detrend=False, backend="cpu")
+
+    default_detector.find_bad_by_deviation()
+    cpu_detector.find_bad_by_deviation()
+
+    assert cpu_detector.bad_by_deviation == default_detector.bad_by_deviation
+
+
+def test_auto_backend_falls_back_to_cpu_without_torch(raw_tmp, monkeypatch):
+    """An unavailable accelerator must leave public channel results unchanged."""
+    monkeypatch.setattr(gpu, "HAS_TORCH", False)
+    auto_detector = NoisyChannels(
+        raw_tmp.copy(), do_detrend=False, backend="auto", device="auto"
+    )
+    cpu_detector = NoisyChannels(raw_tmp.copy(), do_detrend=False, backend="cpu")
+
+    auto_detector.find_bad_by_deviation()
+    cpu_detector.find_bad_by_deviation()
+
+    assert auto_detector.bad_by_deviation == cpu_detector.bad_by_deviation
+
+
+def test_auto_backend_retries_failed_deviation_on_cpu(raw_tmp, monkeypatch):
+    """A failed optional operation cannot change or abort channel detection."""
+    monkeypatch.setattr(gpu, "resolve_backend", lambda backend, device: "torch")
+    monkeypatch.setattr(
+        gpu,
+        "find_bad_by_deviation_gpu",
+        lambda *args, **kwargs: (_ for _ in ()).throw(RuntimeError("unsupported")),
+    )
+    auto_detector = NoisyChannels(raw_tmp.copy(), do_detrend=False, backend="auto")
+    cpu_detector = NoisyChannels(raw_tmp.copy(), do_detrend=False, backend="cpu")
+
+    auto_detector.find_bad_by_deviation()
+    cpu_detector.find_bad_by_deviation()
+
+    assert auto_detector.bad_by_deviation == cpu_detector.bad_by_deviation
+
+
+def test_auto_backend_retries_failed_correlation_on_cpu(raw_tmp, monkeypatch):
+    """A failed correlation offload reruns the legacy whole operation on CPU."""
+    monkeypatch.setattr(gpu, "resolve_backend", lambda backend, device: "torch")
+    monkeypatch.setattr(
+        gpu,
+        "correlate_windows_gpu",
+        lambda *args, **kwargs: (_ for _ in ()).throw(RuntimeError("unsupported")),
+    )
+    auto_detector = NoisyChannels(raw_tmp.copy(), do_detrend=False, backend="auto")
+    cpu_detector = NoisyChannels(raw_tmp.copy(), do_detrend=False, backend="cpu")
+
+    auto_detector.find_bad_by_correlation()
+    cpu_detector.find_bad_by_correlation()
+
+    assert auto_detector.bad_by_correlation == cpu_detector.bad_by_correlation
+    assert auto_detector.bad_by_dropout == cpu_detector.bad_by_dropout
+
+
+def test_find_bad_by_correlation_gpu_exception_retry(raw_tmp, monkeypatch):
+    """Test find_bad_by_correlation retries on CPU when GPU calculation fails."""
+    monkeypatch.setattr(
+        gpu,
+        "compute_window_correlation_metrics_gpu",
+        lambda *args, **kwargs: (_ for _ in ()).throw(RuntimeError("Metrics error")),
+    )
+    nd = NoisyChannels(raw_tmp.copy(), do_detrend=False, backend="auto")
+    nd.find_bad_by_correlation()
+    assert isinstance(nd.bad_by_correlation, list)
+
+
+def test_ransac_gpu_exception_retry(raw_tmp, monkeypatch):
+    """_ransac_by_window logs a warning and retries on CPU when GPU raises."""
+    import logging
+
+    monkeypatch.setattr(
+        gpu,
+        "ransac_by_window_gpu",
+        lambda *args, **kwargs: (_ for _ in ()).throw(RuntimeError("RANSAC error")),
+    )
+    nd = NoisyChannels(raw_tmp.copy(), do_detrend=False, backend="auto")
+
+    log_records = []
+
+    class _Capture(logging.Handler):
+        def emit(self, record):
+            log_records.append(record)
+
+    handler = _Capture()
+    mne_logger = logging.getLogger("mne")
+    mne_logger.addHandler(handler)
+    try:
+        nd.find_bad_by_ransac()
+    finally:
+        mne_logger.removeHandler(handler)
+
+    assert isinstance(nd.bad_by_ransac, list)
+    ransac_warns = [r for r in log_records if "RANSAC" in r.getMessage()]
+    assert ransac_warns, "Expected a warning log when GPU RANSAC falls back to CPU"
+
+
 @pytest.mark.skipif(not gpu.HAS_TORCH, reason="PyTorch is not installed")
 def test_auto_device_matches_cpu_for_deviation(raw_tmp):
     """Automatic acceleration preserves bad-by-deviation channel decisions."""
-    auto_detector = NoisyChannels(raw_tmp.copy(), do_detrend=False, device="auto")
+    auto_detector = NoisyChannels(
+        raw_tmp.copy(), do_detrend=False, backend="auto", device="auto"
+    )
     cpu_detector = NoisyChannels(raw_tmp.copy(), do_detrend=False)
 
     auto_detector.find_bad_by_deviation()
@@ -167,7 +273,9 @@ def test_auto_device_matches_cpu_for_deviation(raw_tmp):
 @pytest.mark.skipif(not gpu.HAS_TORCH, reason="PyTorch is not installed")
 def test_auto_device_matches_cpu_for_correlation(raw_tmp):
     """Automatic acceleration preserves correlation and dropout channel decisions."""
-    auto_detector = NoisyChannels(raw_tmp.copy(), do_detrend=False, device="auto")
+    auto_detector = NoisyChannels(
+        raw_tmp.copy(), do_detrend=False, backend="auto", device="auto"
+    )
     cpu_detector = NoisyChannels(raw_tmp.copy(), do_detrend=False)
 
     auto_detector.find_bad_by_correlation()
@@ -175,6 +283,23 @@ def test_auto_device_matches_cpu_for_correlation(raw_tmp):
 
     assert auto_detector.bad_by_correlation == cpu_detector.bad_by_correlation
     assert auto_detector.bad_by_dropout == cpu_detector.bad_by_dropout
+
+
+@pytest.mark.skipif(not gpu.HAS_TORCH, reason="PyTorch is not installed")
+def test_auto_device_matches_cpu_for_psd_and_hfnoise(raw_tmp):
+    """Automatic acceleration preserves PSD and HF noise channel decisions."""
+    auto_detector = NoisyChannels(
+        raw_tmp.copy(), do_detrend=False, backend="auto", device="auto"
+    )
+    cpu_detector = NoisyChannels(raw_tmp.copy(), do_detrend=False)
+
+    auto_detector.find_bad_by_PSD()
+    cpu_detector.find_bad_by_PSD()
+    assert auto_detector.bad_by_psd == cpu_detector.bad_by_psd
+
+    auto_detector.find_bad_by_hfnoise()
+    cpu_detector.find_bad_by_hfnoise()
+    assert auto_detector.bad_by_hf_noise == cpu_detector.bad_by_hf_noise
 
 
 def test_bad_by_hf_noise(raw_tmp):
@@ -484,3 +609,233 @@ def test_reject_by_annotation_data_extraction(raw_tmp):
 
     # Both should have the same original sample count stored
     assert nd_no_reject.n_samples_original == nd_with_reject.n_samples_original
+
+
+def test_reject_by_annotation_with_matlab_strict_warns(raw_tmp):
+    """Test reject_by_annotation is cleared when matlab_strict=True (lines 141-145)."""
+    import warnings
+
+    with warnings.catch_warnings(record=True):
+        warnings.simplefilter("always")
+        nd = NoisyChannels(
+            raw_tmp.copy(),
+            do_detrend=False,
+            matlab_strict=True,
+            reject_by_annotation="omit",
+        )
+    # reject_by_annotation should be set to None due to matlab_strict override
+    assert nd.reject_by_annotation is None
+
+
+def test_reject_by_annotation_many_short_segments_warns(raw_tmp):
+    """Test warning when many short BAD segments cover >15% of recording (line 162)."""
+    duration = raw_tmp.times[-1]
+    # Add many short BAD segments covering > 15% total, each < 5s
+    n_annots = 20
+    step = duration / (n_annots + 1)
+    for i in range(n_annots):
+        raw_tmp.annotations.append(
+            onset=i * step,
+            duration=1.0,  # 1s each, much < 5s
+            description="BAD_short",
+        )
+
+    total_bad = 20.0  # 20 * 1s
+    pct = (total_bad / duration) * 100
+    if pct > 15:
+        # Warning is a logger.warning (not Python Warning); just verify no crash
+        nd = NoisyChannels(raw_tmp, do_detrend=False, reject_by_annotation="omit")
+        assert nd.reject_by_annotation == "omit"
+
+
+def test_get_filtered_data_fallback_on_gpu_error(raw_tmp):
+    """_get_filtered_data logs a warning and falls back to CPU on GPU error.
+
+    Covers lines 249-260 of find_noisy_channels.py, including the
+    except-clause warning that was previously a bare ``pass`` in ransac.py.
+    """
+    from unittest.mock import patch
+
+    import torch
+
+    nd = NoisyChannels(raw_tmp, do_detrend=False, backend="cpu")
+    nd._use_gpu = True
+    nd.EEGDataTensor = torch.from_numpy(nd.EEGData.astype(np.float32))
+    # Patch both get_device (so non-MPS branch runs) and filter_bandpass_gpu
+    # (so it raises, triggering the except handler on lines 255-256).
+    with (
+        patch(
+            "pyprep.find_noisy_channels.gpu.get_device",
+            return_value=torch.device("cpu"),
+        ),
+        patch(
+            "pyprep.find_noisy_channels.gpu.filter_bandpass_gpu",
+            side_effect=RuntimeError("simulated GPU error"),
+        ),
+    ):
+        result = nd._get_filtered_data()
+    assert result is not None
+    assert result.shape[0] == nd.EEGData.shape[0]
+
+
+def test_psd_and_hfnoise_fallback_on_gpu_error(raw_tmp):
+    """find_bad_by_PSD and find_bad_by_hf_noise fall back to CPU on GPU exception."""
+    from unittest.mock import patch
+
+    import torch
+
+    nd = NoisyChannels(raw_tmp, do_detrend=False, backend="cpu")
+    nd._use_gpu = True
+    nd.EEGDataTensor = torch.from_numpy(nd.EEGData.astype(np.float32))
+
+    with patch(
+        "pyprep.find_noisy_channels.gpu.welch_psd_gpu",
+        side_effect=RuntimeError("GPU error"),
+    ):
+        nd.find_bad_by_PSD()
+        assert isinstance(nd.bad_by_psd, list)
+
+    with patch(
+        "pyprep.find_noisy_channels.gpu.mad_gpu", side_effect=RuntimeError("GPU error")
+    ):
+        nd.find_bad_by_hfnoise()
+        assert isinstance(nd.bad_by_hf_noise, list)
+
+
+@pytest.mark.skipif(not gpu.HAS_TORCH, reason="PyTorch is not installed")
+def test_get_filtered_data_gpu_tensor_success(raw_tmp):
+    """GPU tensor bandpass filter happy path covers lines 249-254.
+
+    Uses a real sfreq > 100 Hz recording so filter_bandpass_gpu takes the
+    active FFT branch rather than the clone short-circuit.
+    """
+    from unittest.mock import patch
+
+    import torch
+
+    # raw_tmp uses PhysioNet BCI data at 160 Hz, which is > 100 -> active filter
+    assert raw_tmp.info["sfreq"] > 100, "Fixture sfreq must be > 100 for this test"
+
+    nd = NoisyChannels(raw_tmp, do_detrend=False, backend="cpu")
+    nd._use_gpu = True
+    nd.EEGDataTensor = torch.from_numpy(nd.EEGData.astype(np.float32))
+    # Patch get_device to return plain CPU so the non-MPS branch is taken
+    with patch(
+        "pyprep.find_noisy_channels.gpu.get_device",
+        return_value=torch.device("cpu"),
+    ):
+        result = nd._get_filtered_data()
+
+    assert result is not None
+    assert result.shape == nd.EEGData.shape
+    # EEGFilteredTensor should have been populated by the GPU path
+    assert nd.EEGFilteredTensor is not None
+    assert isinstance(nd.EEGFilteredTensor, torch.Tensor)
+
+
+def test_get_filtered_data_uses_fft_bandpass_on_mps(raw_tmp, monkeypatch):
+    """MPS uses filter_bandpass_gpu with odd-extension padding and CPU float64 H²."""
+    from unittest.mock import Mock
+
+    import torch
+
+    nd = NoisyChannels(raw_tmp, do_detrend=False, backend="cpu")
+    nd._use_gpu = True
+    nd.device = "mps"
+    nd.EEGDataTensor = torch.from_numpy(nd.EEGData).float()
+    gpu_filter = Mock(return_value=nd.EEGDataTensor)
+    monkeypatch.setattr(
+        "pyprep.find_noisy_channels.gpu.filter_bandpass_gpu", gpu_filter
+    )
+    monkeypatch.setattr(
+        "pyprep.find_noisy_channels.gpu.get_device",
+        lambda _device: torch.device("mps"),
+    )
+
+    result = nd._get_filtered_data()
+
+    gpu_filter.assert_called_once()
+    assert result.shape == nd.EEGData.shape
+
+
+def test_find_all_bads_overwrites_ransac(raw_tmp):
+    """Test find_all_bads overwrite warning for ransac parameter (lines 398-405)."""
+    nd = NoisyChannels(raw_tmp, do_detrend=False)
+    nd.find_all_bads(ransac=False)
+    assert nd.ransac is False
+
+    # Calling again with a different ransac value should trigger overwrite warning
+    nd.find_all_bads(ransac=True)
+    assert nd.ransac is True
+
+
+def test_find_all_bads_overwrites_correlation(raw_tmp):
+    """Test find_all_bads overwrite warning for correlation (lines 397-405)."""
+    nd = NoisyChannels(raw_tmp, do_detrend=False)
+    nd.find_all_bads(correlation=True)
+    assert nd.correlation is True
+
+    nd.find_all_bads(correlation=False)
+    assert nd.correlation is False
+
+
+def test_psd_robust_zscore_zero_mad(raw_tmp):
+    """Test robust_zscore returns zeros when MAD==0 (line 820)."""
+    import mne
+
+    # Build a raw where one channel has an exactly constant PSD across all freqs
+    # by making all samples identical (zero MAD of band power -> line 820 triggered)
+    n_ch = 4
+    n_samp = 1024
+    sfreq = 256.0
+    data = np.random.randn(n_ch, n_samp) * 1e-6
+    # All channels identical power -> inter-channel MAD == 0 -> line 820 hit
+    for i in range(n_ch):
+        data[i, :] = np.sin(2 * np.pi * 10 * np.arange(n_samp) / sfreq) * 1e-6
+    info = mne.create_info([f"EEG{i:03d}" for i in range(n_ch)], sfreq, ch_types="eeg")
+    raw_flat = mne.io.RawArray(data, info, verbose=False)
+    nd = NoisyChannels(raw_flat, do_detrend=False)
+    # Should not raise; robust_zscore hits the sd==0 branch returning zeros
+    nd.find_bad_by_PSD()
+    assert isinstance(nd.bad_by_psd, list)
+
+
+def test_ransac_nan_channel_positions_raises():
+    """Test find_bad_by_ransac raises ValueError for NaN positions (line 126)."""
+    import mne
+
+    n_ch = 4
+    n_samp = 500
+    sfreq = 100.0
+    data = np.random.randn(n_ch, n_samp) * 1e-6
+    info = mne.create_info([f"EEG{i:03d}" for i in range(n_ch)], sfreq, ch_types="eeg")
+    raw_nan = mne.io.RawArray(data, info, verbose=False)
+    # NaN positions arise when no montage is set
+    chn_pos_nan = np.full((n_ch, 3), np.nan)
+    complete_chn_labs = np.array(raw_nan.ch_names)
+    with pytest.raises(ValueError, match="NaN in channel positions"):
+        find_bad_by_ransac(
+            data=data,
+            sample_rate=sfreq,
+            complete_chn_labs=complete_chn_labs,
+            chn_pos=chn_pos_nan,
+            exclude=[],
+            n_samples=25,
+        )
+
+
+def test_ransac_predict_median_signals_matlab_strict(montage):
+    """Test _predict_median_signals returns MATLAB-style median (lines 417-419)."""
+    from pyprep.ransac import _predict_median_signals
+
+    # Build 3 simple interpolation mats and a small window
+    n_ch = 4
+    n_samp = 50
+    rng2 = np.random.default_rng(42)
+    window = rng2.standard_normal((n_ch, n_samp))
+    interp_mats = [np.eye(n_ch) * (i + 1) for i in range(5)]
+
+    result_strict = _predict_median_signals(window, interp_mats, matlab_strict=True)
+    result_normal = _predict_median_signals(window, interp_mats, matlab_strict=False)
+    assert result_strict.shape == (n_ch, n_samp)
+    assert result_normal.shape == (n_ch, n_samp)

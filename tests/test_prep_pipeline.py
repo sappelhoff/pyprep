@@ -15,6 +15,30 @@ from .conftest import make_random_mne_object
 
 
 @pytest.mark.usefixtures("raw", "montage")
+def test_remove_line_noise_uses_fft_notch_backend(raw, montage):
+    """Line-noise removal routes through the vendored FFT notch implementation."""
+    prep = PrepPipeline(
+        raw.copy(),
+        {"ref_chs": "eeg", "reref_chs": "eeg", "line_freqs": [50.0]},
+        montage,
+        ransac=False,
+        backend="torch",
+        device="cpu",
+    )
+    with (
+        mock.patch(
+            "pyprep.prep_pipeline.gpu.notch_filter_gpu",
+            side_effect=lambda data, **_kwargs: np.asarray(data),
+        ) as notch,
+        mock.patch("mne.filter.notch_filter") as mne_notch,
+    ):
+        prep.remove_line_noise()
+
+    notch.assert_called_once()
+    mne_notch.assert_not_called()
+
+
+@pytest.mark.usefixtures("raw", "montage")
 def test_prep_pipeline_non_eeg(raw, montage):
     """Test prep pipeline with non eeg channels."""
     raw_copy = raw.copy()

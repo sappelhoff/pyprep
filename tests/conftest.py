@@ -3,17 +3,33 @@
 # Authors: The PyPREP developers
 # SPDX-License-Identifier: MIT
 
+import time
+
 import mne
 import numpy as np
 import pytest
 from mne.datasets import eegbci
 
 
+def _load_eegbci_with_retry(subject, runs, max_retries=5):
+    """Download EEGBCI dataset with exponential backoff retries for CI stability."""
+    for attempt in range(max_retries):
+        try:
+            return eegbci.load_data(subject, runs, update_path=True)
+        except Exception as exc:
+            if attempt == max_retries - 1:
+                raise exc
+            time.sleep(2**attempt)
+
+
 @pytest.fixture(scope="session")
 def montage():
     """Fixture for standard EEG montage."""
     montage_kind = "standard_1020"
-    montage = mne.channels.make_standard_montage(montage_kind)
+    try:
+        montage = mne.channels.make_standard_montage("colin27_1020")
+    except Exception:
+        montage = mne.channels.make_standard_montage(montage_kind)
     return montage
 
 
@@ -35,8 +51,8 @@ def raw():
     """
     mne.set_log_level("WARNING")
 
-    # Download and read S004R01.edf from the BCI2000 dataset
-    edf_fpath = eegbci.load_data(4, 1, update_path=True)[0]
+    # Download and read S004R01.edf from the BCI2000 dataset with retries
+    edf_fpath = _load_eegbci_with_retry(4, 1)[0]
     raw = mne.io.read_raw_edf(edf_fpath, preload=True)
     eegbci.standardize(raw)  # Fix non-standard channel names
 
@@ -62,8 +78,8 @@ def raw_clean(montage):
     """
     mne.set_log_level("WARNING")
 
-    # Download and read S030R02.edf from the BCI2000 dataset
-    edf_fpath = eegbci.load_data(30, 2, update_path=True)[0]
+    # Download and read S030R02.edf from the BCI2000 dataset with retries
+    edf_fpath = _load_eegbci_with_retry(30, 2)[0]
     raw = mne.io.read_raw_edf(edf_fpath, preload=True)
     eegbci.standardize(raw)  # Fix non-standard channel names
 

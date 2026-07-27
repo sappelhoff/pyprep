@@ -61,6 +61,7 @@ authors:
       orcid: 'https://orcid.org/0009-0006-2018-1074'
     - given-names: Kanav
       family-names: Dhanda
+      affiliation: 'Department of Computer Science, Thapar Institute of Engineering and Technology'
 type: software
 repository-code: 'https://github.com/sappelhoff/pyprep'
 license: MIT

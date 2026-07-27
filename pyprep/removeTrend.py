@@ -19,6 +19,7 @@ def removeTrend(
     detrendChannels=None,
     matlab_strict=False,
     copy=True,
+    device="auto",
 ):
     """Remove trends (i.e., slow drifts in baseline) from an array of EEG data.
 
@@ -47,6 +48,8 @@ def removeTrend(
         allocating a second full-size copy of the data, but modifies the input.
         Only affects the (default) ``'high pass'`` non-``matlab_strict`` path.
         Defaults to ``True``.
+    device : str or torch.device
+        Hardware device requested for optional GPU acceleration. Defaults to ``'auto'``.
 
     Returns
     -------
@@ -58,9 +61,7 @@ def removeTrend(
     High-pass filtering is implemented using the MNE filter function
     :func:``mne.filter.filter_data`` unless `matlab_strict` is ``True``, in
     which case it is performed using a minimal re-implementation of EEGLAB's
-    ``pop_eegfiltnew``. Local detrending is performed using a Python
-    re-implementation of the ``runline`` function from the Chronux package for
-    MATLAB [1]_.
+    filter function :func:``pyprep.utils._eeglab_fir_filter``.
 
     References
     ----------
@@ -76,14 +77,29 @@ def removeTrend(
             filt = _eeglab_create_highpass(detrendCutoff, sample_rate)
             EEG[picks, :] = _eeglab_fir_filter(EEG[picks, :], filt)
         else:
-            EEG = mne.filter.filter_data(
-                EEG,
-                sfreq=sample_rate,
-                l_freq=detrendCutoff,
-                h_freq=None,
-                picks=detrendChannels,
-                copy=copy,
-            )
+            import pyprep.gpu as gpu
+
+            dev = gpu.get_device(device) if gpu.HAS_TORCH else None
+            if (
+                gpu.HAS_TORCH
+                and not detrendChannels
+                and dev is not None
+                and dev.type != "cpu"
+            ):
+                t_data = gpu._to_tensor(EEG, device=dev)
+                filtered_t = gpu.filter_highpass_gpu(
+                    t_data, sfreq=sample_rate, low_hz=detrendCutoff
+                )
+                EEG = filtered_t.cpu().numpy().astype(EEG.dtype)
+            else:
+                EEG = mne.filter.filter_data(
+                    EEG,
+                    sfreq=sample_rate,
+                    l_freq=detrendCutoff,
+                    h_freq=None,
+                    picks=detrendChannels,
+                    copy=copy,
+                )
 
     elif detrendType.lower() == "high pass sinc":
         fOrder = np.round(14080 * sample_rate / 512)

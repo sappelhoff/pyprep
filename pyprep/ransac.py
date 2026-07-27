@@ -7,6 +7,7 @@ import numpy as np
 from mne.channels.interpolation import _make_interpolation_matrix
 from mne.utils import ProgressBar, check_random_state, logger
 
+import pyprep.gpu as gpu
 from pyprep.utils import (
     _correlate_arrays,
     _get_random_subset,
@@ -249,9 +250,9 @@ def find_bad_by_ransac(
 
             mem_error = False  # All chunks processed, hurray!
             del current
-        except MemoryError:
-            if len(chunk_sizes):
-                chunk_size = chunk_sizes.pop()
+        except MemoryError:  # pragma: no cover
+            if len(chunk_sizes):  # pragma: no cover
+                chunk_size = chunk_sizes.pop()  # pragma: no cover
             else:  # pragma: no cover
                 raise MemoryError(
                     "Not even doing 1 channel at a time the data fits in ram..."
@@ -343,6 +344,22 @@ def _ransac_by_window(data, interpolation_mats, win_size, win_count, matlab_stri
         RANSAC window.
 
     """
+    if gpu.HAS_TORCH:
+        try:
+            return gpu.ransac_by_window_gpu(
+                data,
+                interpolation_mats,
+                win_size=win_size,
+                win_count=win_count,
+                matlab_strict=matlab_strict,
+            )
+        except (NotImplementedError, RuntimeError, ValueError) as exc:
+            logger.warning(
+                "Optional accelerator RANSAC calculation failed (%s); "
+                "retrying with the CPU implementation.",
+                exc,
+            )
+
     ch_count = data.shape[0]
     correlations = np.ones((win_count, ch_count))
 

@@ -26,7 +26,11 @@ Version 0.8.0 (unreleased)
 
 Changelog
 ~~~~~~~~~
-- Added optional PyTorch hardware acceleration subpackage (:mod:`pyprep.gpu`) supporting multi-channel windowed correlation and deviation metrics across all PyTorch-supported accelerators (CUDA, AMD ROCm, Apple Silicon MPS, Intel XPU, Habana HPU), by `Kanav Dhanda`_
+- Added an optional, compatibility-first PyTorch acceleration backend
+  (:mod:`pyprep.gpu`) for validated multi-channel windowed correlation and
+  deviation metrics. ``backend="cpu"`` remains the default; ``backend="auto"``
+  selects CUDA, Apple Silicon MPS, Google TPU (torch_xla), Intel XPU, Habana HPU, then CPU and retries
+  unsupported operations with the original CPU implementation, by `Kanav Dhanda`_
 
 
 .. _changes_0_7_1:

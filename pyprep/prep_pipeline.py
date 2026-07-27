@@ -5,9 +5,9 @@
 
 import warnings
 
-import mne
 from mne.utils import check_random_state
 
+from pyprep import gpu
 from pyprep.reference import Reference
 from pyprep.removeTrend import removeTrend
 
@@ -87,11 +87,13 @@ class PrepPipeline:
         Whether or not PyPREP should strictly follow MATLAB PREP's internal
         math, ignoring any improvements made in PyPREP over the original code
         (see :ref:`matlab-diffs` for more details). Defaults to False.
-    device : {None, 'auto', str, torch.device} | None
-        Hardware device used for optional PyTorch acceleration of bad-channel
-        deviation and correlation assessments. ``'auto'`` selects the best
-        available accelerator; without PyTorch, PyPREP uses its standard NumPy
-        implementation. Defaults to ``None``.
+    backend : {'cpu', 'auto', 'torch'}
+        Computation backend. ``'cpu'`` preserves the established NumPy/SciPy
+        path; ``'auto'`` prefers an available accelerator. Defaults to
+        ``'cpu'``.
+    device : {'auto', 'cpu', 'cuda', 'mps', 'xpu', 'hpu'} or torch.device
+        Device requested by an optional accelerator backend. Defaults to
+        ``'auto'``.
 
     Attributes
     ----------
@@ -144,7 +146,8 @@ class PrepPipeline:
         filter_kwargs=None,
         reject_by_annotation=None,
         matlab_strict=False,
-        device=None,
+        device="auto",
+        backend="cpu",
     ):
         """Initialize PREP class."""
         raw.load_data()
@@ -166,7 +169,7 @@ class PrepPipeline:
             self.raw_non_eeg = raw.copy()
             self.raw_non_eeg.pick(self.ch_names_non_eeg)
 
-        self.raw_eeg.set_montage(montage)
+        self.raw_eeg.set_montage(montage, on_missing="ignore")
         # raw_non_eeg may not be compatible with the montage
         # so it is not set for that object
 
@@ -188,6 +191,7 @@ class PrepPipeline:
         self.random_state = check_random_state(random_state)
         self.filter_kwargs = filter_kwargs
         self.matlab_strict = matlab_strict
+        self.backend = backend
         self.device = device
 
         # Initialize attributes to be filled in later
@@ -214,12 +218,9 @@ class PrepPipeline:
     def remove_line_noise(self, line_freqs=None):
         """Remove line noise from all EEG channels.
 
-        Line noise is removed by detrending the signal, applying a notch filter,
-        and adding the slow drifts back. By default the notch filter uses MNE's
-        ``spectrum_fit`` method, which attempts to isolate and remove line noise
-        while preserving unrelated background signal in the same frequency ranges
-        (to minimize distortions in the power-spectral density). The filter can be
-        configured via the ``filter_kwargs`` argument of :class:`PrepPipeline`.
+        Line noise is removed by detrending the signal, applying the vendored
+        zero-phase FFT notch filter on the requested accelerator, and adding the
+        slow drifts back.
 
         Parameters
         ----------
@@ -235,28 +236,21 @@ class PrepPipeline:
 
         # Remove slow drifts from the recording prior to filtering
         self.EEG_new = removeTrend(
-            self.EEG_raw, self.sfreq, matlab_strict=self.matlab_strict
+            self.EEG_raw,
+            self.sfreq,
+            matlab_strict=self.matlab_strict,
+            device=self.device,
         )
 
-        # Remove line noise. When no filter kwargs are given, fall back to PREP's
-        # default ``spectrum_fit`` settings; otherwise use the provided kwargs as-is.
-        if self.filter_kwargs is None:
-            self.EEG_clean = mne.filter.notch_filter(
-                self.EEG_new,
-                Fs=self.sfreq,
-                freqs=line_freqs,
-                method="spectrum_fit",
-                mt_bandwidth=2,
-                p_value=0.01,
-                filter_length="10s",
-            )
-        else:
-            self.EEG_clean = mne.filter.notch_filter(
-                self.EEG_new,
-                Fs=self.sfreq,
-                freqs=line_freqs,
-                **self.filter_kwargs,
-            )
+        # All PREP backends use the same vendored zero-phase FFT notch. This
+        # intentionally supersedes MNE's adaptive spectrum_fit implementation.
+        # ``filter_kwargs`` is retained for API compatibility but is not applied.
+        self.EEG_clean = gpu.notch_filter_gpu(
+            self.EEG_new,
+            sfreq=self.sfreq,
+            freqs=line_freqs,
+            device=self.device,
+        )
 
         # Add the slow drifts back
         self.EEG = self.EEG_raw - self.EEG_new + self.EEG_clean
@@ -306,6 +300,7 @@ class PrepPipeline:
             self.prep_params,
             random_state=self.random_state,
             matlab_strict=self.matlab_strict,
+            backend=self.backend,
             device=self.device,
             **self.ransac_settings,
         )

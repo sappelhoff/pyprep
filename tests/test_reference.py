@@ -110,3 +110,12 @@ def test_remove_reference():
         Reference.remove_reference(signal, reference, [1, 2]),
         np.array([[1, 2, 3, 4], [-1, 0, 0, 1], [2, 3, 3, 4]]),
     )
+
+
+def test_remove_reference_no_index():
+    """Test remove_reference subtracts from all channels when index is None."""
+    signal = np.array([[1, 2, 3, 4], [0, 1, 2, 3], [3, 4, 5, 6]], dtype=float)
+    reference = np.array([1.0, 1.0, 1.0, 1.0])
+    result = Reference.remove_reference(signal, reference, index=None)
+    expected = signal - reference
+    assert np.array_equal(result, expected)

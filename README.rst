@@ -79,8 +79,8 @@ The dependencies are defined in the ``pyproject.toml`` file under the
 GPU Acceleration
 ================
 
-``pyprep`` includes optional PyTorch-based acceleration for bad-channel
-deviation and correlation assessments. Install the optional dependency with
+``pyprep`` includes optional PyTorch-based acceleration for validated
+bad-channel deviation and correlation assessments. Install the optional dependency with
 ``pip``:
 
 .. code-block:: bash
@@ -88,8 +88,11 @@ deviation and correlation assessments. Install the optional dependency with
    python -m pip install "pyprep[gpu]"
 
 The regular ``python -m pip install pyprep`` installation remains sufficient
-for CPU preprocessing. With the GPU extra, pass ``device="auto"`` to select
-CUDA, Apple Silicon MPS, Intel XPU, Habana HPU, or CPU in that order:
+for CPU preprocessing. The default ``backend="cpu"`` preserves PyPREP's
+established NumPy/SciPy numerical behavior. With the GPU extra, pass
+``backend="auto", device="auto"`` to select CUDA, Apple Silicon MPS, Intel XPU,
+Habana HPU, or CPU in that order. Unsupported operations automatically rerun
+with the CPU implementation:
 
 .. code-block:: python
 
@@ -105,8 +108,23 @@ CUDA, Apple Silicon MPS, Intel XPU, Habana HPU, or CPU in that order:
        "reref_chs": "eeg",
        "line_freqs": [],
    }
-   prep = PrepPipeline(raw, prep_params, montage, device="auto")
+   prep = PrepPipeline(raw, prep_params, montage, backend="auto", device="auto")
    prep.fit()
+
+To pin a supported device explicitly, use one of
+``device="cuda"`` (NVIDIA CUDA or AMD ROCm builds of PyTorch), ``"mps"``
+(Apple Silicon), ``"xpu"`` (Intel), ``"hpu"`` (Habana), or ``"cpu"``.
+``torch.device`` objects are accepted as well. For example:
+
+.. code-block:: python
+
+   prep = PrepPipeline(raw, prep_params, montage, backend="auto", device="cuda")
+
+Use ``backend="cpu"`` to force the established NumPy/SciPy implementation.
+This is the setting for strict numerical reproducibility with prior PyPREP
+releases. Optional accelerator results are regression-tested against the CPU
+implementation, but floating-point values can differ across hardware; do not
+use an accelerator when bit-for-bit reproducibility is required.
 
 Contributing
 ============
@@ -117,6 +135,16 @@ The development of ``pyprep`` is taking place on
 
 For more information, please see
 `CONTRIBUTING.md <https://github.com/sappelhoff/pyprep/blob/main/.github/CONTRIBUTING.md>`_.
+
+Before submitting a change, the local checks used by this repository can be run
+with:
+
+.. code-block:: bash
+
+   python -m pip install -e ".[test,docs,gpu]"
+   pre-commit run --all-files
+   pytest
+   make -C docs html
 
 Citing
 ======

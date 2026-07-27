@@ -69,11 +69,13 @@ class NoisyChannels:
         full recording is used. This is useful when recordings contain breaks
         or movement artifacts that shouldn't influence channel rejection
         decisions.
-    device : {None, 'auto', str, torch.device} | None
-        Hardware device used for optional PyTorch acceleration of the deviation
-        and correlation assessments. ``'auto'`` selects the best available
-        accelerator. If PyTorch is not installed, PyPREP uses its standard
-        NumPy implementation. Defaults to ``None``.
+    backend : {'cpu', 'auto', 'torch'}
+        Computation backend. ``'cpu'`` retains the established NumPy/SciPy
+        implementation. ``'auto'`` uses an available accelerator and otherwise
+        falls back to CPU. Defaults to ``'cpu'``.
+    device : {'auto', 'cpu', 'cuda', 'mps', 'xpu', 'hpu'} or torch.device
+        Hardware device requested by an optional accelerator backend. ``'auto'``
+        prefers CUDA, MPS, XPU, HPU, then CPU. Defaults to ``'auto'``.
 
     References
     ----------
@@ -94,7 +96,8 @@ class NoisyChannels:
         correlation=True,
         bad_by_manual=None,
         reject_by_annotation=None,
-        device=None,
+        backend="cpu",
+        device="auto",
     ):
         # Make sure that we got an MNE object
         assert isinstance(raw, mne.io.BaseRaw)
@@ -114,7 +117,10 @@ class NoisyChannels:
             )
         self.matlab_strict = matlab_strict
         self.device = device
-        self._use_gpu = device is not None and gpu is not None and gpu.HAS_TORCH
+        self.backend = (
+            gpu.resolve_backend(backend, device) if gpu is not None else "cpu"
+        )
+        self._use_gpu = self.backend == "torch"
 
         msg = f"ransac must be boolean, got: {ransac}"
         assert isinstance(ransac, bool), msg
@@ -207,10 +213,24 @@ class NoisyChannels:
         )
         self.n_samples = self.EEGData.shape[1]
         self.EEGFiltered = None
+        self.EEGFilteredTensor = None
+        if self._use_gpu:
+            self.EEGDataTensor = gpu._to_tensor(
+                self.EEGData, self.device, dtype=gpu._dtype_for_device(self.device)
+            )
+        else:
+            self.EEGDataTensor = None
 
         # Get usable EEG channel names & channel counts
         self.ch_names_new = np.asarray(ch_names[self.usable_idx])
         self.n_chans_new = len(self.ch_names_new)
+
+    def __del__(self):
+        """Clean up GPU tensor references and cache on destruction."""
+        self.EEGDataTensor = None
+        self.EEGFilteredTensor = None
+        if getattr(self, "_use_gpu", False):
+            gpu.clear_gpu_cache()
 
     def _get_filtered_data(self):
         """Apply a [1 Hz - 50 Hz] bandpass filter to the EEG signal.
@@ -222,12 +242,36 @@ class NoisyChannels:
         if self.sample_rate <= 100:
             return self.EEGData.copy()
 
+        if (
+            self._use_gpu
+            and not self.matlab_strict
+            and getattr(self, "EEGDataTensor", None) is not None
+        ):
+            try:
+                self.EEGFilteredTensor = gpu.filter_bandpass_gpu(
+                    self.EEGDataTensor, self.sample_rate
+                )
+                self.EEGFiltered = self.EEGFilteredTensor.cpu().numpy()
+                return self.EEGFiltered
+            except (NotImplementedError, RuntimeError, ValueError) as exc:
+                logger.warning(
+                    "Optional accelerator bandpass filter failed (%s); "
+                    "falling back to CPU scipy.signal.filtfilt.",
+                    exc,
+                )
+
         bandpass_filter = _filter_design(
             N_order=100,
             amp=np.array([1, 1, 0, 0]),
             freq=np.array([0, 90 / self.sample_rate, 100 / self.sample_rate, 1]),
         )
-        return signal.filtfilt(bandpass_filter, 1, self.EEGData, axis=1)
+        filtered = signal.filtfilt(bandpass_filter, 1, self.EEGData, axis=1)
+
+        if self._use_gpu:
+            self.EEGFilteredTensor = gpu._to_tensor(
+                filtered, self.device, dtype=gpu._dtype_for_device(self.device)
+            )
+        return filtered
 
     def get_bads(self, verbose=False, as_dict=False):
         """Get the names of all channels currently flagged as bad.
@@ -403,8 +447,25 @@ class NoisyChannels:
         # Get all EEG channels from original copy of data
         EEGData = self.raw_mne.get_data(reject_by_annotation=self.reject_by_annotation)
 
-        # Detect channels containing any NaN values
-        nan_channel_mask = np.isnan(np.sum(EEGData, axis=1))
+        # Detect channels containing any NaN values in signal or non-finite 3D positions
+        nan_signal_mask = np.isnan(np.sum(EEGData, axis=1))
+
+        # Check 3D position finiteness if valid 3D coordinates exist
+        locs = np.array([ch["loc"][:3] for ch in self.raw_mne.info["chs"]])
+        has_any_valid_pos = np.any(np.isfinite(locs) & (locs != 0))
+
+        pos_nan_mask = np.zeros(len(self.ch_names_original), dtype=bool)
+        if has_any_valid_pos:
+            for i, ch_name in enumerate(self.ch_names_original):
+                try:
+                    ch_idx = self.raw_mne.ch_names.index(ch_name)
+                    loc = self.raw_mne.info["chs"][ch_idx]["loc"][:3]
+                    if not np.all(np.isfinite(loc)):
+                        pos_nan_mask[i] = True
+                except (ValueError, KeyError, IndexError):
+                    pos_nan_mask[i] = True
+
+        nan_channel_mask = nan_signal_mask | pos_nan_mask
         nan_channels = self.ch_names_original[nan_channel_mask]
 
         # Detect channels with flat or extremely weak signals
@@ -448,11 +509,27 @@ class NoisyChannels:
         # Calculate robust Z-scores for the channel amplitudes
         amplitude_zscore = np.zeros(self.n_chans_original)
         if self._use_gpu:
-            amplitude_zscore[self.usable_idx] = gpu.find_bad_by_deviation_gpu(
-                self.EEGData,
-                deviation_threshold=deviation_threshold,
-                device=self.device,
-            )
+            try:
+                eeg_input = (
+                    self.EEGDataTensor
+                    if self.EEGDataTensor is not None
+                    else self.EEGData
+                )
+                amplitude_zscore[self.usable_idx] = gpu.find_bad_by_deviation_gpu(
+                    eeg_input,
+                    deviation_threshold=deviation_threshold,
+                    device=self.device,
+                )
+
+            except (NotImplementedError, RuntimeError, ValueError) as exc:
+                logger.warning(
+                    "Optional accelerator deviation calculation failed (%s); "
+                    "retrying with the CPU implementation.",
+                    exc,
+                )
+                amplitude_zscore[self.usable_idx] = (
+                    chan_amplitudes - amp_median
+                ) / amp_sd
         else:
             amplitude_zscore[self.usable_idx] = (chan_amplitudes - amp_median) / amp_sd
 
@@ -503,16 +580,46 @@ class NoisyChannels:
         # If sample rate is high enough, calculate ratio of > 50 Hz amplitude to
         # < 50 Hz amplitude for each channel and get robust z-scores of values
         if self.sample_rate > 100:
-            noisiness = np.divide(
-                _mad(self.EEGData - self.EEGFiltered, axis=1),
-                _mad(self.EEGFiltered, axis=1),
-            )
-            # NaN-robust z-score: the center uses nanmedian (noisiness may hold
-            # NaNs), so the MAD-style spread is computed inline rather than with
-            # ``_mad``, which centers on the plain median.
-            noise_median = np.nanmedian(noisiness)
-            noise_sd = np.median(np.abs(noisiness - noise_median)) * MAD_TO_SD
-            noise_zscore[self.usable_idx] = (noisiness - noise_median) / noise_sd
+            with np.errstate(divide="ignore", invalid="ignore"):
+                if self._use_gpu and self.EEGDataTensor is not None:
+                    try:
+                        import torch
+
+                        data_t = self.EEGDataTensor
+                        filt_t = (
+                            self.EEGFilteredTensor
+                            if self.EEGFilteredTensor is not None
+                            else torch.from_numpy(self.EEGFiltered).to(data_t.device)
+                        )
+                        diff_mad = gpu.mad_gpu(data_t - filt_t, dim=-1).cpu().numpy()
+                        filt_mad = gpu.mad_gpu(filt_t, dim=-1).cpu().numpy()
+                        noisiness = np.divide(diff_mad, filt_mad)
+                    except Exception:
+                        noisiness = np.divide(
+                            _mad(self.EEGData - self.EEGFiltered, axis=1),
+                            _mad(self.EEGFiltered, axis=1),
+                        )
+                else:
+                    noisiness = np.divide(
+                        _mad(self.EEGData - self.EEGFiltered, axis=1),
+                        _mad(self.EEGFiltered, axis=1),
+                    )
+                # NaN-robust z-score: the center uses nanmedian (noisiness may hold
+                # NaNs), so the MAD-style spread is computed inline rather than with
+                # ``_mad``, which centers on the plain median.
+                noise_median = np.nanmedian(noisiness)
+                if np.isnan(noise_median):
+                    noise_sd = 0.0
+                else:
+                    noise_diff = np.abs(noisiness - noise_median)
+                    noise_sd = np.nanmedian(noise_diff) * MAD_TO_SD
+
+                if not np.isnan(noise_sd) and noise_sd > 0:
+                    noise_zscore[self.usable_idx] = (
+                        noisiness - noise_median
+                    ) / noise_sd
+                else:
+                    noise_zscore[self.usable_idx] = 0.0
 
         # Flag channels with much more high-frequency noise than the median channel
         hf_mask = np.isnan(noise_zscore) | (noise_zscore > HF_zscore_threshold)
@@ -570,14 +677,32 @@ class NoisyChannels:
         if self.EEGFiltered is None:
             self.EEGFiltered = self._get_filtered_data()
 
-        gpu_correlations = None
+        gpu_metrics = None
         if self._use_gpu:
-            gpu_correlations = gpu.correlate_windows_gpu(
-                self.EEGFiltered,
-                sfreq=self.sample_rate,
-                win_len_sec=correlation_secs,
-                device=self.device,
-            )
+            try:
+                eeg_in = (
+                    self.EEGDataTensor
+                    if self.EEGDataTensor is not None
+                    else self.EEGData
+                )
+                filt_in = (
+                    self.EEGFilteredTensor
+                    if self.EEGFilteredTensor is not None
+                    else self.EEGFiltered
+                )
+                gpu_metrics = gpu.compute_window_correlation_metrics_gpu(
+                    eeg_in,
+                    filt_in,
+                    sfreq=self.sample_rate,
+                    correlation_secs=correlation_secs,
+                    device=self.device,
+                )
+            except (NotImplementedError, RuntimeError, ValueError) as exc:
+                logger.warning(
+                    "Optional accelerator correlation calculation failed (%s); "
+                    "retrying with the CPU implementation.",
+                    exc,
+                )
 
         # Determine the number and size (in frames) of correlation windows
         win_size = int(correlation_secs * self.sample_rate)
@@ -590,39 +715,43 @@ class NoisyChannels:
         noiselevels = np.zeros((win_count, self.n_chans_original))
         channel_amplitudes = np.zeros((win_count, self.n_chans_original))
 
-        for w in range(win_count):
-            # Get both filtered and unfiltered data for the current window
-            start, end = (w * win_size, (w + 1) * win_size)
-            eeg_filtered = self.EEGFiltered[:, start:end]
-            eeg_raw = self.EEGData[:, start:end]
+        if gpu_metrics is not None:
+            max_correlations[:, self.usable_idx] = gpu_metrics["max_correlations"]
+            dropout[:, self.usable_idx] = gpu_metrics["dropout"]
+            noiselevels[:, self.usable_idx] = gpu_metrics["noiselevels"]
+            channel_amplitudes[:, self.usable_idx] = gpu_metrics["channel_amplitudes"]
+        else:
+            for w in range(win_count):
+                # Get both filtered and unfiltered data for the current window
+                start, end = (w * win_size, (w + 1) * win_size)
+                eeg_filtered = self.EEGFiltered[:, start:end]
+                eeg_raw = self.EEGData[:, start:end]
 
-            # Get channel amplitude info for the window
-            usable = self.usable_idx.copy()
-            channel_amplitudes[w, usable] = _mat_iqr(eeg_raw, axis=1) * IQR_TO_SD
+                # Get channel amplitude info for the window
+                usable = self.usable_idx.copy()
+                channel_amplitudes[w, usable] = _mat_iqr(eeg_raw, axis=1) * IQR_TO_SD
 
-            # Check for any channel dropouts (flat signal) within the window
-            eeg_amplitude = _mad(eeg_filtered, axis=1)
-            non_dropout = eeg_amplitude > 0
-            dropout[w, usable] = ~non_dropout
+                # Check for any channel dropouts (flat signal) within the window
+                eeg_amplitude = _mad(eeg_filtered, axis=1)
+                non_dropout = eeg_amplitude > 0
+                dropout[w, usable] = ~non_dropout
 
-            # Exclude any dropout chans from further calculations (avoids div-by-zero)
-            usable[usable] = non_dropout
-            eeg_raw = eeg_raw[non_dropout, :]
-            eeg_filtered = eeg_filtered[non_dropout, :]
-            eeg_amplitude = eeg_amplitude[non_dropout]
+                # Exclude any dropout chans from further calculations (avoids
+                # div-by-zero)
+                usable[usable] = non_dropout
+                eeg_raw = eeg_raw[non_dropout, :]
+                eeg_filtered = eeg_filtered[non_dropout, :]
+                eeg_amplitude = eeg_amplitude[non_dropout]
 
-            # Get high-frequency noise ratios for the window
-            high_freq_amplitude = _mad(eeg_raw - eeg_filtered, axis=1)
-            noiselevels[w, usable] = high_freq_amplitude / eeg_amplitude
+                # Get high-frequency noise ratios for the window
+                high_freq_amplitude = _mad(eeg_raw - eeg_filtered, axis=1)
+                noiselevels[w, usable] = high_freq_amplitude / eeg_amplitude
 
-            # Get inter-channel correlations for the window
-            if gpu_correlations is None:
+                # Get inter-channel correlations for the window
                 win_correlations = np.corrcoef(eeg_filtered)
-            else:
-                win_correlations = gpu_correlations[w][non_dropout][:, non_dropout]
-            abs_corr = np.abs(win_correlations - np.diag(np.diag(win_correlations)))
-            max_correlations[w, usable] = _mat_quantile(abs_corr, 0.98, axis=0)
-            max_correlations[w, dropout[w, :]] = 0  # Set dropout correlations to 0
+                abs_corr = np.abs(win_correlations - np.diag(np.diag(win_correlations)))
+                max_correlations[w, usable] = _mat_quantile(abs_corr, 0.98, axis=0)
+                max_correlations[w, dropout[w, :]] = 0  # Set dropout correlations to 0
 
         # Flag channels with above-threshold fractions of bad correlation windows
         thresholded_correlations = max_correlations < correlation_threshold
@@ -710,20 +839,47 @@ class NoisyChannels:
         if self.EEGFiltered is None:
             self.EEGFiltered = self._get_filtered_data()
 
-        # Create a temporary Raw object from filtered data for PSD computation
-        info = mne.create_info(
-            ch_names=self.ch_names_new.tolist(),
-            sfreq=self.sample_rate,
-            ch_types="eeg",
-        )
-        raw_filtered = mne.io.RawArray(self.EEGFiltered, info, verbose=False)
+        if self._use_gpu:
+            try:
+                psd_data, freqs = gpu.welch_psd_gpu(
+                    self.EEGFilteredTensor
+                    if self.EEGFilteredTensor is not None
+                    else self.EEGFiltered,
+                    sfreq=self.sample_rate,
+                    fmin=fmin,
+                    fmax=fmax,
+                    device=self.device,
+                )
+            except Exception:
+                # Fallback to MNE CPU Welch PSD
+                info = mne.create_info(
+                    ch_names=self.ch_names_new.tolist(),
+                    sfreq=self.sample_rate,
+                    ch_types="eeg",
+                )
+                raw_filtered = mne.io.RawArray(self.EEGFiltered, info, verbose=False)
+                psd = raw_filtered.compute_psd(
+                    method="welch", fmin=fmin, fmax=fmax, verbose=False
+                )
+                psd_data = psd.get_data()
+                freqs = psd.freqs
+        else:
+            # Create a temporary Raw object from filtered data for PSD computation
+            info = mne.create_info(
+                ch_names=self.ch_names_new.tolist(),
+                sfreq=self.sample_rate,
+                ch_types="eeg",
+            )
+            raw_filtered = mne.io.RawArray(self.EEGFiltered, info, verbose=False)
 
-        # Compute PSD using Welch method and convert to log scale (dB)
-        psd = raw_filtered.compute_psd(
-            method="welch", fmin=fmin, fmax=fmax, verbose=False
-        )
-        psd_data = psd.get_data()
-        freqs = psd.freqs
+            # Compute PSD using Welch method and convert to log scale (dB)
+            psd = raw_filtered.compute_psd(
+                method="welch", fmin=fmin, fmax=fmax, verbose=False
+            )
+            psd_data = psd.get_data()
+            freqs = psd.freqs
+
+        psd_data = np.maximum(psd_data, 1e-15)
         log_psd = 10 * np.log10(psd_data)
 
         # Get frequency indices for each band

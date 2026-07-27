@@ -64,9 +64,9 @@ raw_before = raw.copy()
 # https://numpy.org/doc/stable/reference/random/index.html
 random_state = 466171092
 
-# ``device="auto"`` selects the fastest PyTorch accelerator available (CUDA,
-# Apple Silicon MPS, Intel XPU, Habana HPU, or CPU). If PyTorch is not installed,
-# the full pipeline continues with PyPREP's standard NumPy implementation.
+# ``backend="auto", device="auto"`` selects the fastest available accelerator
+# (CUDA, Apple Silicon MPS, Intel XPU, Habana HPU, or CPU). Unsupported
+# accelerator operations rerun with PyPREP's standard NumPy/SciPy implementation.
 
 sfreq = raw.info["sfreq"]
 prep_params = {
@@ -80,6 +80,7 @@ prep = PrepPipeline(
     prep_params,
     montage,
     random_state=random_state,
+    backend="auto",
     device="auto",
 )
 prep.fit()
