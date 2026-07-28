@@ -440,7 +440,14 @@ def compute_window_correlation_metrics_gpu(
 
     # 4. Use gpu_corrs matrix for 98th percentile quantile across channels
     bmm_corrs = _to_tensor(gpu_corrs, dev, dtype=dtype)
-    eye = torch.eye(n_chans, dtype=torch.bool, device=dev).unsqueeze(0)
+    try:
+        eye = torch.eye(n_chans, dtype=torch.bool, device=dev).unsqueeze(0)
+    except (RuntimeError, NotImplementedError, AssertionError):
+        eye = (
+            torch.eye(n_chans, dtype=torch.bool, device=torch.device("cpu"))
+            .unsqueeze(0)
+            .to(dev)
+        )
     abs_bmm_corrs = torch.abs(bmm_corrs)
     abs_bmm_corrs.masked_fill_(eye, 0.0)
 

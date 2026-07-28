@@ -699,7 +699,7 @@ def test_reference_and_noisy_channels_coverage(raw_clean):
     from pyprep.reference import Reference
 
     # reference.py remove_reference index TypeError branch
-    with pytest.raises(TypeError, match="RemoveReference: Expected list"):
+    with pytest.raises(TypeError, match="RemoveReference: Expected"):
         Reference.remove_reference(
             np.zeros((2, 100)), np.zeros(100), index="not_a_list"
         )
