@@ -671,7 +671,7 @@ def test_mad_gpu():
 
 @pytest.mark.skipif(not HAS_TORCH, reason="PyTorch is required")
 def test_gpu_additional_coverage():
-    """Test clear_gpu_cache, tensor device conversion, chunked filtering, and reference fallbacks."""
+    """Test clear_gpu_cache, tensor device conversion, and fallbacks."""
     # clear_gpu_cache
     gpu.clear_gpu_cache()
 
@@ -680,23 +680,35 @@ def test_gpu_additional_coverage():
     mock_t.device.type = "mps"
     mock_t.cpu.return_value.to.return_value = "cpu_tensor"
     assert gpu._to_tensor(mock_t, device="cpu", dtype=torch.float64) == "cpu_tensor"
-    # notch_filter_gpu test with list of freqs and tensor input
+    # test chunked paths
     data_long = np.random.randn(2, 6000)
+    t_long = torch.randn(2, 6000)
+    res_bp = gpu.filter_bandpass_gpu(t_long, sfreq=250.0, chunk_size=2000)
+    assert res_bp.shape == (2, 6000)
+
+    res_hp = gpu.filter_highpass_gpu(t_long, sfreq=250.0, chunk_size=2000)
+    assert res_hp.shape == (2, 6000)
+
     res_notch = gpu.notch_filter_gpu(data_long, sfreq=250.0, freqs=[50.0], device="cpu")
     assert res_notch.shape == (2, 6000)
 
 
 def test_reference_and_noisy_channels_coverage(raw_clean):
     """Test fallback paths in reference.py and find_noisy_channels.py."""
-    from pyprep.reference import Reference
     from pyprep.find_noisy_channels import NoisyChannels
+    from pyprep.reference import Reference
 
     # reference.py remove_reference index TypeError branch
     with pytest.raises(TypeError, match="RemoveReference: Expected list"):
-        Reference.remove_reference(np.zeros((2, 100)), np.zeros(100), index="not_a_list")
+        Reference.remove_reference(
+            np.zeros((2, 100)), np.zeros(100), index="not_a_list"
+        )
 
     # reference.py unusable reference channel fallback
-    ref = Reference(raw_clean, params={"ref_chs": raw_clean.ch_names, "reref_chs": raw_clean.ch_names})
+    ref = Reference(
+        raw_clean,
+        params={"ref_chs": raw_clean.ch_names, "reref_chs": raw_clean.ch_names},
+    )
     ref.unusable_channels = raw_clean.ch_names.copy()
     ref.perform_reference()
     assert hasattr(ref, "reference_signal")

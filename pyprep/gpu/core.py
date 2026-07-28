@@ -180,7 +180,9 @@ def _to_tensor(data, device, dtype=None):
         )
     except (RuntimeError, AssertionError):
         return torch.tensor(
-            np.ascontiguousarray(data, dtype=np_dtype), device=torch.device("cpu"), dtype=dtype
+            np.ascontiguousarray(data, dtype=np_dtype),
+            device=torch.device("cpu"),
+            dtype=dtype,
         )
 
 
@@ -543,7 +545,11 @@ def ransac_by_window_gpu(
 
 
 def filter_bandpass_gpu(
-    t_data: torch.Tensor, sfreq: float, low_hz: float = 1.0, high_hz: float = 50.0
+    t_data: torch.Tensor,
+    sfreq: float,
+    low_hz: float = 1.0,
+    high_hz: float = 50.0,
+    chunk_size: int = 131072,
 ) -> torch.Tensor:
     """Apply PyPREP zero-phase bandpass filter [1 Hz - 50 Hz] on GPU tensor via FFT.
 
@@ -575,7 +581,6 @@ def filter_bandpass_gpu(
     n_times = t_data.shape[-1]
     # Match scipy.filtfilt default: padlen = 3 * max(len(b), len(a)) = 3 * len(b_kernel)
     pad_len = 3 * len(b_kernel)
-    chunk_size = 131072
 
     if n_times <= chunk_size:
         # Direct fast path for small/medium signals
@@ -647,7 +652,7 @@ def filter_bandpass_gpu(
 
 
 def filter_highpass_gpu(
-    t_data: torch.Tensor, sfreq: float, low_hz: float = 1.0
+    t_data: torch.Tensor, sfreq: float, low_hz: float = 1.0, chunk_size: int = 131072
 ) -> torch.Tensor:
     """Apply PyPREP zero-phase highpass FIR filter on GPU tensor via FFT.
 
@@ -662,7 +667,6 @@ def filter_highpass_gpu(
     b_kernel = _eeglab_create_highpass(low_hz, sfreq)
     n_times = t_data.shape[-1]
     pad_len = 3 * len(b_kernel)
-    chunk_size = 131072
 
     if n_times <= chunk_size:
         left_pad = 2.0 * t_data[..., :1] - t_data[..., 1 : pad_len + 1].flip(-1)
