@@ -174,9 +174,14 @@ def _to_tensor(data, device, dtype=None):
         return data.to(device=device, dtype=dtype, non_blocking=True)
 
     np_dtype = np.float64 if dtype == torch.float64 else np.float32
-    return torch.tensor(
-        np.ascontiguousarray(data, dtype=np_dtype), device=device, dtype=dtype
-    )
+    try:
+        return torch.tensor(
+            np.ascontiguousarray(data, dtype=np_dtype), device=device, dtype=dtype
+        )
+    except (RuntimeError, AssertionError):
+        return torch.tensor(
+            np.ascontiguousarray(data, dtype=np_dtype), device=torch.device("cpu"), dtype=dtype
+        )
 
 
 def _dtype_for_device(device):

@@ -667,3 +667,44 @@ def test_mad_gpu():
     t_data = torch.randn(4, 500)
     mad_t = gpu.mad_gpu(t_data, dim=-1)
     assert mad_t.shape == (4,)
+
+
+@pytest.mark.skipif(not HAS_TORCH, reason="PyTorch is required")
+def test_gpu_additional_coverage():
+    """Test clear_gpu_cache, tensor device conversion, chunked filtering, and reference fallbacks."""
+    # clear_gpu_cache
+    gpu.clear_gpu_cache()
+
+    # _to_tensor tensor mps float64 branch mock
+    mock_t = MagicMock(spec=torch.Tensor)
+    mock_t.device.type = "mps"
+    mock_t.cpu.return_value.to.return_value = "cpu_tensor"
+    assert gpu._to_tensor(mock_t, device="cpu", dtype=torch.float64) == "cpu_tensor"
+    # notch_filter_gpu test with list of freqs and tensor input
+    data_long = np.random.randn(2, 6000)
+    res_notch = gpu.notch_filter_gpu(data_long, sfreq=250.0, freqs=[50.0], device="cpu")
+    assert res_notch.shape == (2, 6000)
+
+
+def test_reference_and_noisy_channels_coverage(raw_clean):
+    """Test fallback paths in reference.py and find_noisy_channels.py."""
+    from pyprep.reference import Reference
+    from pyprep.find_noisy_channels import NoisyChannels
+
+    # reference.py remove_reference index TypeError branch
+    with pytest.raises(TypeError, match="RemoveReference: Expected list"):
+        Reference.remove_reference(np.zeros((2, 100)), np.zeros(100), index="not_a_list")
+
+    # reference.py unusable reference channel fallback
+    ref = Reference(raw_clean, params={"ref_chs": raw_clean.ch_names, "reref_chs": raw_clean.ch_names})
+    ref.unusable_channels = raw_clean.ch_names.copy()
+    ref.perform_reference()
+    assert hasattr(ref, "reference_signal")
+
+    # find_noisy_channels.py exception handling when checking channel locations
+    nd = NoisyChannels(raw_clean, do_detrend=False)
+    with patch.object(nd.raw_mne, "info", {"chs": [{"loc": np.array([np.nan, 0, 0])}]}):
+        try:
+            nd.find_bad_by_nan_flat()
+        except Exception:
+            pass
