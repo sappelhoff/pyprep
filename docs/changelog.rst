@@ -26,7 +26,11 @@ Version 0.8.0 (unreleased)
 
 Changelog
 ~~~~~~~~~
-- Nothing yet
+- ``pyprep`` now logs through its own ``pyprep`` logger, configured at import time to log at ``"INFO"`` through its own handler on :data:`sys.stdout`. The new :func:`pyprep.setup_logging` changes the level, redirects the stream, or hands the records over to the application's own handlers; the root logger is never configured. :mod:`pyprep.find_noisy_channels` and :mod:`pyprep.ransac` previously logged through MNE's logger, so :func:`mne.set_log_level` no longer silences them — use :func:`pyprep.setup_logging` instead, by `Stefan Appelhoff`_ (:gh:`209`)
+
+Bug
+~~~
+- :func:`pyprep.removeTrend.removeTrend` no longer logs to the root logger; its two messages now go through the ``pyprep.removeTrend`` logger like the rest of the package, by `Stefan Appelhoff`_ (:gh:`209`)
 
 .. _changes_0_7_1:
 

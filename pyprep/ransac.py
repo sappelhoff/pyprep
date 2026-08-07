@@ -3,9 +3,11 @@
 # Authors: The PyPREP developers
 # SPDX-License-Identifier: MIT
 
+import logging
+
 import numpy as np
 from mne.channels.interpolation import _make_interpolation_matrix
-from mne.utils import ProgressBar, check_random_state, logger
+from mne.utils import ProgressBar, check_random_state
 
 from pyprep.utils import (
     _correlate_arrays,
@@ -14,6 +16,8 @@ from pyprep.utils import (
     _split_list,
     _verify_free_ram,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def find_bad_by_ransac(

@@ -21,6 +21,7 @@ import mne
 import numpy as np
 from mne.datasets import eegbci
 
+from pyprep import setup_logging
 from pyprep.prep_pipeline import PrepPipeline
 
 ###############################################################################
@@ -30,8 +31,12 @@ from pyprep.prep_pipeline import PrepPipeline
 # We use subject 4, run 1 from the PhysioNet BCI2000 (eegbci) dataset. This is
 # a fairly noisy recording, which makes it a good candidate for demonstrating
 # PREP. The data are 64-channel EEG sampled at 160 Hz.
+#
+# MNE and pyprep each log at ``"INFO"`` by default; we turn both down to keep
+# this example's output short.
 
 mne.set_log_level("WARNING")
+setup_logging("WARNING")
 
 edf_fpath = eegbci.load_data(subjects=4, runs=1, update_path=True)[0]
 raw = mne.io.read_raw_edf(edf_fpath, preload=True)
