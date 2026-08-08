@@ -3,14 +3,18 @@
 # Authors: The PyPREP developers
 # SPDX-License-Identifier: MIT
 
+import logging
+
 import mne
 import numpy as np
-from mne.utils import check_random_state, logger
+from mne.utils import check_random_state
 from scipy import signal
 
 from pyprep.ransac import find_bad_by_ransac
 from pyprep.removeTrend import removeTrend
 from pyprep.utils import _filter_design, _mad, _mat_iqr, _mat_quantile
+
+logger = logging.getLogger(__name__)
 
 
 class NoisyChannels:

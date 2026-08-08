@@ -51,3 +51,18 @@ The :mod:`~pyprep.ransac` module
    :toctree: generated/
 
    find_bad_by_ransac
+
+Logging
+=======
+
+pyprep logs at ``"INFO"`` through its own ``pyprep`` logger, which is configured
+when the package is imported. Use the function below to change the level, redirect
+the stream, or hand the records to your application's own handlers. The root logger
+is never configured.
+
+.. currentmodule:: pyprep
+
+.. autosummary::
+   :toctree: generated/
+
+   setup_logging

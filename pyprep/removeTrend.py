@@ -10,6 +10,8 @@ import numpy as np
 
 from pyprep.utils import _eeglab_create_highpass, _eeglab_fir_filter
 
+logger = logging.getLogger(__name__)
+
 
 def removeTrend(
     EEG,
@@ -109,7 +111,7 @@ def removeTrend(
         dn = np.round(sample_rate * stepSize)
 
         if dn > n or dn < 1:
-            logging.error(
+            logger.error(
                 "Step size should be less than the window size and "
                 "contain at least 1 sample"
             )
@@ -122,8 +124,8 @@ def removeTrend(
         EEG = np.transpose(EEG)
 
     else:
-        logging.warning(
-            "No filtering/detreding performed since the detrend type did not match"
+        logger.warning(
+            "No filtering/detrending performed since the detrend type did not match"
         )
 
     return EEG
