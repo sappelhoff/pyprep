@@ -25,7 +25,7 @@ jobs:
       FORCE_COLOR: true
     steps:
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v6
+      uses: actions/setup-python@v7
       with:
         python-version: ${{ matrix.python-version }}
 
@@ -34,7 +34,7 @@ jobs:
         python -m pip install --upgrade pip
         python -m pip install --upgrade build twine
 
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
       with:
         fetch-depth: 0
         fetch-tags: true
@@ -52,7 +52,7 @@ jobs:
     - name: Remove sdist install
       run: python -m pip uninstall -y pyprep
 
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
       with:
         fetch-depth: 0
         fetch-tags: true

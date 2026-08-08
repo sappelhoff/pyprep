@@ -34,23 +34,23 @@ jobs:
       TZ: Europe/Berlin
       FORCE_COLOR: true
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
       with:
         fetch-depth: 0
         fetch-tags: true
         submodules: true
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v6
+      uses: actions/setup-python@v7
       with:
         python-version: ${{ matrix.python-version }}
 
-    - uses: actions/cache@v5
+    - uses: actions/cache@v6
       with:
         path: ${{ env.HOME }}/mne_data/MNE-eegbci-data
         key: v-0-eegbci-${{ hashFiles('pyproject.toml') }}
 
-    - uses: actions/cache@v5
+    - uses: actions/cache@v6
       with:
         path: ${{ env.pythonLocation }}
         key: v-0-${{ env.pythonLocation }}-${{ hashFiles('pyproject.toml') }}
