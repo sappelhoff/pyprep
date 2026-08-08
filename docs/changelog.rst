@@ -19,9 +19,9 @@ Here we list what's new in ``pyprep``.
 
 .. currentmodule:: pyprep
 
-.. _current:
+.. _changes_0_8_0:
 
-Version 0.8.0 (unreleased)
+Version 0.8.0 (2026-08-08)
 --------------------------
 
 Changelog
