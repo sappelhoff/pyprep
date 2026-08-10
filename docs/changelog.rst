@@ -26,7 +26,7 @@ Version 0.9.0 (unreleased)
 
 Changelog
 ~~~~~~~~~
-- Nothing yet
+- :func:`pyprep.setup_logging` now accepts level names in any case, so ``setup_logging("warning")`` works like :func:`mne.set_log_level` instead of raising ``ValueError``, by `Stefan Appelhoff`_ (:gh:`210`)
 
 .. _changes_0_8_0:
 

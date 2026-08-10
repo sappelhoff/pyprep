@@ -24,7 +24,8 @@ def setup_logging(level="INFO", stream=None, propagate=False):
     ----------
     level : int | str
         Level for the ``pyprep`` logger. Pass ``"WARNING"`` to keep only warnings
-        and errors, or ``"DEBUG"`` for more detail. Defaults to ``"INFO"``.
+        and errors, or ``"DEBUG"`` for more detail. Names are case-insensitive, as
+        in :func:`mne.set_log_level`. Defaults to ``"INFO"``.
     stream : file-like | None
         Destination for pyprep's own handler. ``None`` keeps the current
         destination, which is :data:`sys.stdout` on a fresh interpreter. Ignored
@@ -45,7 +46,8 @@ def setup_logging(level="INFO", stream=None, propagate=False):
     function instead.
     """
     logger = logging.getLogger(_LOGGER_NAME)
-    logger.setLevel(level)
+    # The stdlib only knows upper-case level names; MNE accepts any case, so do we.
+    logger.setLevel(level.upper() if isinstance(level, str) else level)
     own = [h for h in logger.handlers if isinstance(h, _StreamHandler)]
     if propagate:
         for handler in own:

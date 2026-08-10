@@ -64,6 +64,13 @@ def test_setup_logging_level(restore_logger):
     assert "visible" in stream.getvalue()
 
 
+@pytest.mark.parametrize("level", ["warning", "WARNING", "Warning", logging.WARNING])
+def test_setup_logging_accepts_any_level_spelling(restore_logger, level):
+    """Level names are case-insensitive, and plain ints work too."""
+    setup_logging(level=level, stream=io.StringIO())
+    assert restore_logger.level == logging.WARNING
+
+
 def test_setup_logging_is_idempotent(restore_logger):
     """Test that repeated setup_logging calls do not duplicate output."""
     stream = io.StringIO()
