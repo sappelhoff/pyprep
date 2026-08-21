@@ -76,6 +76,19 @@ all required dependencies automatically.
 The dependencies are defined in the ``pyproject.toml`` file under the
 ``dependencies`` and ``project.optional-dependencies`` sections.
 
+Logging
+=======
+
+``pyprep`` logs through the standard ``logging`` module and configures nothing
+when it is imported, so it is quiet by default but never silent: warnings and
+errors reach ``stderr`` without any setup.
+Call ``pyprep.setup_logging("info")`` to see what the pipeline decided, or
+``pyprep.set_log_level("info")`` if your application already routes logging
+somewhere of its own.
+
+See the `Logging section of the API documentation
+<https://pyprep.readthedocs.io/en/stable/api.html#logging>`_ for the details.
+
 Contributing
 ============
 

@@ -20,7 +20,15 @@ import mne
 import numpy as np
 from scipy import signal as signal
 
+import pyprep
 from pyprep.find_noisy_channels import NoisyChannels
+
+###############################################################################
+# pyprep configures no logging of its own, so we ask it for ``"INFO"`` here to
+# see what RANSAC decides. MNE is loud at ``"INFO"``, so we turn it down.
+
+mne.set_log_level("warning")
+pyprep.setup_logging("info")
 
 ###############################################################################
 # Now let's make some arbitrary MNE raw object for demonstration purposes.

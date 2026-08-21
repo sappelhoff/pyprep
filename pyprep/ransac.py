@@ -202,7 +202,7 @@ def find_bad_by_ransac(
     # Is now data.shape[0] = n_chans_complete
     # They came from the same drop of channels
 
-    logger.info("Executing RANSAC\nThis may take a while, so be patient...")
+    logger.info("Executing RANSAC, this may take a while, so be patient...")
 
     # If enabled, run window-wise RANSAC
     if not channel_wise:
@@ -229,9 +229,7 @@ def find_bad_by_ransac(
     while mem_error and channel_wise:
         try:
             channel_chunks = _split_list(job, chunk_size)
-            total_chunks = len(channel_chunks)
-            current = 1
-            for chunk in channel_chunks:
+            for i, chunk in enumerate(channel_chunks):
                 interp_mats_for_chunk = [mat[chunk, :] for mat in interp_mats]
                 channel_correlations[:, good_idx[chunk]] = _ransac_by_channel(
                     data[good_idx, :],
@@ -242,17 +240,16 @@ def find_bad_by_ransac(
                     random_ch_picks,
                     matlab_strict,
                 )
-                if chunk == channel_chunks[0]:
-                    # If it gets here, it means it is the optimal
-                    logger.info("Finding optimal chunk size : %s", chunk_size)
-                    logger.info("Total # of chunks: %s", total_chunks)
-                    logger.info("Current chunk:")
-
-                logger.info(current)
-                current = current + 1
+                if i == 0:
+                    # If it gets here, it means the chunk size is small enough
+                    # to fit in memory, so it is the one we will use throughout.
+                    logger.info(
+                        "Optimal chunk size: %s channels (%s chunks in total)",
+                        chunk_size,
+                        len(channel_chunks),
+                    )
 
             mem_error = False  # All chunks processed, hurray!
-            del current
         except MemoryError:
             if len(chunk_sizes):
                 chunk_size = chunk_sizes.pop()
@@ -271,7 +268,7 @@ def find_bad_by_ransac(
     bad_ransac_channels_idx = np.argwhere(frac_bad_corr_windows > frac_bad)
     bad_ransac_channels_name = complete_chn_labs[bad_ransac_channels_idx.astype(int)]
     bad_by_ransac = [i[0] for i in bad_ransac_channels_name]
-    logger.info("\nRANSAC done!")
+    logger.info("RANSAC done!")
 
     return bad_by_ransac, channel_correlations
 
