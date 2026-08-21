@@ -228,10 +228,11 @@ class NoisyChannels:
 
         Parameters
         ----------
-        verbose : bool | None
-            If ``True``, a summary of the channels currently flagged as by bad per
-            category is printed. Defaults to ``False``.
-        as_dict: bool | None
+        verbose : bool
+            If ``True``, a summary of the channels currently flagged as bad per
+            category is logged at ``"INFO"`` through the ``pyprep`` logger.
+            Defaults to ``False``.
+        as_dict : bool
             If ``True``, this method will return a dict of the channels currently
             flagged as bad by each individual bad channel type. If ``False``, this
             method will return a list of all unique bad channels detected so far.

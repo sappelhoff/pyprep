@@ -111,7 +111,7 @@ def removeTrend(
         dn = np.round(sample_rate * stepSize)
 
         if dn > n or dn < 1:
-            logger.error(
+            raise ValueError(
                 "Step size should be less than the window size and "
                 "contain at least 1 sample"
             )
