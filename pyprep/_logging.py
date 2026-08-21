@@ -85,16 +85,8 @@ def setup_logging(level="info", *, stream=None, fmt=DEFAULT_FORMAT):
 
     Notes
     -----
-    Only the ``pyprep`` namespace is configured; the root logger is never
-    touched. Records stop at pyprep's own handler, so an application that
-    configures the root logger does not see them twice. To hand the output back,
-    drop the handler again with
+    To hand the output back afterwards, drop the handler again with
     ``logging.getLogger("pyprep").handlers.clear()``.
-
-    MNE has its own ``mne`` logger, controlled separately through
-    :func:`mne.set_log_level`. The progress bar that window-wise RANSAC draws is
-    an ``mne.utils.ProgressBar``, which writes to its own stream rather than
-    through either logger, so neither function silences it.
     """
     logger = logging.getLogger(LOGGER_NAME)
     logger.setLevel(_as_level(level))

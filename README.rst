@@ -79,47 +79,15 @@ The dependencies are defined in the ``pyproject.toml`` file under the
 Logging
 =======
 
-``pyprep`` logs through the standard ``logging`` module, on a logger named
-``pyprep``, and configures nothing on import.
-It is quiet, but not silent: warnings and errors still reach ``stderr`` without
-any setup, because Python falls back to ``logging.lastResort`` when it finds no
-handler.
-``"INFO"`` records, which is where the pipeline reports what it decided, stay
-hidden until you ask for them.
+``pyprep`` logs through the standard ``logging`` module and configures nothing
+when it is imported, so it is quiet by default but never silent: warnings and
+errors reach ``stderr`` without any setup.
+Call ``pyprep.setup_logging("info")`` to see what the pipeline decided, or
+``pyprep.set_log_level("info")`` if your application already routes logging
+somewhere of its own.
 
-To see them without writing handler boilerplate, for example in a script or a
-notebook:
-
-.. code-block:: python
-
-   import pyprep
-
-   pyprep.setup_logging("info")
-
-This attaches a handler on ``sys.stdout`` to the ``pyprep`` logger only, and
-stops those records from propagating to the root logger so they are not printed
-twice.
-Pass ``"warning"`` to keep only warnings and errors, or ``"debug"`` for more
-detail.
-
-If your application already routes logging somewhere of its own, a file or a
-Rich console, do not call ``setup_logging`` at all.
-The records reach your handlers by propagation, and ``set_log_level`` will raise
-``pyprep``'s verbosity if you want the ``"INFO"`` ones too, without touching the
-handler, the stream, the format, or the propagation your application chose:
-
-.. code-block:: python
-
-   pyprep.set_log_level("info")
-
-To take the output back after calling ``setup_logging``, drop the handler again:
-
-.. code-block:: python
-
-   logging.getLogger("pyprep").handlers.clear()
-
-MNE has its own ``mne`` logger, controlled separately through
-``mne.set_log_level``.
+See the `Logging section of the API documentation
+<https://pyprep.readthedocs.io/en/stable/api.html#logging>`_ for the details.
 
 Contributing
 ============

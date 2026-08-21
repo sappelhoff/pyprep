@@ -39,29 +39,28 @@ From the project root, call:
 
 ## Logging conventions
 
-`pyprep` is a library, so it never decides where log records go. It configures
-nothing on import, and library code must never configure the root logger, add a
-handler, or touch another package's logger (including MNE's). Those are the
-application's calls to make; `setup_logging` and `set_log_level` exist so that
-the application can make them in one line.
-
-Note that we deliberately do *not* install a `NullHandler` on the `pyprep`
-logger. A `NullHandler` satisfies the handler search in
-`logging.Logger.callHandlers`, which stops `logging.lastResort` from firing and
-would silently drop warnings and errors instead of merely hiding `"INFO"`. We
-want quiet, not silent. `tests/test_logging.py` enforces both properties from a
-clean interpreter.
-
-Within the library:
+What pyprep's logging does, and how a user turns it on, is documented in the
+[Logging section of the API documentation](https://pyprep.readthedocs.io/en/stable/api.html#logging).
+The rules below are the ones library code has to follow to keep that true.
 
 - one `logger = logging.getLogger(__name__)` per module, at module level, so
   records carry the module they came from
-- never `print` from library code; user-facing output is the application's job
+- never `print` from library code, and never configure the root logger, add a
+  handler, or touch another package's logger (including MNE's). Those are the
+  application's calls to make; `setup_logging` and `set_log_level` exist so that
+  it can make them in one line
 - pass arguments to the logging call (`logger.info("Found %s bads", n)`) rather
   than formatting the string yourself, so the work is skipped when the level is
   off
 - log values with a label. A bare `logger.info(some_number)` produces an
   unreadable line, and the examples render their log output into the docs
+
+Do not add a `NullHandler` to the `pyprep` logger, even though older advice
+says a library should. A `NullHandler` satisfies the handler search in
+`logging.Logger.callHandlers`, which stops `logging.lastResort` from firing and
+would silently drop warnings and errors instead of merely hiding `"INFO"`. We
+want quiet, not silent, and `tests/test_logging.py` enforces both properties
+from a clean interpreter.
 
 `pyprep/_logging.py` is a verbatim copy of the same module in a few sibling
 projects, save for the package name in `LOGGER_NAME` and the docstrings. If you
