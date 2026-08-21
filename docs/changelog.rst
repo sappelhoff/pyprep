@@ -26,7 +26,18 @@ Version 0.9.0 (unreleased)
 
 Changelog
 ~~~~~~~~~
-- Nothing yet
+- The new :func:`pyprep.set_log_level` changes the level of the ``pyprep`` logger without touching its handler, stream, format, or propagation, mirroring :func:`mne.set_log_level`. Use it instead of calling :func:`pyprep.setup_logging` a second time, which would reset all of those, by `Stefan Appelhoff`_ (:gh:`211`)
+- :func:`pyprep.setup_logging` now accepts level names in any case, so ``setup_logging("warning")`` works like :func:`mne.set_log_level` instead of raising ``ValueError``. Its ``stream`` argument became keyword-only and now defaults to :data:`sys.stdout` on every call rather than keeping whatever stream a previous call had installed, and a new keyword-only ``fmt`` argument sets the format of the installed handler, by `Stefan Appelhoff`_ (:gh:`211`)
+- All three examples now switch pyprep's logging on themselves with ``pyprep.setup_logging("info")``, since importing the package no longer does. Channel-wise RANSAC no longer logs a bare chunk counter on every chunk, reporting the chunk size and the number of chunks once instead, and two of its messages no longer carry embedded newlines that split them across two log lines, by `Stefan Appelhoff`_ (:gh:`211`)
+
+API
+~~~
+- ``pyprep`` no longer configures logging when it is imported. 0.8.0 attached a handler on :data:`sys.stdout` to the ``pyprep`` logger at import time, so users got ``"INFO"`` output for free; a library cannot know whether the application wants stdout, a file, JSON to an aggregator, or a Rich console, so that decision is handed back to the caller. Without any configuration ``pyprep`` is quiet but not silent: warnings and errors still reach :data:`sys.stderr` through :data:`logging.lastResort`, and ``"INFO"`` records appear once you call :func:`pyprep.setup_logging` or :func:`pyprep.set_log_level`. Note that no :class:`logging.NullHandler` is installed either, deliberately: one would satisfy the handler search in ``logging.Logger.callHandlers`` and suppress the ``lastResort`` fallback, dropping warnings and errors instead of merely hiding ``"INFO"``, by `Stefan Appelhoff`_ (:gh:`211`)
+- The ``propagate`` argument of :func:`pyprep.setup_logging` was removed. It existed to undo the import-time configuration and hand the records to the application's handlers; with nothing configured on import, propagation is simply what happens when :func:`pyprep.setup_logging` is never called, by `Stefan Appelhoff`_ (:gh:`211`)
+
+Bug
+~~~
+- :func:`pyprep.removeTrend.removeTrend` now raises a :class:`ValueError` for a ``'local detrend'`` step size that is larger than the window or smaller than one sample, instead of logging an error and detrending with it anyway, by `Stefan Appelhoff`_ (:gh:`211`)
 
 .. _changes_0_8_0:
 
