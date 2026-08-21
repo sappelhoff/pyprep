@@ -4,6 +4,7 @@
 # SPDX-License-Identifier: MIT
 
 import numpy as np
+import pytest
 
 import pyprep.removeTrend as removeTrend
 
@@ -50,3 +51,18 @@ def test_detrend():
     )
     error3 = signal_detrend - signal
     assert np.sqrt(np.mean(error3**2)) < 0.1
+
+
+def test_detrend_rejects_unusable_step_size():
+    """A local-detrend step size that cannot work raises instead of detrending."""
+    signal = np.zeros(100)
+
+    # A cutoff this high makes the window shorter than the fixed 0.02 s step.
+    with pytest.raises(ValueError, match="Step size should be less"):
+        removeTrend.removeTrend(
+            signal, detrendType="Local detrend", sample_rate=100, detrendCutoff=1000
+        )
+
+    # A sample rate this low makes the step round down to zero samples.
+    with pytest.raises(ValueError, match="at least 1 sample"):
+        removeTrend.removeTrend(signal, detrendType="Local detrend", sample_rate=10)
