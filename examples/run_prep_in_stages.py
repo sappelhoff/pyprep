@@ -26,7 +26,7 @@ import mne
 import numpy as np
 from mne.datasets import eegbci
 
-from pyprep import setup_logging
+import pyprep
 from pyprep.prep_pipeline import PrepPipeline
 
 ###############################################################################
@@ -37,11 +37,11 @@ from pyprep.prep_pipeline import PrepPipeline
 # PhysioNet BCI2000 (eegbci) dataset: a fairly noisy 64-channel recording
 # sampled at 160 Hz.
 #
-# MNE and pyprep each log at ``"INFO"`` by default; we turn both down to keep
-# this example's output short.
+# pyprep configures no logging of its own, so we ask it for ``"INFO"`` here to
+# see what each step decides. MNE is loud at ``"INFO"``, so we turn it down.
 
-mne.set_log_level("WARNING")
-setup_logging("WARNING")
+mne.set_log_level("warning")
+pyprep.setup_logging("info")
 
 edf_fpath = eegbci.load_data(subjects=4, runs=1, update_path=True)[0]
 raw = mne.io.read_raw_edf(edf_fpath, preload=True)
