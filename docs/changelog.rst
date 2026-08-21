@@ -39,6 +39,10 @@ Bug
 ~~~
 - :func:`pyprep.removeTrend.removeTrend` now raises a :class:`ValueError` for a ``'local detrend'`` step size that is larger than the window or smaller than one sample, instead of logging an error and detrending with it anyway, by `Stefan Appelhoff`_ (:gh:`211`)
 
+Doc
+~~~
+- The ``ransac``, ``channel_wise`` and ``matlab_strict`` parameters of :class:`~pyprep.PrepPipeline`, :class:`~pyprep.Reference`, :class:`~pyprep.NoisyChannels` and :func:`~pyprep.ransac.find_bad_by_ransac` were documented as ``bool | None`` in twelve places although each has a plain bool default and never accepts ``None``. They are now documented as ``bool``; the entries in :meth:`~pyprep.NoisyChannels.find_all_bads`, where ``None`` means "use the value from instantiation", keep ``bool | None``. The copied descriptions of ``ransac``, ``random_state``, ``matlab_strict``, ``reject_by_annotation`` and ``interpolate_bads`` had drifted apart between those same classes and were reconciled, by `Stefan Appelhoff`_ (:gh:`212`)
+
 .. _changes_0_8_0:
 
 Version 0.8.0 (2026-08-08)
