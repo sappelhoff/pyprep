@@ -3,28 +3,10 @@
 # Authors: The PyPREP developers
 # SPDX-License-Identifier: MIT
 
-import logging
-
 import mne
 import numpy as np
 import pytest
 from mne.datasets import eegbci
-
-
-@pytest.fixture(autouse=True)
-def configure_pyprep_logging():
-    """Quiet pyprep's own INFO output and let ``caplog`` capture its records.
-
-    pyprep configures its logger at import time with ``propagate = False``, which
-    keeps records away from the root-level handler that ``caplog`` installs.
-    """
-    logger = logging.getLogger("pyprep")
-    level, propagate = logger.level, logger.propagate
-    logger.setLevel("WARNING")
-    logger.propagate = True
-    yield
-    logger.setLevel(level)
-    logger.propagate = propagate
 
 
 @pytest.fixture(scope="session")
