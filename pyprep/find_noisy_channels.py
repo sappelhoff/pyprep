@@ -306,7 +306,7 @@ class NoisyChannels:
             detection considerably. If ``None`` (default), then the value at
             instantiation of the ``NoisyChannels`` class is taken (defaults
             to ``True``), else the instantiation value is overwritten.
-        channel_wise : bool | None
+        channel_wise : bool
             Whether RANSAC should predict signals for chunks of channels over the
             entire signal length ("channel-wise RANSAC", see `max_chunk_size`
             parameter). If ``False``, RANSAC will instead predict signals for all
@@ -845,7 +845,7 @@ class NoisyChannels:
         corr_window_secs : float | None
             The duration (in seconds) of each RANSAC correlation window. Defaults
             to 5 seconds.
-        channel_wise : bool | None
+        channel_wise : bool
             Whether RANSAC should predict signals for chunks of channels over the
             entire signal length ("channel-wise RANSAC", see `max_chunk_size`
             parameter). If ``False``, RANSAC will instead predict signals for all
