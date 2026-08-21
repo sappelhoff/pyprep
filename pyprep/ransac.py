@@ -81,7 +81,7 @@ def find_bad_by_ransac(
     corr_window_secs : float | None
         The duration (in seconds) of each RANSAC correlation window. Defaults to
         5 seconds.
-    channel_wise : bool | None
+    channel_wise : bool
         Whether RANSAC should predict signals for chunks of channels over the
         entire signal length ("channel-wise RANSAC", see `max_chunk_size`
         parameter). If ``False``, RANSAC will instead predict signals for all
@@ -101,7 +101,7 @@ def find_bad_by_ransac(
         RANSAC. If random_state is an int, it will be used as a seed for RandomState.
         If ``None``, the seed will be obtained from the operating system
         (see RandomState for details). Defaults to ``None``.
-    matlab_strict : bool | None
+    matlab_strict : bool
         Whether or not RANSAC should strictly follow MATLAB PREP's internal
         math, ignoring any improvements made in PyPREP over the original code
         (see :ref:`matlab-diffs` for more details). Defaults to ``False``.

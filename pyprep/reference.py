@@ -29,10 +29,10 @@ class Reference:
         Parameters of PREP which include at least the following keys:
         - ``ref_chs``
         - ``reref_chs``
-    ransac : bool | None
+    ransac : bool
         Whether or not to use RANSAC for noisy channel detection in addition to
         the other methods in :class:`~pyprep.NoisyChannels`. Defaults to True.
-    channel_wise : bool | None
+    channel_wise : bool
         Whether RANSAC should predict signals for chunks of channels over the
         entire signal length ("channel-wise RANSAC", see `max_chunk_size`
         parameter). If ``False``, RANSAC will instead predict signals for all
@@ -57,7 +57,7 @@ class Reference:
         How to handle BAD-annotated time segments (annotations starting with
         "BAD" or "bad") during channel quality assessment. If ``'omit'``,
         annotated segments are excluded. Defaults to ``None`` (ignore).
-    matlab_strict : bool | None
+    matlab_strict : bool
         Whether or not PyPREP should strictly follow MATLAB PREP's internal
         math, ignoring any improvements made in PyPREP over the original code.
         Defaults to False.

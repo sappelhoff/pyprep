@@ -39,7 +39,7 @@ def removeTrend(
     detrendChannels : {list, None} | None
         List of the indices of all channels that require detrending/filtering.
         If ``None``, all channels are used (default).
-    matlab_strict : bool | None
+    matlab_strict : bool
         Whether or not detrending should strictly follow MATLAB PREP's internal
         math, ignoring any improvements made in PyPREP over the original code
         (see :ref:`matlab-diffs` for more details). Defaults to ``False``.

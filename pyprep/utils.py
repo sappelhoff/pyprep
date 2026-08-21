@@ -435,7 +435,7 @@ def _correlate_arrays(a, b, matlab_strict=False):
         A 2-D array to correlate with `a`.
     b : np.ndarray
         A 2-D array to correlate with `b`.
-    matlab_strict : bool | None
+    matlab_strict : bool
         Whether or not correlations should be calculated identically to MATLAB
         PREP (i.e., without mean subtraction) instead of by traditional Pearson
         product-moment correlation (see Notes for details). Defaults to

@@ -45,10 +45,10 @@ class PrepPipeline:
               perform during robust referencing. Defaults to ``4``.
     montage : mne.channels.DigMontage
         Digital montage of EEG data.
-    ransac : bool | None
+    ransac : bool
         Whether or not to use RANSAC for noisy channel detection in addition to
         the other methods in :class:`~pyprep.NoisyChannels`. Defaults to True.
-    channel_wise : bool | None
+    channel_wise : bool
         Whether RANSAC should predict signals for chunks of channels over the
         entire signal length ("channel-wise RANSAC", see `max_chunk_size`
         parameter). If ``False``, RANSAC will instead predict signals for all
@@ -83,7 +83,7 @@ class PrepPipeline:
         full recording is used. This is useful when recordings contain breaks
         or movement artifacts that shouldn't influence channel rejection
         decisions.
-    matlab_strict : bool | None
+    matlab_strict : bool
         Whether or not PyPREP should strictly follow MATLAB PREP's internal
         math, ignoring any improvements made in PyPREP over the original code
         (see :ref:`matlab-diffs` for more details). Defaults to False.
