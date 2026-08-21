@@ -31,7 +31,9 @@ class Reference:
         - ``reref_chs``
     ransac : bool
         Whether or not to use RANSAC for noisy channel detection in addition to
-        the other methods in :class:`~pyprep.NoisyChannels`. Defaults to True.
+        the other methods in :class:`~pyprep.NoisyChannels`. RANSAC can detect
+        bad channels that other methods are unable to catch, but also slows down
+        noisy channel detection considerably. Defaults to ``True``.
     channel_wise : bool
         Whether RANSAC should predict signals for chunks of channels over the
         entire signal length ("channel-wise RANSAC", see `max_chunk_size`
@@ -49,18 +51,22 @@ class Reference:
         host system. If using window-wise RANSAC (the default) or not using
         RANSAC at all, this parameter has no effect. Defaults to ``None``.
     random_state : {int, None, np.random.RandomState} | None
-        The random seed at which to initialize the class. If random_state is
-        an int, it will be used as a seed for RandomState.
-        If None, the seed will be obtained from the operating system
-        (see RandomState for details). Default is None.
+        The random seed at which to initialize the class. This can be ``None``,
+        an integer, or a :class:`~numpy.random.RandomState` object. If ``None``,
+        a random seed will be obtained from the operating system. Defaults to
+        ``None``.
     reject_by_annotation : {None, 'omit'} | None
         How to handle BAD-annotated time segments (annotations starting with
         "BAD" or "bad") during channel quality assessment. If ``'omit'``,
-        annotated segments are excluded. Defaults to ``None`` (ignore).
+        annotated segments are excluded from analysis (clean segments are
+        concatenated). If ``None`` (default), annotations are ignored and the
+        full recording is used. This is useful when recordings contain breaks
+        or movement artifacts that shouldn't influence channel rejection
+        decisions.
     matlab_strict : bool
         Whether or not PyPREP should strictly follow MATLAB PREP's internal
-        math, ignoring any improvements made in PyPREP over the original code.
-        Defaults to False.
+        math, ignoring any improvements made in PyPREP over the original code
+        (see :ref:`matlab-diffs` for more details). Defaults to ``False``.
 
     References
     ----------

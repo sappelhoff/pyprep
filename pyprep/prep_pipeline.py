@@ -47,7 +47,9 @@ class PrepPipeline:
         Digital montage of EEG data.
     ransac : bool
         Whether or not to use RANSAC for noisy channel detection in addition to
-        the other methods in :class:`~pyprep.NoisyChannels`. Defaults to True.
+        the other methods in :class:`~pyprep.NoisyChannels`. RANSAC can detect
+        bad channels that other methods are unable to catch, but also slows down
+        noisy channel detection considerably. Defaults to ``True``.
     channel_wise : bool
         Whether RANSAC should predict signals for chunks of channels over the
         entire signal length ("channel-wise RANSAC", see `max_chunk_size`
@@ -65,10 +67,10 @@ class PrepPipeline:
         host system. If using window-wise RANSAC (the default) or not using
         RANSAC at all, this parameter has no effect. Defaults to ``None``.
     random_state : {int, None, np.random.RandomState} | None
-        The random seed at which to initialize the class. If random_state is
-        an int, it will be used as a seed for RandomState.
-        If None, the seed will be obtained from the operating system
-        (see RandomState for details). Default is None.
+        The random seed at which to initialize the class. This can be ``None``,
+        an integer, or a :class:`~numpy.random.RandomState` object. If ``None``,
+        a random seed will be obtained from the operating system. Defaults to
+        ``None``.
     filter_kwargs : {dict, None} | None
         Optional keywords arguments to be passed on to mne.filter.notch_filter.
         Do not set the "x", Fs", and "freqs" arguments via the filter_kwargs
@@ -86,7 +88,7 @@ class PrepPipeline:
     matlab_strict : bool
         Whether or not PyPREP should strictly follow MATLAB PREP's internal
         math, ignoring any improvements made in PyPREP over the original code
-        (see :ref:`matlab-diffs` for more details). Defaults to False.
+        (see :ref:`matlab-diffs` for more details). Defaults to ``False``.
 
     Attributes
     ----------
@@ -278,7 +280,7 @@ class PrepPipeline:
             entry of the ``prep_params`` passed to :class:`PrepPipeline` is used.
         interpolate_bads : bool, optional
             Whether or not any remaining bad channels following robust referencing
-            should be interpolated. Defaults to ``True``.
+            should be interpolated or left as-is. Defaults to ``True``.
 
         """
         if max_iterations is None:

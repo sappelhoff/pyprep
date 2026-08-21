@@ -98,9 +98,9 @@ def find_bad_by_ransac(
         has no effect. Defaults to ``None``.
     random_state : {int, None, np.random.RandomState} | None
         The random seed with which to generate random samples of channels during
-        RANSAC. If random_state is an int, it will be used as a seed for RandomState.
-        If ``None``, the seed will be obtained from the operating system
-        (see RandomState for details). Defaults to ``None``.
+        RANSAC. This can be ``None``, an integer, or a
+        :class:`~numpy.random.RandomState` object. If ``None``, a random seed
+        will be obtained from the operating system. Defaults to ``None``.
     matlab_strict : bool
         Whether or not RANSAC should strictly follow MATLAB PREP's internal
         math, ignoring any improvements made in PyPREP over the original code
