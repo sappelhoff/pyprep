@@ -49,7 +49,7 @@ raw = mne.io.read_raw_edf(edf_fpath, preload=True)
 # Fix the non-standard channel names and attach a montage (PREP needs sensor
 # positions to interpolate).
 eegbci.standardize(raw)
-montage = mne.channels.make_standard_montage("standard_1005")
+montage = mne.channels.make_standard_montage("spherical_1005")
 raw.set_montage(montage)
 
 ###############################################################################

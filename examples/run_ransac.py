@@ -40,7 +40,7 @@ pyprep.setup_logging("info")
 sfreq = 1000.0
 
 # We need a montage, because RANSAC uses spherical splines for interpolation
-montage = mne.channels.make_standard_montage("standard_1020")
+montage = mne.channels.make_standard_montage("spherical_1020")
 
 ch_names = montage.ch_names
 

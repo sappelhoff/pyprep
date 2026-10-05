@@ -44,7 +44,7 @@ raw = mne.io.read_raw_edf(edf_fpath, preload=True)
 # The eegbci data ships with non-standard channel names, so we fix them and
 # attach a standard montage (PREP needs sensor positions to interpolate).
 eegbci.standardize(raw)
-montage = mne.channels.make_standard_montage("standard_1005")
+montage = mne.channels.make_standard_montage("spherical_1005")
 raw.set_montage(montage)
 
 # Keep an untouched copy of the original data for a before/after comparison.
