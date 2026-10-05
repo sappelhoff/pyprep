@@ -33,10 +33,10 @@ jobs:
     - name: Check out repository
       uses: actions/checkout@v7
 
-    - name: Set up Python 3.12
+    - name: Set up Python 3.14
       uses: actions/setup-python@v7
       with:
-        python-version: '3.12'
+        python-version: '3.14'
 
     - name: Install Python dependencies
       # mne (eegbci loader) is used only to fetch the test recording; it does

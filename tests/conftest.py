@@ -12,7 +12,7 @@ from mne.datasets import eegbci
 @pytest.fixture(scope="session")
 def montage():
     """Fixture for standard EEG montage."""
-    montage_kind = "standard_1020"
+    montage_kind = "spherical_1005"
     montage = mne.channels.make_standard_montage(montage_kind)
     return montage
 
