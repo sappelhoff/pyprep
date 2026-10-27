@@ -574,9 +574,11 @@ class NoisyChannels:
         threshold (default: ``0.01``).
 
         This method also detects channels with intermittent dropouts (i.e.,
-        regions of flat signal). A channel is considered "bad-by-dropout" if
-        its fraction of correlation windows with a completely flat signal is
-        above the bad fraction threshold (default: ``0.01``).
+        regions of flat signal). A correlation window is considered flat for a
+        channel if the median absolute deviation (MAD) of its filtered signal is
+        below ``1e-15`` volts (exactly zero if ``matlab_strict`` is ``True``). A
+        channel is considered "bad-by-dropout" if its fraction of flat correlation
+        windows is above the bad fraction threshold (default: ``0.01``).
 
         Parameters
         ----------
@@ -593,6 +595,10 @@ class NoisyChannels:
         """
         IQR_TO_SD = 0.7413  # Scales units of IQR to units of SD, assuming normality
         # Reference: https://stat.ethz.ch/R-manual/R-devel/library/stats/html/IQR.html
+
+        # Filtering leaves residue far below this in a flat stretch (MATLAB PREP
+        # requires an exact zero); same value as the default flat_threshold
+        dropout_threshold = 1e-15
 
         if self.EEGFiltered is None:
             self.EEGFiltered = self._get_filtered_data()
@@ -628,10 +634,14 @@ class NoisyChannels:
             # Check for any channel dropouts (flat signal) within the window
             eeg_amplitude = _mad(eeg_filtered, axis=1)
             if reference_filtered is None:
-                is_dropout = eeg_amplitude == 0
+                dropout_amplitude = eeg_amplitude
             else:
                 eeg_unreferenced = eeg_filtered + reference_filtered[:, start:end]
-                is_dropout = _mad(eeg_unreferenced, axis=1) == 0
+                dropout_amplitude = _mad(eeg_unreferenced, axis=1)
+            if self.matlab_strict:
+                is_dropout = dropout_amplitude == 0
+            else:
+                is_dropout = dropout_amplitude < dropout_threshold
             dropout[w, usable] = is_dropout
 
             # Exclude any dropout chans from further calculations (avoids div-by-zero)

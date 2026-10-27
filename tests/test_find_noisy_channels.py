@@ -177,6 +177,33 @@ def test_bad_by_dropout(raw_tmp):
     assert nd.bad_by_dropout == [raw_tmp.ch_names[dropout_idx]]
 
 
+def test_bad_by_dropout_after_filtering(raw_tmp):
+    """Test that dropouts are detected despite filter residue in the flat stretch."""
+    n_chans, n_samples = raw_tmp.get_data().shape
+    dropout_idx = int(rng.integers(0, n_chans, 1)[0])
+    x1, x2 = (int(n_samples / 10), int(2 * n_samples / 10))
+    raw_tmp._data[dropout_idx, x1:x2] = 0
+
+    # Default detrending high-pass filters the data, leaving tiny non-zero values
+    nd = NoisyChannels(raw_tmp, do_detrend=True)
+    nd.find_bad_by_correlation()
+    assert nd.bad_by_dropout == [raw_tmp.ch_names[dropout_idx]]
+
+
+@pytest.mark.parametrize("matlab_strict", [False, True])
+def test_bad_by_dropout_threshold(raw_tmp, matlab_strict):
+    """Test that near-zero stretches count as dropouts unless matlab_strict."""
+    n_chans, n_samples = raw_tmp.get_data().shape
+    dropout_idx = int(rng.integers(0, n_chans, 1)[0])
+    x1, x2 = (int(n_samples / 10), int(2 * n_samples / 10))
+    raw_tmp._data[dropout_idx, x1:x2] = rng.normal(scale=1e-17, size=x2 - x1)
+
+    nd = NoisyChannels(raw_tmp, do_detrend=False, matlab_strict=matlab_strict)
+    nd.find_bad_by_correlation()
+    expected = [] if matlab_strict else [raw_tmp.ch_names[dropout_idx]]
+    assert nd.bad_by_dropout == expected
+
+
 def test_bad_by_correlation(raw_tmp):
     """Test detection of channels that correlate poorly with others."""
     # Replace a random channel's signal with uncorrelated values

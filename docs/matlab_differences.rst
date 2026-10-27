@@ -27,6 +27,20 @@ in the method :meth:`~pyprep.NoisyChannels.find_bad_by_nan_flat`.
 However, the default value remains the same as in MATLAB PREP: ``1e-15`` volts
 (that is, 1e-9 microvolts).
 
+Differences in ``find_bad_by_correlation``
+------------------------------------------
+
+In MATLAB PREP, a correlation window counts towards a channel being
+'bad-by-dropout' only if the median absolute deviation (MAD) of the channel's
+filtered signal in that window is exactly zero. However, filtering (including
+the high-pass trend removal applied before bad channel detection) leaves
+residual values on the order of ``1e-21`` to ``1e-15`` volts in a stretch of
+flat signal, so dropouts would often go undetected. PyPREP therefore treats a
+window as flat when the MAD is below ``1e-15`` volts, the same value as the
+default ``flat_threshold`` in :meth:`~pyprep.NoisyChannels.find_bad_by_nan_flat`.
+When ``matlab_strict`` is set to ``True``, an exact zero is required.
+
+
 Differences in Signal Detrending
 --------------------------------
 
