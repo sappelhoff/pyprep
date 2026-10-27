@@ -261,6 +261,28 @@ but is skipped when ``matlab_strict=True`` to maintain equivalence with the
 original MATLAB PREP pipeline.
 
 
+Average referencing before detection
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Setting ``average_reference=True`` in :class:`~pyprep.NoisyChannels` average
+references the usable EEG channels before bad channel detection. Usable channels
+are those that are not bad-by-NaN, bad-by-flat, or manually marked as bad, so
+these channels do not contribute to the reference.
+
+Re-referencing the data with :meth:`mne.io.Raw.set_eeg_reference` before passing
+it to :class:`~pyprep.NoisyChannels` is not equivalent: subtracting the average
+of all channels adds that average to flat channels, which then go undetected by
+:meth:`~pyprep.NoisyChannels.find_bad_by_nan_flat`, spreads NaN values to all
+channels, and mixes channels already known to be bad into every other channel.
+With ``average_reference=True``, NaN and flat detection run on the data as
+passed, and the dropout detection in
+:meth:`~pyprep.NoisyChannels.find_bad_by_correlation` is evaluated on the
+unreferenced signal.
+
+MATLAB PREP does not have this option. It is automatically set to ``False`` when
+``matlab_strict`` is set to ``True``.
+
+
 Annotation-Based Segment Rejection
 ----------------------------------
 

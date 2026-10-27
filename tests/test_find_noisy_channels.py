@@ -491,6 +491,18 @@ def test_average_reference_ignores_unusable_channel_content(raw_tmp):
     assert bads[0] == bads[1]
 
 
+def test_average_reference_keeps_dropouts(raw_tmp):
+    """Test that the average reference does not mask flat stretches in a channel."""
+    n_chans, n_samples = raw_tmp.get_data().shape
+    dropout_idx = int(rng.integers(0, n_chans, 1)[0])
+    x1, x2 = (int(n_samples / 10), int(2 * n_samples / 10))
+    raw_tmp._data[dropout_idx, x1:x2] = 0
+
+    nd = NoisyChannels(raw_tmp, do_detrend=False, average_reference=True)
+    nd.find_bad_by_correlation()
+    assert nd.bad_by_dropout == [raw_tmp.ch_names[dropout_idx]]
+
+
 def test_average_reference_default_off(raw_tmp):
     """Test that the data are not re-referenced by default."""
     nd = NoisyChannels(raw_tmp, do_detrend=False)
