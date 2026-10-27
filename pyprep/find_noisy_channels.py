@@ -68,6 +68,15 @@ class NoisyChannels:
         full recording is used. This is useful when recordings contain breaks
         or movement artifacts that shouldn't influence channel rejection
         decisions.
+    average_reference : bool
+        Whether to average reference the usable EEG channels before running any
+        detection method other than :meth:`~.find_bad_by_nan_flat`. Usable
+        channels are those that are not bad-by-NaN, bad-by-flat, or manually
+        marked as bad: these channels neither contribute to the average nor are
+        masked by it. NaN and flat detection always run on the data as passed,
+        and dropout detection in :meth:`~.find_bad_by_correlation` on the
+        unreferenced signal. Ignored (with a warning) if ``matlab_strict`` is
+        ``True``. See :ref:`matlab-diffs`. Defaults to ``False``.
 
     References
     ----------
@@ -88,6 +97,7 @@ class NoisyChannels:
         correlation=True,
         bad_by_manual=None,
         reject_by_annotation=None,
+        average_reference=False,
     ):
         # Make sure that we got an MNE object
         assert isinstance(raw, mne.io.BaseRaw)
@@ -129,6 +139,16 @@ class NoisyChannels:
             )
             reject_by_annotation = None
         self.reject_by_annotation = reject_by_annotation
+
+        msg = f"average_reference must be boolean, got: {average_reference}"
+        assert isinstance(average_reference, bool), msg
+        if matlab_strict and average_reference:
+            logger.warning(
+                "average_reference is not available in MATLAB PREP. "
+                "Setting average_reference to False."
+            )
+            average_reference = False
+        self.average_reference = average_reference
 
         # Warn if many small BAD segments are present (potential edge effects)
         if reject_by_annotation is not None:
@@ -203,22 +223,44 @@ class NoisyChannels:
         self.ch_names_new = np.asarray(ch_names[self.usable_idx])
         self.n_chans_new = len(self.ch_names_new)
 
-    def _get_filtered_data(self):
+        # Kept so that dropout detection can undo the reference (see
+        # find_bad_by_correlation)
+        self._reference_signal = None
+        if self.average_reference:
+            if self.n_chans_new < 2:
+                logger.warning(
+                    "Not average referencing: %s usable channel(s) left after "
+                    "excluding NaN, flat, and manually marked channels.",
+                    self.n_chans_new,
+                )
+            else:
+                self._reference_signal = self.EEGData.mean(axis=0, keepdims=True)
+                self.EEGData -= self._reference_signal
+
+    def _get_filtered_data(self, data=None):
         """Apply a [1 Hz - 50 Hz] bandpass filter to the EEG signal.
 
         Only applied if the sample rate is above 100 Hz to avoid violating the
         Nyquist theorem.
 
+        Parameters
+        ----------
+        data : np.ndarray | None
+            The data to filter, with time along the last axis. If ``None``
+            (default), the EEG signal of the usable channels is filtered.
+
         """
+        if data is None:
+            data = self.EEGData
         if self.sample_rate <= 100:
-            return self.EEGData.copy()
+            return data.copy()
 
         bandpass_filter = _filter_design(
             N_order=100,
             amp=np.array([1, 1, 0, 0]),
             freq=np.array([0, 90 / self.sample_rate, 100 / self.sample_rate, 1]),
         )
-        return signal.filtfilt(bandpass_filter, 1, self.EEGData, axis=1)
+        return signal.filtfilt(bandpass_filter, 1, data, axis=-1)
 
     def get_bads(self, verbose=False, as_dict=False):
         """Get the names of all channels currently flagged as bad.
@@ -555,6 +597,13 @@ class NoisyChannels:
         if self.EEGFiltered is None:
             self.EEGFiltered = self._get_filtered_data()
 
+        # With average_reference, a flat stretch in a channel carries the negated
+        # reference; the filter is linear, so adding the filtered reference back
+        # recovers the unreferenced signal for dropout detection.
+        reference_filtered = None
+        if self._reference_signal is not None:
+            reference_filtered = self._get_filtered_data(self._reference_signal)
+
         # Determine the number and size (in frames) of correlation windows
         win_size = int(correlation_secs * self.sample_rate)
         win_offsets = np.arange(1, (self.n_samples - win_size), win_size)
@@ -578,13 +627,19 @@ class NoisyChannels:
 
             # Check for any channel dropouts (flat signal) within the window
             eeg_amplitude = _mad(eeg_filtered, axis=1)
-            dropout[w, usable] = eeg_amplitude == 0
+            if reference_filtered is None:
+                is_dropout = eeg_amplitude == 0
+            else:
+                eeg_unreferenced = eeg_filtered + reference_filtered[:, start:end]
+                is_dropout = _mad(eeg_unreferenced, axis=1) == 0
+            dropout[w, usable] = is_dropout
 
             # Exclude any dropout chans from further calculations (avoids div-by-zero)
-            usable[usable] = eeg_amplitude > 0
-            eeg_raw = eeg_raw[eeg_amplitude > 0, :]
-            eeg_filtered = eeg_filtered[eeg_amplitude > 0, :]
-            eeg_amplitude = eeg_amplitude[eeg_amplitude > 0]
+            keep = (eeg_amplitude > 0) & ~is_dropout
+            usable[usable] = keep
+            eeg_raw = eeg_raw[keep, :]
+            eeg_filtered = eeg_filtered[keep, :]
+            eeg_amplitude = eeg_amplitude[keep]
 
             # Get high-frequency noise ratios for the window
             high_freq_amplitude = _mad(eeg_raw - eeg_filtered, axis=1)
