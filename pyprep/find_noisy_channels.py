@@ -68,6 +68,14 @@ class NoisyChannels:
         full recording is used. This is useful when recordings contain breaks
         or movement artifacts that shouldn't influence channel rejection
         decisions.
+    average_reference : bool
+        Whether to average reference the usable EEG channels before running any
+        detection method other than :meth:`~.find_bad_by_nan_flat`. Usable
+        channels are those that are not bad-by-NaN, bad-by-flat, or manually
+        marked as bad: these channels neither contribute to the average nor are
+        masked by it, and NaN and flat detection always run on the data as
+        passed. Ignored (with a warning) if ``matlab_strict`` is ``True``.
+        Defaults to ``False``.
 
     References
     ----------
@@ -88,6 +96,7 @@ class NoisyChannels:
         correlation=True,
         bad_by_manual=None,
         reject_by_annotation=None,
+        average_reference=False,
     ):
         # Make sure that we got an MNE object
         assert isinstance(raw, mne.io.BaseRaw)
@@ -129,6 +138,16 @@ class NoisyChannels:
             )
             reject_by_annotation = None
         self.reject_by_annotation = reject_by_annotation
+
+        msg = f"average_reference must be boolean, got: {average_reference}"
+        assert isinstance(average_reference, bool), msg
+        if matlab_strict and average_reference:
+            logger.warning(
+                "average_reference is not available in MATLAB PREP. "
+                "Setting average_reference to False."
+            )
+            average_reference = False
+        self.average_reference = average_reference
 
         # Warn if many small BAD segments are present (potential edge effects)
         if reject_by_annotation is not None:
@@ -202,6 +221,16 @@ class NoisyChannels:
         # Get usable EEG channel names & channel counts
         self.ch_names_new = np.asarray(ch_names[self.usable_idx])
         self.n_chans_new = len(self.ch_names_new)
+
+        if self.average_reference:
+            if self.n_chans_new < 2:
+                logger.warning(
+                    "Not average referencing: %s usable channel(s) left after "
+                    "excluding NaN, flat, and manually marked channels.",
+                    self.n_chans_new,
+                )
+            else:
+                self.EEGData -= self.EEGData.mean(axis=0, keepdims=True)
 
     def _get_filtered_data(self):
         """Apply a [1 Hz - 50 Hz] bandpass filter to the EEG signal.

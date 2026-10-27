@@ -3,6 +3,8 @@
 # Authors: The PyPREP developers
 # SPDX-License-Identifier: MIT
 
+import logging
+
 import numpy as np
 import pytest
 
@@ -446,3 +448,82 @@ def test_reject_by_annotation_data_extraction(raw_tmp):
 
     # Both should have the same original sample count stored
     assert nd_no_reject.n_samples_original == nd_with_reject.n_samples_original
+
+
+# Tests for average_reference functionality
+
+
+def test_average_reference(raw_tmp):
+    """Test that only usable channels are re-referenced, to their own average."""
+    flat_ch, nan_ch, manual_ch = raw_tmp.ch_names[:3]
+    raw_tmp._data[0, :] = 0
+    raw_tmp._data[1, 3] = np.nan
+    raw_tmp._data[2, :] *= 1e3
+
+    nd = NoisyChannels(
+        raw_tmp, do_detrend=False, bad_by_manual=[manual_ch], average_reference=True
+    )
+
+    # Flat and NaN channels are detected on the data as passed
+    assert nd.bad_by_flat == [flat_ch]
+    assert nd.bad_by_nan == [nan_ch]
+    usable = raw_tmp.get_data(picks=raw_tmp.ch_names[3:])
+    np.testing.assert_allclose(nd.EEGData, usable - usable.mean(axis=0))
+
+
+def test_average_reference_ignores_unusable_channel_content(raw_tmp):
+    """Test that results do not depend on the signal in a manually marked channel."""
+    manual_ch = raw_tmp.ch_names[0]
+    raw_noisy = raw_tmp.copy()
+    raw_noisy._data[0, :] = rng.normal(scale=1e-3, size=raw_tmp.n_times)
+
+    bads = []
+    for raw in (raw_tmp, raw_noisy):
+        nd = NoisyChannels(
+            raw,
+            do_detrend=False,
+            ransac=False,
+            bad_by_manual=[manual_ch],
+            average_reference=True,
+        )
+        nd.find_all_bads()
+        bads.append(nd.get_bads(as_dict=True))
+    assert bads[0] == bads[1]
+
+
+def test_average_reference_default_off(raw_tmp):
+    """Test that the data are not re-referenced by default."""
+    nd = NoisyChannels(raw_tmp, do_detrend=False)
+    assert nd.average_reference is False
+    np.testing.assert_array_equal(nd.EEGData, raw_tmp.get_data())
+
+
+def test_average_reference_matlab_strict(raw_tmp, caplog):
+    """Test that average_reference is ignored with a warning in matlab_strict mode."""
+    with caplog.at_level(logging.WARNING, logger="pyprep"):
+        nd = NoisyChannels(
+            raw_tmp, do_detrend=False, matlab_strict=True, average_reference=True
+        )
+    assert "average_reference is not available in MATLAB PREP" in caplog.text
+    assert nd.average_reference is False
+    np.testing.assert_array_equal(nd.EEGData, raw_tmp.get_data())
+
+
+def test_average_reference_too_few_usable(raw_tmp, caplog):
+    """Test that a single usable channel is not referenced to itself."""
+    raw_two = raw_tmp.copy().pick(raw_tmp.ch_names[:2])
+    with caplog.at_level(logging.WARNING, logger="pyprep"):
+        nd = NoisyChannels(
+            raw_two,
+            do_detrend=False,
+            bad_by_manual=[raw_two.ch_names[0]],
+            average_reference=True,
+        )
+    assert "Not average referencing" in caplog.text
+    np.testing.assert_array_equal(nd.EEGData, raw_two.get_data(picks=[1]))
+
+
+def test_average_reference_invalid(raw_tmp):
+    """Test that a non-boolean average_reference is rejected."""
+    with pytest.raises(AssertionError, match="average_reference must be boolean"):
+        NoisyChannels(raw_tmp, do_detrend=False, average_reference="yes")

@@ -26,6 +26,7 @@ Version 0.10.0 (unreleased)
 
 Changelog
 ~~~~~~~~~
+- :class:`~pyprep.NoisyChannels` gained the ``average_reference`` parameter to average reference the usable channels (excluding bad-by-NaN, bad-by-flat, and manually marked channels) before detection, by `Stefan Appelhoff`_ (:gh:`217`)
 - Python 3.11 or higher is now required, by `Stefan Appelhoff`_ (:gh:`214`)
 - MNE-Python 1.13.0 or higher is now required, by `Stefan Appelhoff`_ (:gh:`214`)
 - Switched standard montages in tests and examples to ``spherical_1005`` (and ``spherical_1020`` for the standalone RANSAC example), following MNE's montage deprecations, by `Stefan Appelhoff`_ (:gh:`214`)
