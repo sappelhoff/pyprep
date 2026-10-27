@@ -27,6 +27,7 @@ Version 0.10.0 (unreleased)
 Changelog
 ~~~~~~~~~
 - :class:`~pyprep.NoisyChannels` gained the ``average_reference`` parameter to average reference the usable channels (excluding bad-by-NaN, bad-by-flat, and manually marked channels) before detection, while NaN, flat, and dropout detection still see the unreferenced signal, by `Stefan Appelhoff`_ (:gh:`217`)
+- :meth:`~pyprep.NoisyChannels.find_bad_by_correlation` now counts a window as flat for "bad-by-dropout" when the median absolute deviation of the filtered signal is below ``1e-15`` volts instead of exactly zero, so that dropouts are detected despite filter residue, by `Stefan Appelhoff`_ (:gh:`218`)
 - Python 3.11 or higher is now required, by `Stefan Appelhoff`_ (:gh:`214`)
 - MNE-Python 1.13.0 or higher is now required, by `Stefan Appelhoff`_ (:gh:`214`)
 - Switched standard montages in tests and examples to ``spherical_1005`` (and ``spherical_1020`` for the standalone RANSAC example), following MNE's montage deprecations, by `Stefan Appelhoff`_ (:gh:`214`)
