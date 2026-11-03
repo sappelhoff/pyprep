@@ -85,8 +85,15 @@ def setup_logging(level="info", *, stream=None, fmt=DEFAULT_FORMAT):
 
     Notes
     -----
-    To hand the output back afterwards, drop the handler again with
-    ``logging.getLogger("pyprep").handlers.clear()``.
+    To hand the output back afterwards, drop the handler again and let the
+    records propagate::
+
+        logger = logging.getLogger("pyprep")
+        logger.handlers.clear()
+        logger.propagate = True
+
+    Clearing the handlers also removes any that the application attached to
+    this logger itself.
     """
     logger = logging.getLogger(LOGGER_NAME)
     logger.setLevel(_as_level(level))
