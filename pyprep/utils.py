@@ -526,6 +526,12 @@ def _filter_design(N_order, amp, freq):
 
     """
     nfft = np.maximum(512, 2 ** (np.ceil(math.log(100) / math.log(2))))
+    bins = np.round(np.multiply(nfft, freq))
+    if np.any(np.diff(bins) <= 0):
+        raise ValueError(
+            "The MATLAB PREP filter cannot resolve its frequency edges at this "
+            "sampling rate. Use matlab_strict=False to use MNE filtering."
+        )
     hamming_window = np.subtract(
         0.54,
         np.multiply(
@@ -535,9 +541,7 @@ def _filter_design(N_order, amp, freq):
             ),
         ),
     )
-    pchip_interpolate = scipy.interpolate.PchipInterpolator(
-        np.round(np.multiply(nfft, freq)), amp
-    )
+    pchip_interpolate = scipy.interpolate.PchipInterpolator(bins, amp)
     freq = pchip_interpolate(np.arange(nfft + 1))
     freq = np.multiply(
         freq,

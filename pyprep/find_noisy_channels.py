@@ -17,6 +17,16 @@ from pyprep.utils import _filter_design, _mad, _mat_iqr, _mat_quantile
 logger = logging.getLogger(__name__)
 
 
+def _has_flat_half_window(data, tol):
+    """Check for a contiguous flat half-window containing the midpoint."""
+    mid = data.shape[1] // 2
+    flat = np.abs(data - data[:, mid : mid + 1]) < tol
+    # Count consecutive samples from the midpoint; scattered ties do not count.
+    length = np.logical_and.accumulate(flat[:, mid::-1], axis=1).sum(axis=1)
+    length += np.logical_and.accumulate(flat[:, mid + 1 :], axis=1).sum(axis=1)
+    return 2 * length >= data.shape[1]
+
+
 class NoisyChannels:
     """Detect bad channels in an EEG recording using a range of methods.
 
@@ -238,7 +248,7 @@ class NoisyChannels:
                 self.EEGData -= self._reference_signal
 
     def _get_filtered_data(self, data=None):
-        """Apply a [1 Hz - 50 Hz] bandpass filter to the EEG signal.
+        """Low-pass filter the EEG signal for noisy channel detection.
 
         Only applied if the sample rate is above 100 Hz to avoid violating the
         Nyquist theorem.
@@ -255,12 +265,27 @@ class NoisyChannels:
         if self.sample_rate <= 100:
             return data.copy()
 
-        bandpass_filter = _filter_design(
+        if not self.matlab_strict:
+            # MNE accepts real data; apply the same FIR to both components.
+            is_complex = np.iscomplexobj(data)
+            if is_complex:
+                data = (data.real, data.imag)
+            filtered = mne.filter.filter_data(
+                np.array(data, dtype=np.float64, order="C", copy=True),
+                self.sample_rate,
+                l_freq=None,
+                h_freq=45,
+                h_trans_bandwidth=5,
+                copy=False,
+            )
+            return filtered[0] + 1j * filtered[1] if is_complex else filtered
+
+        lowpass_filter = _filter_design(
             N_order=100,
             amp=np.array([1, 1, 0, 0]),
             freq=np.array([0, 90 / self.sample_rate, 100 / self.sample_rate, 1]),
         )
-        return signal.filtfilt(bandpass_filter, 1, data, axis=-1)
+        return signal.filtfilt(lowpass_filter, 1, data, axis=-1)
 
     def get_bads(self, verbose=False, as_dict=False):
         """Get the names of all channels currently flagged as bad.
@@ -576,7 +601,10 @@ class NoisyChannels:
         This method also detects channels with intermittent dropouts (i.e.,
         regions of flat signal). A correlation window is considered flat for a
         channel if the median absolute deviation (MAD) of its filtered signal is
-        below ``1e-15`` volts (exactly zero if ``matlab_strict`` is ``True``). A
+        below ``1e-15`` volts (exactly zero if ``matlab_strict`` is ``True``).
+        When the non-strict low-pass filter is used, a window also counts if
+        a continuous flat stretch containing its midpoint covers at least half
+        the window before low-pass filtering. A
         channel is considered "bad-by-dropout" if its fraction of flat correlation
         windows is above the bad fraction threshold (default: ``0.01``).
 
@@ -596,8 +624,7 @@ class NoisyChannels:
         IQR_TO_SD = 0.7413  # Scales units of IQR to units of SD, assuming normality
         # Reference: https://stat.ethz.ch/R-manual/R-devel/library/stats/html/IQR.html
 
-        # Filtering leaves residue far below this in a flat stretch (MATLAB PREP
-        # requires an exact zero); same value as the default flat_threshold
+        # Same value as the default flat_threshold; MATLAB PREP requires zero.
         dropout_threshold = 1e-15
 
         if self.EEGFiltered is None:
@@ -642,6 +669,12 @@ class NoisyChannels:
                 is_dropout = dropout_amplitude == 0
             else:
                 is_dropout = dropout_amplitude < dropout_threshold
+                if self.sample_rate > 100:
+                    # The low-pass filter can smear an otherwise flat stretch.
+                    unfiltered = eeg_raw
+                    if self._reference_signal is not None:
+                        unfiltered = eeg_raw + self._reference_signal[:, start:end]
+                    is_dropout |= _has_flat_half_window(unfiltered, dropout_threshold)
             dropout[w, usable] = is_dropout
 
             # Exclude any dropout chans from further calculations (avoids div-by-zero)
@@ -656,10 +689,12 @@ class NoisyChannels:
             noiselevels[w, usable] = high_freq_amplitude / eeg_amplitude
 
             # Get inter-channel correlations for the window
+            max_correlations[w, dropout[w, :]] = 0
+            if eeg_filtered.shape[0] < 2:
+                continue  # No pair of usable channels to correlate.
             win_correlations = np.corrcoef(eeg_filtered)
             abs_corr = np.abs(win_correlations - np.diag(np.diag(win_correlations)))
             max_correlations[w, usable] = _mat_quantile(abs_corr, 0.98, axis=0)
-            max_correlations[w, dropout[w, :]] = 0  # Set dropout correlations to 0
 
         # Flag channels with above-threshold fractions of bad correlation windows
         thresholded_correlations = max_correlations < correlation_threshold

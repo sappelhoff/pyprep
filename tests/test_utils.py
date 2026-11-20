@@ -10,12 +10,22 @@ from scipy.stats import median_abs_deviation
 from pyprep.utils import (
     _correlate_arrays,
     _eeglab_create_highpass,
+    _filter_design,
     _get_random_subset,
     _mad,
     _mat_iqr,
     _mat_quantile,
     _mat_round,
 )
+
+
+@pytest.mark.parametrize("freq", [[0, 0.18, 0.2, 1], (0, 0.18, 0.2, 1)])
+def test_filter_design_frequency_sequence(freq):
+    """Frequency sequences and arrays describe the same filter."""
+    amp = [1, 1, 0, 0]
+    np.testing.assert_array_equal(
+        _filter_design(100, amp, freq), _filter_design(100, amp, np.asarray(freq))
+    )
 
 
 def test_mat_round():
