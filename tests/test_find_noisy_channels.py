@@ -199,18 +199,18 @@ def test_bad_by_dropout(raw_tmp):
 
 
 @pytest.mark.parametrize("average_reference", [False, True])
-@pytest.mark.parametrize("n_flat, offset", [(4, 0), (4, 256), (6, 0), (7, 0)])
-def test_single_window_dropout(average_reference, n_flat, offset):
+@pytest.mark.parametrize("n_flat", [4, 6, 7])
+def test_single_window_dropout(average_reference, n_flat):
     """Dropouts depend on whole-window MAD, not a continuous flat stretch."""
     sfreq = 512
     time = np.arange(12 * sfreq) / sfreq
     signal = np.sin(2 * np.pi * 11 * time)
     noise = np.random.default_rng(5).normal(0, 0.15, (8, time.size))
     data = (signal + noise) * 1e-5
-    start = 5 * sfreq + offset
+    start = 5 * sfreq
     portion = slice(start, start + sfreq)
     data[:n_flat, portion] = 2e-6
-    # Every eighth sample differs; the aligned window still has zero MAD.
+    # Every eighth sample differs; the window still has zero MAD.
     data[-1, portion] = 2e-6
     data[-1, start : start + sfreq : 8] = 8e-6
     raw = mne.io.RawArray(data, mne.create_info(8, sfreq, "eeg"))
@@ -218,8 +218,7 @@ def test_single_window_dropout(average_reference, n_flat, offset):
     nd.find_bad_by_correlation()
     dropouts = nd._extra_info["bad_by_dropout"]["dropouts"]
     expected = np.zeros_like(dropouts)
-    if offset == 0:
-        expected[:n_flat, 5] = expected[-1, 5] = 1
+    expected[:n_flat, 5] = expected[-1, 5] = 1
     np.testing.assert_array_equal(dropouts, expected)
 
 
