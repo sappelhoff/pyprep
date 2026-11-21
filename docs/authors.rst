@@ -3,6 +3,7 @@
 .. _Austin Hurst: https://github.com/a-hurst
 .. _Ayush Agarwal: https://github.com/Ayush-Devs
 .. _Christian O'Reilly: https://github.com/christian-oreilly
+.. _Daria Agafonova: https://github.com/viranovskaya
 .. _Jonte Dancker: https://github.com/joDancker/
 .. _Mathieu Scheltienne: https://github.com/mscheltienne
 .. _Nabil Alibou: https://github.com/nabilalibou

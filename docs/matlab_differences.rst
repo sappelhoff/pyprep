@@ -41,17 +41,12 @@ Differences in ``find_bad_by_correlation``
 
 In MATLAB PREP, a correlation window counts towards a channel being
 'bad-by-dropout' only if the median absolute deviation (MAD) of the channel's
-filtered signal in that window is exactly zero. However, filtering (including
-the high-pass trend removal applied before bad channel detection) leaves
-residual values on the order of ``1e-21`` to ``1e-15`` volts in a stretch of
-flat signal, so dropouts would often go undetected. PyPREP therefore treats a
-window as flat when the MAD is below ``1e-15`` volts, the same value as the
-default ``flat_threshold`` in :meth:`~pyprep.NoisyChannels.find_bad_by_nan_flat`.
-When the non-strict low-pass filter is used, a window also counts as a dropout
-if at least half its samples form one continuous flat stretch containing the
-window's midpoint before low-pass filtering. This catches dropouts that straddle
-window boundaries without counting scattered identical samples as a plateau.
-When ``matlab_strict`` is set to ``True``, an exact zero is required.
+filtered signal in that window is exactly zero. PyPREP keeps that rule when
+``matlab_strict=True``. By default it instead measures the MAD of the
+unreferenced signal after optional high-pass detrending but before low-pass
+filtering, which can smear the edges of a dropout. The window counts as flat
+if its MAD is below ``1e-15`` volts, allowing for small detrending residuals.
+This is a whole-window statistic: identical samples need not be consecutive.
 
 
 Differences in Signal Detrending

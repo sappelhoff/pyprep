@@ -19,13 +19,10 @@ from pyprep.utils import (
 )
 
 
-@pytest.mark.parametrize("freq", [[0, 0.18, 0.2, 1], (0, 0.18, 0.2, 1)])
-def test_filter_design_frequency_sequence(freq):
-    """Frequency sequences and arrays describe the same filter."""
-    amp = [1, 1, 0, 0]
-    np.testing.assert_array_equal(
-        _filter_design(100, amp, freq), _filter_design(100, amp, np.asarray(freq))
-    )
+def test_filter_design_colliding_edges():
+    """Distinct transition edges can round to the same FFT bin at 8 kHz."""
+    with pytest.raises(ValueError, match="cannot resolve its frequency edges"):
+        _filter_design(100, [1, 1, 0, 0], [0, 90 / 8000, 100 / 8000, 1])
 
 
 def test_mat_round():

@@ -26,7 +26,7 @@ Version 0.11.0 (unreleased)
 
 Changelog
 ~~~~~~~~~
-- :class:`~pyprep.NoisyChannels` now uses MNE for low-pass filtering, allowing high sampling rates such as 8 kHz. MATLAB-strict mode retains the original filter and reports when its frequency grid cannot represent the requested filter (:gh:`109`).
+- :class:`~pyprep.NoisyChannels` now uses MNE for low-pass filtering in default mode. This changes results at all sampling rates above 100 Hz and allows rates such as 8 kHz. Dropouts are checked before low-pass filtering. MATLAB-strict mode retains the original filter and reports when its frequency grid cannot resolve the transition. Fixed a crash when fewer than two usable channels remain in a correlation window (:gh:`220`), by `Daria Agafonova`_.
 
 .. _changes_0_10_0:
 
