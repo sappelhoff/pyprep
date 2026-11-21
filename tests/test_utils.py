@@ -10,12 +10,19 @@ from scipy.stats import median_abs_deviation
 from pyprep.utils import (
     _correlate_arrays,
     _eeglab_create_highpass,
+    _filter_design,
     _get_random_subset,
     _mad,
     _mat_iqr,
     _mat_quantile,
     _mat_round,
 )
+
+
+def test_filter_design_colliding_edges():
+    """Distinct transition edges can round to the same FFT bin at 8 kHz."""
+    with pytest.raises(ValueError, match="cannot resolve its frequency edges"):
+        _filter_design(100, [1, 1, 0, 0], [0, 90 / 8000, 100 / 8000, 1])
 
 
 def test_mat_round():

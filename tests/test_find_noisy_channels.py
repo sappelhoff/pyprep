@@ -5,6 +5,7 @@
 
 import logging
 
+import mne
 import numpy as np
 import pytest
 
@@ -58,6 +59,26 @@ def _generate_signal(fmin, fmax, timepoints, fcount=1):
 
 
 # Run unit tests for each bad channel type detected by NoisyChannels
+
+
+@pytest.mark.parametrize("matlab_strict", [False, True])
+def test_high_sample_rate_filter(matlab_strict):
+    """Filter an 8 kHz recording unless exact MATLAB behaviour is requested."""
+    sfreq = 8000
+    time = np.arange(2 * sfreq) / sfreq
+    low = 1 + np.cos(2 * np.pi * 10 * time)
+    data = low + np.cos(2 * np.pi * 50 * time)
+    raw = mne.io.RawArray(data[np.newaxis], mne.create_info(["Cz"], sfreq, "eeg"))
+    nd = NoisyChannels(raw, do_detrend=False, matlab_strict=matlab_strict)
+
+    if matlab_strict:
+        with pytest.raises(ValueError, match="matlab_strict=False"):
+            nd._get_filtered_data()
+    else:
+        # Away from the edges, retain DC and 10 Hz but reject 50 Hz.
+        middle = slice(sfreq // 2, -sfreq // 2)
+        filtered = nd._get_filtered_data()
+        np.testing.assert_allclose(filtered[0, middle], low[middle], atol=0.01)
 
 
 def test_bad_by_nan(raw_tmp):
@@ -177,17 +198,38 @@ def test_bad_by_dropout(raw_tmp):
     assert nd.bad_by_dropout == [raw_tmp.ch_names[dropout_idx]]
 
 
-def test_bad_by_dropout_after_filtering(raw_tmp):
-    """Test that dropouts are detected despite filter residue in the flat stretch."""
-    n_chans, n_samples = raw_tmp.get_data().shape
-    dropout_idx = int(rng.integers(0, n_chans, 1)[0])
-    x1, x2 = (int(n_samples / 10), int(2 * n_samples / 10))
-    raw_tmp._data[dropout_idx, x1:x2] = 0
-
-    # Default detrending high-pass filters the data, leaving tiny non-zero values
-    nd = NoisyChannels(raw_tmp, do_detrend=True)
+@pytest.mark.parametrize("average_reference", [False, True])
+@pytest.mark.parametrize("n_flat", [4, 6, 7])
+def test_single_window_dropout(average_reference, n_flat):
+    """Dropouts depend on whole-window MAD, not a continuous flat stretch."""
+    sfreq = 512
+    time = np.arange(12 * sfreq) / sfreq
+    signal = np.sin(2 * np.pi * 11 * time)
+    noise = np.random.default_rng(5).normal(0, 0.15, (8, time.size))
+    data = (signal + noise) * 1e-5
+    start = 5 * sfreq
+    portion = slice(start, start + sfreq)
+    data[:n_flat, portion] = 2e-6
+    # Every eighth sample differs; the window still has zero MAD.
+    data[-1, portion] = 2e-6
+    data[-1, start : start + sfreq : 8] = 8e-6
+    raw = mne.io.RawArray(data, mne.create_info(8, sfreq, "eeg"))
+    nd = NoisyChannels(raw, do_detrend=False, average_reference=average_reference)
     nd.find_bad_by_correlation()
-    assert nd.bad_by_dropout == [raw_tmp.ch_names[dropout_idx]]
+    dropouts = nd._extra_info["bad_by_dropout"]["dropouts"]
+    expected = np.zeros_like(dropouts)
+    expected[:n_flat, 5] = expected[-1, 5] = 1
+    np.testing.assert_array_equal(dropouts, expected)
+
+
+def test_bad_by_dropout_after_filtering(raw_clean):
+    """Detect a five-second dropout with the default high-pass detrending."""
+    raw = raw_clean.copy()
+    sfreq = int(raw.info["sfreq"])
+    raw._data[0, 10 * sfreq : 15 * sfreq] = 0
+    nd = NoisyChannels(raw)
+    nd.find_bad_by_correlation()
+    assert nd.bad_by_dropout == [raw.ch_names[0]]
 
 
 @pytest.mark.parametrize("matlab_strict", [False, True])
