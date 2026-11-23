@@ -61,6 +61,9 @@ authors:
       orcid: 'https://orcid.org/0009-0006-2018-1074'
     - given-names: Daria
       family-names: Agafonova
+    - given-names: Benedikt
+      family-names: Ehinger
+      affiliation: 'University of Stuttgart, Stuttgart, Germany'
 type: software
 repository-code: 'https://github.com/sappelhoff/pyprep'
 license: MIT

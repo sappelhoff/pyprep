@@ -27,6 +27,7 @@ Version 0.11.0 (unreleased)
 Changelog
 ~~~~~~~~~
 - :class:`~pyprep.NoisyChannels` now uses MNE for low-pass filtering in default mode. This changes results at all sampling rates above 100 Hz and allows rates such as 8 kHz. Dropouts are checked before low-pass filtering. MATLAB-strict mode retains the original filter and reports when its frequency grid cannot resolve the transition. Fixed a crash when fewer than two usable channels remain in a correlation window, by `Daria Agafonova`_ (:gh:`220`)
+- With ``do_detrend=True`` and ``reject_by_annotation="omit"``, :class:`~pyprep.NoisyChannels` now high-pass filters each segment between BAD annotations separately. NaNs inside BAD segments (e.g., ``BAD_NAN`` from :func:`mne.preprocessing.annotate_nan`) no longer spread over the whole channel and flag every channel as bad-by-NaN, and artifacts inside BAD segments no longer leak into the retained data. This changes results for all recordings with BAD annotations, by `Benedikt Ehinger`_ (:gh:`222`)
 
 .. _changes_0_10_0:
 

@@ -64,10 +64,11 @@ class NoisyChannels:
         How to handle BAD-annotated time segments (annotations starting with
         "BAD" or "bad") during channel quality assessment. If ``'omit'``,
         annotated segments are excluded from analysis (clean segments are
-        concatenated). If ``None`` (default), annotations are ignored and the
-        full recording is used. This is useful when recordings contain breaks
-        or movement artifacts that shouldn't influence channel rejection
-        decisions.
+        concatenated), and if ``do_detrend`` is ``True``, each clean segment is
+        high-pass filtered separately. If ``None`` (default), annotations are
+        ignored and the full recording is used. This is useful when recordings
+        contain breaks or movement artifacts that shouldn't influence channel
+        rejection decisions.
     average_reference : bool
         Whether to average reference the usable EEG channels before running any
         detection method other than :meth:`~.find_bad_by_nan_flat`. Usable
@@ -108,13 +109,6 @@ class NoisyChannels:
         self.bad_by_manual = list(set(bad_by_manual + raw.info["bads"]))
         self.raw_mne.pick("eeg")  # excludes bads
         self.sample_rate = raw.info["sfreq"]
-        if do_detrend:
-            self.raw_mne._data = removeTrend(
-                self.raw_mne._data,
-                self.sample_rate,
-                matlab_strict=matlab_strict,
-                copy=False,
-            )
         self.matlab_strict = matlab_strict
 
         msg = f"ransac must be boolean, got: {ransac}"
@@ -139,6 +133,25 @@ class NoisyChannels:
             )
             reject_by_annotation = None
         self.reject_by_annotation = reject_by_annotation
+
+        if do_detrend:
+            if reject_by_annotation == "omit":
+                # Filtering across BAD segments would spread NaNs (e.g., from
+                # mne.preprocessing.annotate_nan) and artifacts into the
+                # retained data.
+                self.raw_mne.filter(
+                    l_freq=1.0,
+                    h_freq=None,
+                    skip_by_annotation=("edge", "bad"),
+                    verbose=False,
+                )
+            else:
+                self.raw_mne._data = removeTrend(
+                    self.raw_mne._data,
+                    self.sample_rate,
+                    matlab_strict=matlab_strict,
+                    copy=False,
+                )
 
         msg = f"average_reference must be boolean, got: {average_reference}"
         assert isinstance(average_reference, bool), msg
