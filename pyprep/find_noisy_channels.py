@@ -108,13 +108,6 @@ class NoisyChannels:
         self.bad_by_manual = list(set(bad_by_manual + raw.info["bads"]))
         self.raw_mne.pick("eeg")  # excludes bads
         self.sample_rate = raw.info["sfreq"]
-        if do_detrend:
-            self.raw_mne._data = removeTrend(
-                self.raw_mne._data,
-                self.sample_rate,
-                matlab_strict=matlab_strict,
-                copy=False,
-            )
         self.matlab_strict = matlab_strict
 
         msg = f"ransac must be boolean, got: {ransac}"
@@ -139,6 +132,29 @@ class NoisyChannels:
             )
             reject_by_annotation = None
         self.reject_by_annotation = reject_by_annotation
+
+        if do_detrend:
+            if reject_by_annotation == "omit":
+                # Same 1 Hz high-pass as removeTrend (MNE defaults), but filter
+                # each segment between BAD annotations separately: BAD samples
+                # are omitted later anyway, and filtering across them would
+                # spread NaNs (e.g. BAD_NAN from mne.preprocessing.annotate_nan)
+                # or large artifacts into the retained data. "bad" matches the
+                # annotations that reject_by_annotation="omit" drops; "edge"
+                # keeps MNE's default of splitting at concatenation boundaries.
+                self.raw_mne.filter(
+                    l_freq=1.0,
+                    h_freq=None,
+                    skip_by_annotation=("edge", "bad"),
+                    verbose=False,
+                )
+            else:
+                self.raw_mne._data = removeTrend(
+                    self.raw_mne._data,
+                    self.sample_rate,
+                    matlab_strict=matlab_strict,
+                    copy=False,
+                )
 
         msg = f"average_reference must be boolean, got: {average_reference}"
         assert isinstance(average_reference, bool), msg

@@ -608,3 +608,42 @@ def test_average_reference_invalid(raw_tmp):
     """Test that a non-boolean average_reference is rejected."""
     with pytest.raises(AssertionError, match="average_reference must be boolean"):
         NoisyChannels(raw_tmp, do_detrend=False, average_reference="yes")
+
+
+def _make_nan_raw():
+    rng = np.random.default_rng(0)
+    montage = mne.channels.make_standard_montage("spherical_1005")
+    ch_names = montage.ch_names[:32]
+    n_times = 250 * 120
+    common = rng.standard_normal(n_times)
+    data = (common + 0.5 * rng.standard_normal((32, n_times))) * 1e-5
+    raw = mne.io.RawArray(data, mne.create_info(ch_names, 250.0, "eeg"))
+    raw.set_montage(montage)
+    return raw
+
+
+def test_nan_in_bad_annotations_with_detrend():
+    """NaNs inside BAD segments must not spread through detrending (omit)."""
+    raw = _make_nan_raw()
+    raw._data[:, 15000:15500] = np.nan  # gap across all channels
+    raw.set_annotations(mne.preprocessing.annotate_nan(raw))
+    orig = raw.get_data().copy()
+
+    nd = NoisyChannels(raw, do_detrend=True, reject_by_annotation="omit")
+    assert nd.n_chans_new == 32
+    assert not np.isnan(nd.EEGData).any()
+    assert nd.bad_by_nan == []
+    np.testing.assert_array_equal(raw.get_data(), orig)  # input untouched
+
+    # NaNs outside BAD segments are still detected
+    raw._data[3, 20000:20100] = np.nan
+    nd = NoisyChannels(raw, do_detrend=True, reject_by_annotation="omit")
+    assert nd.bad_by_nan == [raw.ch_names[3]]
+
+
+def test_omit_detrend_matches_without_annotations():
+    """Without BAD annotations, the "omit" detrend equals removeTrend."""
+    raw = _make_nan_raw()
+    nd_omit = NoisyChannels(raw, do_detrend=True, reject_by_annotation="omit")
+    nd_none = NoisyChannels(raw, do_detrend=True, reject_by_annotation=None)
+    np.testing.assert_allclose(nd_omit.EEGData, nd_none.EEGData)

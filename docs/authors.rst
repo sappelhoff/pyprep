@@ -13,3 +13,4 @@
 .. _Yorguin Mantilla: https://github.com/yjmantilla
 .. _John Veillette: https://github.com/john-veillette
 .. _Roy Eric Wieske: https://github.com/Randomidous
+.. _Benedikt Ehinger: https://github.com/behinger
