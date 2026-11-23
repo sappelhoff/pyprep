@@ -135,13 +135,9 @@ class NoisyChannels:
 
         if do_detrend:
             if reject_by_annotation == "omit":
-                # Same 1 Hz high-pass as removeTrend (MNE defaults), but filter
-                # each segment between BAD annotations separately: BAD samples
-                # are omitted later anyway, and filtering across them would
-                # spread NaNs (e.g. BAD_NAN from mne.preprocessing.annotate_nan)
-                # or large artifacts into the retained data. "bad" matches the
-                # annotations that reject_by_annotation="omit" drops; "edge"
-                # keeps MNE's default of splitting at concatenation boundaries.
+                # Filtering across BAD segments would spread NaNs (e.g., from
+                # mne.preprocessing.annotate_nan) and artifacts into the
+                # retained data.
                 self.raw_mne.filter(
                     l_freq=1.0,
                     h_freq=None,
