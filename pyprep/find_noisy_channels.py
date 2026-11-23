@@ -64,10 +64,11 @@ class NoisyChannels:
         How to handle BAD-annotated time segments (annotations starting with
         "BAD" or "bad") during channel quality assessment. If ``'omit'``,
         annotated segments are excluded from analysis (clean segments are
-        concatenated). If ``None`` (default), annotations are ignored and the
-        full recording is used. This is useful when recordings contain breaks
-        or movement artifacts that shouldn't influence channel rejection
-        decisions.
+        concatenated), and if ``do_detrend`` is ``True``, each clean segment is
+        high-pass filtered separately. If ``None`` (default), annotations are
+        ignored and the full recording is used. This is useful when recordings
+        contain breaks or movement artifacts that shouldn't influence channel
+        rejection decisions.
     average_reference : bool
         Whether to average reference the usable EEG channels before running any
         detection method other than :meth:`~.find_bad_by_nan_flat`. Usable
