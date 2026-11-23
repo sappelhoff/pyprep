@@ -647,3 +647,14 @@ def test_omit_detrend_matches_without_annotations():
     nd_omit = NoisyChannels(raw, do_detrend=True, reject_by_annotation="omit")
     nd_none = NoisyChannels(raw, do_detrend=True, reject_by_annotation=None)
     np.testing.assert_allclose(nd_omit.EEGData, nd_none.EEGData)
+
+
+def test_omit_detrend_ignores_data_in_bad_segments():
+    """Data inside BAD segments does not leak into the retained data (omit)."""
+    raw = _make_nan_raw()
+    raw.set_annotations(mne.Annotations([60.0], [2.0], ["BAD_artifact"]))
+    nd_clean = NoisyChannels(raw, do_detrend=True, reject_by_annotation="omit")
+
+    raw._data[:, 15050:15450] += 1e-2
+    nd_artifact = NoisyChannels(raw, do_detrend=True, reject_by_annotation="omit")
+    np.testing.assert_array_equal(nd_artifact.EEGData, nd_clean.EEGData)
